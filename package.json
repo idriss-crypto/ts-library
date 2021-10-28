@@ -1,0 +1,18 @@
+{
+  "name": "idriss-crypto",
+  "version": "0.1.0",
+  "main": "lib/index.js",
+  "repository": "https://github.com/idriss-crypto/ts-library.git",
+  "author": "Idriss-crypto",
+  "license": "MIT",
+  "scripts": {
+    "build" : "tsc"
+  },
+  "dependencies": {
+    "web3": "^1.6.0"
+  },
+  "devDependencies": {
+    "ts-loader": "^9.2.6",
+    "typescript": "^4.4.4"
+  }
+}
