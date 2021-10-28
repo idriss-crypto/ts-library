@@ -7,8 +7,12 @@ on:
 
 jobs:
   build:
-    runs-on: yarnpkg/node-yarn
+    runs-on: ubuntu-latest
     steps:
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14.x
       - name: Run a multi-line script
         run: |
           yarn
