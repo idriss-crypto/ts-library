@@ -1,4 +1,4 @@
-name: CI
+name: Test
 
 on:
   push:
@@ -14,7 +14,19 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 14.x
-      - name: Run a multi-line script
+      - name: Build
         run: |
           yarn
           yarn build
+          
+      - name: E2E tests
+        run: |
+          node tests/e2e/index.js
+          
+      - name: Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: result
+          path: |
+            lib
+            package.json
