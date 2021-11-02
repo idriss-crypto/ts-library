@@ -6,10 +6,13 @@
   "author": "Idriss-crypto",
   "license": "MIT",
   "scripts": {
-    "build" : "tsc"
+    "build" : "tsc",
+    "buildDev" : "tsc --watch"
   },
   "dependencies": {
-    "web3": "^1.6.0"
+    "web3": "^1.6.0",
+    "node-fetch": "^2.6.6",
+    "@types/node-fetch": "^2.5.12"
   },
   "devDependencies": {
     "ts-loader": "^9.2.6",

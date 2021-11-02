@@ -1,10 +1,17 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "module": "commonjs",
-    "declaration": true,
-    "outDir": "./lib",
-    "strict": true
+    "target": "es2019",
+    "module": "CommonJS",
+    "lib": ["es6"],
+    "allowJs": true,
+    "outDir": "lib",
+    "rootDir": "src",
+    "strict": true,
+    "noImplicitAny": true,
+    "esModuleInterop": true,
+    "types": ["node"],
+    "typeRoots" : ["./node_modules/@types"],
+    "moduleResolution": "node"
   },
   "include": ["src"],
   "exclude": ["node_modules", "**/__tests__/*"]

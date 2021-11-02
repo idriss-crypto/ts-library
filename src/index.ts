@@ -1,18 +1,27 @@
+import {WebApi} from "./webApi";
+
 const Web3 = require("web3");
 
 export class IdrissCrypto {
     private web3;
+    private webApi;
+    private contract;
 
     constructor(ethEndpoint: string = "https://bsc-dataseed.binance.org/") {
         this.web3 = new Web3(new Web3.providers.HttpProvider(ethEndpoint));
-
+        this.webApi = new WebApi()
+        this.contract = this.generateContract();
     }
 
     public async resolve(input: string) {
-        const contract = this.generateContract();
-        let result = await contract.methods.Idriss(input).call()
-        debugger;
+        const apiResponse = await this.webApi.encrypt(input);
+        console.log({apiResponse})
+        let result = Object.fromEntries(await (Promise.all(Object.entries(apiResponse.result).map(async ([key, value]) => [key, await this.callWeb3(value)]))))
         console.log({result});
+    }
+
+    private async callWeb3(encrypted: string) {
+        return await this.contract.methods.Idriss(encrypted).call();
     }
 
     private generateContract() {
