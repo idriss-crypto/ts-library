@@ -21,7 +21,7 @@ jobs:
           
       - name: E2E tests
         run: |
-          node tests/e2e/index.js
+          yarn testE2e
           
       - name: Artifacts
         uses: actions/upload-artifact@v2
