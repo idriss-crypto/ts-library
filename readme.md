@@ -44,4 +44,4 @@ Params:
 * input (string) - e-mail address or phone number
 
 Returns:
-Promise, that resolves to dictionary (object), in which keys are names of typess of addresses, and values are these addresses (see example). In case nothing was found, promise will resolve to empty object;
+Promise, that resolves to dictionary (object), in which keys are names of typess of addresses, and values are these addresses (see example). In case nothing was found, promise will resolve to empty object.
