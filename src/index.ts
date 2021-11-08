@@ -8,8 +8,8 @@ export class IdrissCrypto {
     private webApi;
     private contract;
 
-    constructor(ethEndpoint: string = "https://bsc-dataseed.binance.org/") {
-        this.web3 = new Web3(new Web3.providers.HttpProvider(ethEndpoint));
+    constructor(bscEndpoint: string = "https://bsc-dataseed.binance.org/") {
+        this.web3 = new Web3(new Web3.providers.HttpProvider(bscEndpoint));
         this.webApi = new WebApi()
         this.contract = this.generateContract();
     }
