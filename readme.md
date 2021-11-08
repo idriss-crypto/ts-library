@@ -29,6 +29,11 @@ And output of this is:
 ### Class IdrissCrypto
 #### constructor
 ```typescript
+type ResolveOptions = {
+  coin?: string|null,
+  network?: string|null,
+}
+
 constructor(ethEndpoint: string = "https://bsc-dataseed.binance.org/")
 ```
 Params:
@@ -36,12 +41,15 @@ Params:
 
 #### resolve
 ```typescript
-public async resolve(input: string): Promise<{ [index: string]: string }>
+public async resolve(input: string, options:ResolveOptions = {}): Promise<{ [index: string]: string }>
 ```
 Converts input string (e-mail address of phone number) to wallets addresses. This method connects to Idriss-crypto api server and then to endpoint defined in constructor. 
 
 Params:
 * input (string) - e-mail address or phone number
+* options (ResolveOptions object) - optional parameters
+  * coin (string) - for example "ETH"
+  * network (string) - for example "evm"
 
 Returns:
 Promise, that resolves to dictionary (object), in which keys are names of typess of addresses, and values are these addresses (see example). In case nothing was found, promise will resolve to empty object.
