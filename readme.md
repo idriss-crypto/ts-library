@@ -10,6 +10,8 @@ And in code
 
 ```javascript
 import {IdrissCrypto} from "idriss-crypto";
+//or when using commonJS
+const {IdrissCrypto} = require("idriss-crypto");
 
 const idriss = new IdrissCrypto();
 const result = await idriss.resolve("idrisssystem@gmail.com");
