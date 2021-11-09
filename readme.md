@@ -52,7 +52,14 @@ Params:
     * currently supported coins: ETH, BNB, USDC, USDT, ELA, BTC, SOL and one ERC20 wildcard
   * network (string) - for example "evm"
     * currently supported network types: evm (for evm compatible addresses), btc and sol
-* supported networks and coins are not exhaustive. Any  wishes regarding supported combinations? Please send them to idrisssystem@gmail.com
+  * currently, we support the following combinations:
+    * network: evm
+        * coin: ETH, BNB, USDT, USDC, ELA, ERC20
+    * network: btc
+        * coin: BTC
+    * network: sol 
+        * coin: SOL
+* supported networks and coins will be updated on a regular basis. Any  wishes regarding supported combinations? Please send them to idrisssystem@gmail.com
 
 Returns:
 Promise, that resolves to dictionary (object), in which keys are names addresses, and values are these addresses (see example). In case nothing was found, promise will resolve to empty object. If unknown network or coin (or combination) was provided, error returns. Example: "message": "Network not found."
