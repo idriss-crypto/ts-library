@@ -12,7 +12,7 @@ export class WebApi {
         if (options.network != null)
             url.searchParams.append("network", options.network);
         const response = await fetch(url)
-        if (response.status != 200) throw new Error("Idriss api responded with code " + response.status + " " + response.statusText+"\r\n"+await response.text())
+        if (response.status != 200) throw new Error("Idriss api responded with code " + response.status + " " + response.statusText + "\r\n" + await response.text())
         return await (response.json());
     }
 }

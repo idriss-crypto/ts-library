@@ -14,7 +14,7 @@ export class IdrissCrypto {
         this.contract = this.generateContract();
     }
 
-    public async resolve(input: string, options:ResolveOptions = {}): Promise<{ [index: string]: string }> {
+    public async resolve(input: string, options: ResolveOptions = {}): Promise<{ [index: string]: string }> {
         const apiResponse = await this.webApi.encrypt(input, options);
         let web3Requests = await Promise.all(Object.entries(apiResponse.result).map(async ([key, value]) => [key, await this.callWeb3(value)]));
         return Object.fromEntries(web3Requests.filter(([key, value]) => value))

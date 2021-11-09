@@ -1,4 +1,4 @@
 export type ResolveOptions = {
-    coin?: string|null,
-    network?: string|null,
+    coin?: string | null,
+    network?: string | null,
 }
