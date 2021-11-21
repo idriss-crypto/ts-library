@@ -48,17 +48,17 @@ public async resolve(input: string, options:ResolveOptions = {}): Promise<{ [ind
 Converts input string (e-mail address of phone number) to wallets addresses. This method connects to Idriss-crypto api server and then to endpoint defined in constructor. 
 
 Params:
-* input (string) - e-mail address or phone number
+* input (string) - e-mail address or phone number together with optional secret word
 * options (ResolveOptions object) - optional parameters
   * coin (string) - for example "ETH"
-    * currently supported coins: ETH, BNB, USDC, USDT, ELA, BTC, SOL and one ERC20 wildcard
+    * currently supported coins: ETH, BNB, USDT, USDC, ELA, TLOS, MATIC, LINK, HT, FSN, FTM, AVAX, BTC, SOL and one ERC20 wildcard
   * network (string) - for example "evm"
-    * currently supported network types: evm (for evm compatible addresses), btc and sol
+    * currently supported network types: evm (for evm compatible addresses across different networks), btc and sol
   * currently, we support the following combinations:
     * network: evm
-        * coin: ETH, BNB, USDT, USDC, ELA, ERC20
+        * coin: ETH, BNB, USDT, USDC, ELA, TLOS, MATIC, LINK, HT, FSN, FTM, AVAX, BTC, ERC20
     * network: btc
-        * coin: BTC
+        * coin: BTC, ELA
     * network: sol 
         * coin: SOL
 * supported networks and coins will be updated on a regular basis. Any  wishes regarding supported combinations? Please send them to idrisssystem@gmail.com
