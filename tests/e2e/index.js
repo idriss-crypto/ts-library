@@ -3,8 +3,9 @@ const assert = require('assert');
 it('Basic request', async () => {
     const obj = new IdrissCrypto()
     const result = await obj.resolve("idrisssystem@gmail.com")
-    assert.equal(result["ERC20"], "0xAB39e7C21b4a1D0f56a59699F0196d59efD739A5")
+    assert.equal(result["Essentials ELA native"], "EXeRYLa7NqLTTc5LpqN16Gma1s6HRqJ5KU")
     assert.equal(result["Metamask ETH"], "0xcC428D15930F1d3752672B2A8AB7a9b1f2085BC8")
+    assert.equal(result["Trust SOL"], "GT2Cxwi6jf6H7g3qymapq3WDQPzmH5yJUa31AfDCh1uT")
 
 }).timeout(10000);
 it('Parametrized request 1', async () => {
@@ -15,7 +16,7 @@ it('Parametrized request 1', async () => {
 }).timeout(10000);
 it('Parametrized request 2', async () => {
     const obj = new IdrissCrypto()
-    const result = await obj.resolve("idrisssystem@gmail.com", {coin:"ERC20"})
-    assert.equal(result["ERC20"], "0xAB39e7C21b4a1D0f56a59699F0196d59efD739A5")
+    const result = await obj.resolve("idrisssystem@gmail.com", {coin:"SOL"})
+    assert.equal(result["Trust SOL"], "GT2Cxwi6jf6H7g3qymapq3WDQPzmH5yJUa31AfDCh1uT")
     assert.equal(Object.keys(result).length, 1)
 }).timeout(10000);
