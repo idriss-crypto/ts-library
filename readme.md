@@ -37,10 +37,10 @@ type ResolveOptions = {
   network?: string|null,
 }
 
-constructor(polygonEndpoint: string = "https://polygon-mainnet.g.alchemy.com/v2/...")
+constructor(polygonEndpoint: string = "https://polygon-rpc.com/")
 ```
 Params:
-* polygonEndpoint (string) - uri to connect with blockchain. Default is empty. Needs your API key.
+* polygonEndpoint (string) - uri to connect with blockchain. Default is empty https://polygon-rpc.com/.
 
 #### resolve
 ```typescript
