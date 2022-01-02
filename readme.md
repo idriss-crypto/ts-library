@@ -1,4 +1,4 @@
-It's a node.js library, that uses [Idriss-crypto](https://www.idriss-crypto.com/) to translate e-mail addresses and phone numbers to cryptocurrency wallet addresses.
+It's a node.js library, that uses [IDriss-Crypto](https://www.idriss-crypto.com/) to translate e-mail addresses and phone numbers to cryptocurrency wallet addresses.
 
 ## Sample usage
 from cli
@@ -37,16 +37,16 @@ type ResolveOptions = {
   network?: string|null,
 }
 
-constructor(bscEndpoint: string = "https://bsc-dataseed.binance.org/")
+constructor(polygonEndpoint: string = "https://polygon-mainnet.g.alchemy.com/v2/...")
 ```
 Params:
-* bscEndpoint (string) - uri to connect with blockchain. Default is "https://bsc-dataseed.binance.org/"
+* polygonEndpoint (string) - uri to connect with blockchain. Default is empty. Needs your API key.
 
 #### resolve
 ```typescript
 public async resolve(input: string, options:ResolveOptions = {}): Promise<{ [index: string]: string }>
 ```
-Converts input string (e-mail address of phone number) to wallets addresses. This method connects to Idriss-crypto api server and then to endpoint defined in constructor. 
+Converts input string (e-mail address of phone number) to wallets addresses. This method connects to IDriss-Crypto api server and then to endpoint defined in constructor. 
 
 Params:
 * input (string) - e-mail address or phone number together with optional secret word
