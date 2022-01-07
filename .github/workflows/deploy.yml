@@ -1,0 +1,23 @@
+name: deploy
+
+on:
+  workflow_run:
+    workflows: ["cicd"]
+    branches: [masted]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16.x'
+          registry-url: 'https://registry.npmjs.org'
+          scope: '@octocat'
+      - run: yarn
+      - run: yarn publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
