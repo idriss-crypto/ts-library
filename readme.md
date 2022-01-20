@@ -1,4 +1,4 @@
-It's a node.js library, that uses [IDriss-Crypto](https://www.idriss-crypto.com/) to translate e-mail addresses and phone numbers to cryptocurrency wallet addresses.
+It's a node.js and webpack library, that uses [IDriss-Crypto](https://www.idriss-crypto.com/) to translate e-mail addresses and phone numbers to cryptocurrency wallet addresses.
 
 ## Sample usage
 from cli
@@ -9,9 +9,13 @@ npm install idriss-crypto
 And in code
 
 ```javascript
+//for nodejs
 import {IdrissCrypto} from "idriss-crypto";
 //or when using commonJS
 const {IdrissCrypto} = require("idriss-crypto");
+
+//for browser
+import {IdrissCrypto} from "idriss-crypto/lib/browser";
 
 const idriss = new IdrissCrypto();
 const result = await idriss.resolve("idrisssystem@gmail.com");
