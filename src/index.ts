@@ -1,4 +1,4 @@
-import {BaseIdrissCrypto} from "./BaseIdrissCrypto";
+import {BaseIdrissCrypto} from "./baseIdrissCrypto";
 
 const Web3 = require("web3");
 
