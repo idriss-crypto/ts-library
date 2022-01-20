@@ -43,10 +43,11 @@ jobs:
       
       - name: prepare
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" > ~/.npmrc
-       - name: Build
-       run: |
-         yarn
-         yarn build
+      - name: Build
+        run: |
+          yarn
+          yarn build
+          
       - name: publish
         run: yarn publish
         env:
