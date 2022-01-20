@@ -1,12 +1,12 @@
 {
   "name": "idriss-crypto",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "main": "lib/index.js",
   "repository": "https://github.com/idriss-crypto/ts-library.git",
   "author": "Idriss-crypto",
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -d --declarationDir lib",
     "buildDev": "tsc --watch",
     "testE2e": "mocha tests/e2e"
   },

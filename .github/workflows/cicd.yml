@@ -34,6 +34,9 @@ jobs:
       - name: prepare publish
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" > ~/.npmrc
 
+      - name: remove .gitignore for publish
+        run: rm .gitignore
+
       - name: publish
         run: yarn publish
         env:
