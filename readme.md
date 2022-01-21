@@ -105,23 +105,24 @@ const result = await Authorization.CreateOTP("Metamask ETH", "idrisssystem@gmail
 console.log(result.sessionKey)
 ```
 
+
 available tags:
 
-"Metamask ETH", "Binance ETH", "Coinbase ETH", "Exchange ETH", "Private ETH", "Essentials ETH",
-"Essentials BTC", "Binance BTC", "Coinbase BTC", "Exchange BTC", "Private BTC",
-"Metamask USDT", "Binance USDT", "Coinbase USDT", "Exchange USDT", "Private USDT", "Essentials USDT", 
-"Metamask USDC", "Binance USDC", "Coinbase USDC",  "Exchange USDC", "Private USDC", "Essentials USDC", 
-"Solana SOL", "Coinbase SOL", "Trust SOL", "Binance SOL",
-"Metamask BNB", "Essentials BNB", 
-"Essentials ELA", "Essentials ELA native",
-"Essentials TLOS", 
-"Essentials MATIC", 
-"Essentials LINK", 
-"Essentials HT",  
-"Essentials FSN", 
-"Essentials FTM", 
-"Essentials AVAX", 
-"ERC20"
+* "Metamask ETH", "Binance ETH", "Coinbase ETH", "Exchange ETH", "Private ETH", "Essentials ETH",
+* "Essentials BTC", "Binance BTC", "Coinbase BTC", "Exchange BTC", "Private BTC",
+* "Metamask USDT", "Binance USDT", "Coinbase USDT", "Exchange USDT", "Private USDT", "Essentials USDT", 
+* "Metamask USDC", "Binance USDC", "Coinbase USDC",  "Exchange USDC", "Private USDC", "Essentials USDC", 
+* "Solana SOL", "Coinbase SOL", "Trust SOL", "Binance SOL",
+* "Metamask BNB", "Essentials BNB", 
+* "Essentials ELA", "Essentials ELA native",
+* "Essentials TLOS", 
+* "Essentials MATIC", 
+* "Essentials LINK", 
+* "Essentials HT",  
+* "Essentials FSN", 
+* "Essentials FTM", 
+* "Essentials AVAX", 
+* "ERC20"
 
 tags must match address type, error thrown otherwise.
 
