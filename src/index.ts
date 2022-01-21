@@ -1,9 +1,3 @@
-import {BaseIdrissCrypto} from "./baseIdrissCrypto";
-
-const Web3 = require("web3");
-
-export class IdrissCrypto extends BaseIdrissCrypto {
-    constructor(polygonEndpoint: string = "https://polygon-rpc.com/") {
-        super(new Web3(new Web3.providers.HttpProvider(polygonEndpoint)));
-    }
-}
+import {IdrissCrypto} from "./idrissCrypto"
+import {Authorization, CreateOTPResponse, WrongOTPException} from "./authorization"
+export {IdrissCrypto, Authorization, CreateOTPResponse, WrongOTPException};
