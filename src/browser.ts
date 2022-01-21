@@ -7,3 +7,7 @@ export class IdrissCrypto extends BaseIdrissCrypto {
         super(new Web3(new Web3.providers.HttpProvider(polygonEndpoint)));
     }
 }
+
+
+import {Authorization, CreateOTPResponse, WrongOTPException} from "./authorization"
+export {Authorization, CreateOTPResponse, WrongOTPException};
