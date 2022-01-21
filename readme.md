@@ -105,13 +105,33 @@ const result = await Authorization.CreateOTP("Metamask ETH", "idrisssystem@gmail
 console.log(result.sessionKey)
 ```
 
+available tags:
+
+"Metamask ETH", "Binance ETH", "Coinbase ETH", "Exchange ETH", "Private ETH", "Essentials ETH",
+"Essentials BTC", "Binance BTC", "Coinbase BTC", "Exchange BTC", "Private BTC",
+"Metamask USDT", "Binance USDT", "Coinbase USDT", "Exchange USDT", "Private USDT", "Essentials USDT", 
+"Metamask USDC", "Binance USDC", "Coinbase USDC",  "Exchange USDC", "Private USDC", "Essentials USDC", 
+"Solana SOL", "Coinbase SOL", "Trust SOL", "Binance SOL",
+"Metamask BNB", "Essentials BNB", 
+"Essentials ELA", "Essentials ELA native",
+"Essentials TLOS", 
+"Essentials MATIC", 
+"Essentials LINK", 
+"Essentials HT",  
+"Essentials FSN", 
+"Essentials FTM", 
+"Essentials AVAX", 
+"ERC20"
+
+tags must match address type, error thrown otherwise.
+
 #### ValidateOTP
 
 ```typescript
 static async ValidateOTP(OTP:string, sessionKey:string):Promise<ValidateOTPResponse>
 ```
 
-Validates if OTP is correct. If OTP is wrong, WrongOTPException is thrown
+Validates if OTP is correct. If OTP is wrong, WrongOTPException is thrown. If correct, link will be saved on the blockchain and txn_hash is returned. Once the transaction went through, link can be found with resolver.
 
 Params:
 * OTP (string) - 6-digit number
@@ -134,7 +154,7 @@ import {Authorization, WrongOTPException} from "idriss-crypto";
 
 try {
     await Authorization.ValidateOTP("123456", "QNmxmWdWVZ3pm1rHEN7G");
-    console.log("Validatet succesfully");
+    console.log("Validated succesfully");
 } catch (ex) {
     if (ex instanceof WrongOTPException) {
         console.log("OTP is wrong");
