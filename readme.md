@@ -81,7 +81,7 @@ Promise, that resolves to dictionary (object), in which keys are names addresses
 
 Params:
 
-* tag (string) -
+* tag (string) - identifier for wallet. See below for options. Contact us https://discord.gg/RJhJKamjw5 to add additional tags.
 * identifier (string) - email or phone number with country code
 * address (string) - address to be linked with identifier+secret_word
 * secretWord(string, optional) - 
