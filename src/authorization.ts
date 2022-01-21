@@ -29,7 +29,9 @@ export class Authorization {
         const searchParams = [];
         searchParams.push(["OTP", OTP]);
         searchParams.push(["session_key", sessionKey]);
-        const response = await fetch(url + '?' + searchParams.map(x => encodeURIComponent(x[0]) + '=' + encodeURIComponent(x[1])).join('&'))
+        const response = await fetch(url + '?' + searchParams.map(x => encodeURIComponent(x[0]) + '=' + encodeURIComponent(x[1])).join('&'), {
+            method: 'POST'
+        })
         if (response.status != 200) {
             const responseText = await response.text();
             let message;
@@ -40,7 +42,8 @@ export class Authorization {
             }
             if (message == "Wrong OTP.")
                 throw new WrongOTPException("Idriss api responded with code " + response.status + " " + response.statusText + "\r\n" + message);
-            throw new Error("Idriss api responded with code " + response.status + " " + response.statusText + "\r\n" + message);
+            else
+                throw new Error("Idriss api responded with code " + response.status + " " + response.statusText + "\r\n" + message);
         }
         const decodedResponse = await (response.json());
         return new ValidateOTPResponse(decodedResponse.message, decodedResponse.txn_hash);
