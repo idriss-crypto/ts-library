@@ -1,6 +1,6 @@
 {
   "name": "idriss-crypto",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "main": "lib/index.js",
   "repository": "https://github.com/idriss-crypto/ts-library.git",
   "author": "Idriss-crypto",
@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@types/node-fetch": "^2.5.12",
+    "nanoid": "^3.2.0",
     "node-fetch": "^3.1.1",
     "web3": "^1.6.0"
   },
