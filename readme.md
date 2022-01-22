@@ -82,7 +82,7 @@ Example signup functionality in any application. The workflow should follow this
 <br />
 <br />
 <p align="center">
-<img src="img/signupWorkflow.png" width=70% height=70% center>
+<img src="img/signupWorkflow.png" width=70% height=70%>
 </p>
 
 #### CreateOTP
