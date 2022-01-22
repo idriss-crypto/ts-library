@@ -84,6 +84,7 @@ Example signup functionality in any application. The workflow should follow this
 <p align="center">
 <img src="img/signupWorkflow.png" width=70% height=70% center>
 </p>
+
 #### CreateOTP
 
 ```typescript
