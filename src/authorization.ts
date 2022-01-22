@@ -20,7 +20,7 @@ export class Authorization {
             }
             throw new Error("Idriss api responded with code " + response.status + " " + response.statusText + "\r\n" + message);
         }
-        const decodedResponse = await (response.json());
+        const decodedResponse = await (response.json()) as any;
         return new CreateOTPResponse(decodedResponse.session_key, decodedResponse.tries_left);
     }
 
@@ -45,7 +45,7 @@ export class Authorization {
             else
                 throw new Error("Idriss api responded with code " + response.status + " " + response.statusText + "\r\n" + message);
         }
-        const decodedResponse = await (response.json());
+        const decodedResponse = await (response.json()) as any;
         return new ValidateOTPResponse(decodedResponse.message, decodedResponse.txn_hash);
     }
 }
