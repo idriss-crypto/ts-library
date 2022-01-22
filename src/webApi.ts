@@ -12,7 +12,7 @@ export class WebApi {
             searchParams.push(["network", options.network]);
         const response = await fetch(url + '?' + searchParams.map(x => encodeURIComponent(x[0]) + '=' + encodeURIComponent(x[1])).join('&'))
         if (response.status != 200) throw new Error("Idriss api responded with code " + response.status + " " + response.statusText + "\r\n" + await response.text())
-        return await (response.json());
+        return await (response.json()) as EncryptResponse;
     }
 }
 
