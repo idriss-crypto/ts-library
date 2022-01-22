@@ -75,12 +75,15 @@ Promise, that resolves to dictionary (object), in which keys are names addresses
 
 Sign up new users with IDriss using this class. 
 
-![signup](img/signup.jpg)
-
+<p align="center">
+<img src="img/signup.png" width=50% height=50%>
+</p>
 Example signup functionality in any application. The workflow should follow this procedure:
-
-![signupWorkflow](img/signupWorkflow.jpg)
-
+<br />
+<br />
+<p align="center">
+<img src="img/signupWorkflow.png" width=70% height=70% center>
+</p>
 #### CreateOTP
 
 ```typescript
