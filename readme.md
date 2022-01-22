@@ -50,7 +50,7 @@ Params:
 ```typescript
 public async resolve(input: string, options:ResolveOptions = {}): Promise<{ [index: string]: string }>
 ```
-Converts input string (e-mail address of phone number) to wallets addresses. This method connects to IDriss-Crypto api server and then to endpoint defined in constructor.
+Converts input string (e-mail address or phone number) to wallets addresses. This method connects to IDriss-Crypto api server and then to endpoint defined in constructor.
 
 Params:
 * input (string) - e-mail address or phone number together with optional secret word
@@ -72,6 +72,14 @@ Returns:
 Promise, that resolves to dictionary (object), in which keys are names addresses, and values are these addresses (see example). In case nothing was found, promise will resolve to empty object. If unknown network or coin (or combination) was provided, error returns. Example: "message": "Network not found."
 
 ### Class Authorization
+
+Sign up new users with IDriss using this class. 
+
+![signup](img/signup.jpg)
+
+Example signup functionality in any application. The workflow should follow this procedure:
+
+![signupWorkflow](img/signupWorkflow.jpg)
 
 #### CreateOTP
 
