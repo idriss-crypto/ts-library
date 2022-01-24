@@ -24,13 +24,14 @@ describe('translating address', () => {
 });
 describe('Authorization', () => {
     it('Wrong OTP', async () => {
-        const result = await Authorization.CreateOTP("Metamask ETH", "idrisssystem@gmail.com", "0xcC428D15930F1d3752672B2A8AB7a9b1f2085BC8")
+        const secretWord = Math.random().toString();
+        const result = await Authorization.CreateOTP("Metamask ETH", "idrisssystem@gmail.com", "0xcC428D15930F1d3752672B2A8AB7a9b1f2085BC8", secretWord)
         assert(result instanceof CreateOTPResponse);
-        let error=null;
-        try{
-            await Authorization.ValidateOTP("0", result.sessionKey)
-        }catch (e) {
-            error=e;
+        let error = null;
+        try {
+            await Authorization.ValidateOTP("0", result.sessionKey, secretWord)
+        } catch (e) {
+            error = e;
         }
         assert(error instanceof WrongOTPException)
     }).timeout(10000);
