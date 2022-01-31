@@ -1,9 +1,9 @@
 {
-  "name": "idriss-crypto",
+  "name": "IDriss.xyz",
   "version": "1.3.2",
   "main": "lib/index.js",
   "repository": "https://github.com/idriss-crypto/ts-library.git",
-  "author": "Idriss-crypto",
+  "author": "IDriss.xyz",
   "license": "MIT",
   "scripts": {
     "build": "tsc -d --declarationDir lib",

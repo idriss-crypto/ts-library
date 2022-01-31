@@ -2,7 +2,7 @@ import fetch from "node-fetch";
 
 export class Authorization {
     static async CreateOTP(tag: string, identifier: string, address: string, secretWord: string | null = null): Promise<CreateOTPResponse> {
-        const url = "https://www.idriss-crypto.com/v1/createOTP";
+        const url = "https://www.idriss.xyz/v1/createOTP";
         const searchParams = [];
         searchParams.push(["tag", tag]);
         searchParams.push(["identifier", identifier]);
@@ -25,7 +25,7 @@ export class Authorization {
     }
 
     static async ValidateOTP(OTP: string, sessionKey: string): Promise<ValidateOTPResponse> {
-        const url = "https://www.idriss-crypto.com/v1/validateOTP";
+        const url = "https://www.idriss.xyz/v1/validateOTP";
         const searchParams = [];
         searchParams.push(["OTP", OTP]);
         searchParams.push(["session_key", sessionKey]);
