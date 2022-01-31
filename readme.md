@@ -1,4 +1,4 @@
-It's a node.js and webpack library, that uses [IDriss-Crypto](https://www.idriss-crypto.com/) to translate e-mail addresses and phone numbers to cryptocurrency wallet addresses.
+It's a node.js and webpack library, that uses [IDriss](https://www.idriss.xyz/) to translate e-mail addresses, phone numbers and Twitter handles to cryptocurrency wallet addresses.
 
 ## Sample usage
 from cli
@@ -18,22 +18,55 @@ const {IdrissCrypto} = require("idriss-crypto");
 import {IdrissCrypto} from "idriss-crypto/lib/browser";
 
 const idriss = new IdrissCrypto();
-const result = await idriss.resolve("idrisssystem@gmail.com");
-console.log(result);
+const resultEmail = await idriss.resolve("hello@idriss.xyz");
+console.log(resultEmail);
 ```
 
 And output of this is:
 
 ```javascript
 {
-  'Trust SOL': 'GT2Cxwi6jf6H7g3qymapq3WDQPzmH5yJUa31AfDCh1uT',
-  'Metamask ETH': '0xcC428D15930F1d3752672B2A8AB7a9b1f2085BC8',
-  'Essentials ELA native': 'EXeRYLa7NqLTTc5LpqN16Gma1s6HRqJ5KU'
+    'Coinbase BTC': 'bc1qsvz5jumwew8haj4czxpzxujqz8z6xq4nxxh7vh',
+    'Metamask ETH': '0x11E9F9344A9720d2B2B5F0753225bb805161139B'
+}
+```
+
+The same is possible with Twitter handles:
+
+```javascript
+    const resultTwitter = await idriss.resolve("@idriss_xyz");
+    console.log(resultTwitter);
+```
+resolves in 
+```javascript
+{
+    'Metamask ETH': '0x5ABca791C22E7f99237fCC04639E094Ffa0cCce9',
+    'Coinbase ETH': '0x995945Fb74e0f8e345b3f35472c3e07202Eb38Ac',
+    'Argent ETH': '0x4B994A4b85378906B3FE9C5292C749f79c9aD661',
+    'Tally ETH': '0xa1ce10d433bb841cefd82a43f10b6b597538fa1d',
+    'Trust ETH': '0xE297b1E893e7F8849413D8ee7407DB343979A449',
+    'Rainbow ETH': '0xe10A2331Ac5498e7544579167755d6a756786a9F'
+}
+```
+
+And phone numbers:
+
+```javascript
+    const resultPhone = await idriss.resolve("+16506655942");
+    console.log(resultPhone);
+```
+resolves in 
+```javascript
+{
+    'Binance BTC': '1FdqxZsS6HVEs1NaQUdkoQWKYA9R9yfhdz',
+    'Essentials ELA': 'EL4bLnZALyJKkoEf99qjZMrKVresHU76JU',
+    'Phantom SOL': '6GmzRK2qLhBPK2WwYM14EGnxh95jBTsJGXMgFyM3VeVk'
 }
 ```
 ## Documentation
 
 ### Class IdrissCrypto
+### Resolve emails, phone numbers and Twitter handles to wallet addresses.
 #### constructor
 ```typescript
 type ResolveOptions = {
@@ -50,10 +83,10 @@ Params:
 ```typescript
 public async resolve(input: string, options:ResolveOptions = {}): Promise<{ [index: string]: string }>
 ```
-Converts input string (e-mail address or phone number) to wallets addresses. This method connects to IDriss-Crypto api server and then to endpoint defined in constructor.
+Converts input string (e-mail address, phone number or Twitter handle) to wallets addresses. This method connects to IDriss API server and then to endpoint defined in constructor.
 
 Params:
-* input (string) - e-mail address or phone number together with optional secret word
+* input (string) - e-mail address, phone number (starting with (+) country code) or Twitter handle (starting with "@") together with optional secret word
 * options (ResolveOptions object) - optional parameters
     * coin (string) - for example "ETH"
         * currently supported coins: ETH, BNB, USDT, USDC, ELA, TLOS, MATIC, LINK, HT, FSN, FTM, AVAX, BTC, SOL and one ERC20 wildcard
@@ -66,14 +99,14 @@ Params:
             * coin: BTC, ELA
         * network: sol
             * coin: SOL
-* supported networks and coins will be updated on a regular basis. Any  wishes regarding supported combinations? Please send them to idrisssystem@gmail.com
+* supported networks and coins will be updated on a regular basis. Any  wishes regarding supported combinations? Please join our [Discord](https://discord.gg/RJhJKamjw5) and let us know.
 
 Returns:
 Promise, that resolves to dictionary (object), in which keys are names addresses, and values are these addresses (see example). In case nothing was found, promise will resolve to empty object. If unknown network or coin (or combination) was provided, error returns. Example: "message": "Network not found."
 
 ### Class Authorization
+### Sign up new users with IDriss using this class. 
 
-Sign up new users with IDriss using this class. 
 
 <p align="center">
 <img src="img/signup.png" width=50% height=50%>
@@ -93,10 +126,10 @@ Example signup functionality in any application. The workflow should follow this
 
 Params:
 
-* tag (string) - identifier for wallet. See below for options. Contact us https://discord.gg/RJhJKamjw5 to add additional tags.
-* identifier (string) - email or phone number with country code
+* tag (string) - identifier for wallet. See below for options. Contact us on [Discord](https://discord.gg/RJhJKamjw5) to add additional tags.
+* identifier (string) - email, phone number with country code or @twitter handle (including "@")
 * address (string) - address to be linked with identifier+secret_word
-* secretWord(string, optional) - 
+* secretWord(string, optional) - to be appended to identifier when using the resolver
 
 
 returns:
@@ -113,20 +146,20 @@ example:
 ```typescript
 import {Authorization} from "idriss-crypto";
 
-const result = await Authorization.CreateOTP("Metamask ETH", "idrisssystem@gmail.com", "0xcC428D15930F1d3752672B2A8AB7a9b1f2085BC8")
+const result = await Authorization.CreateOTP("Metamask ETH", "hello@idriss.xyz", "0x11E9F9344A9720d2B2B5F0753225bb805161139B")
 console.log(result.sessionKey)
 ```
 
 
 available tags:
 
-* "Metamask ETH", "Binance ETH", "Coinbase ETH", "Exchange ETH", "Private ETH", "Essentials ETH",
+* "Metamask ETH", "Binance ETH", "Coinbase ETH", "Exchange ETH", "Private ETH", "Essentials ETH", "Rainbow ETH", "Argent ETH", "Tally ETH", "Trust ETH", "Public ETH",
 * "Essentials BTC", "Binance BTC", "Coinbase BTC", "Exchange BTC", "Private BTC",
 * "Metamask USDT", "Binance USDT", "Coinbase USDT", "Exchange USDT", "Private USDT", "Essentials USDT", 
-* "Metamask USDC", "Binance USDC", "Coinbase USDC",  "Exchange USDC", "Private USDC", "Essentials USDC", 
-* "Solana SOL", "Coinbase SOL", "Trust SOL", "Binance SOL",
+* "Metamask USDC", "Binance USDC", "Coinbase USDC", "Exchange USDC", "Private USDC", "Essentials USDC", 
+* "Solana SOL", "Coinbase SOL", "Trust SOL", "Binance SOL", "Phantom SOL",
 * "Metamask BNB", "Essentials BNB", 
-* "Essentials ELA", "Essentials ELA native",
+* "Essentials ELA SC", "Essentials ELA" (Smart Chain and native ELA network)
 * "Essentials TLOS", 
 * "Essentials MATIC", 
 * "Essentials LINK", 
@@ -176,3 +209,4 @@ try {
     }
 }
 ```
+Error is thrown if session is not valid anymore (more than 3 wrong OTPs), wrong OTP is provided, the transaction failed or the session key is unknown.
