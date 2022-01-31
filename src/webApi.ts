@@ -3,7 +3,7 @@ import {ResolveOptions} from "./resolveOptions";
 
 export class WebApi {
     async encrypt(inputCombination: string, options: ResolveOptions = {}): Promise<EncryptResponse> {
-        const url = "https://www.idriss.xyz//v1/encrypt";
+        const url = "https://www.idriss.xyz/v1/encrypt";
         const searchParams = [];
         searchParams.push(["InputCombination", inputCombination]);
         if (options.coin != null)
