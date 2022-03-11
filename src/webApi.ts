@@ -2,20 +2,10 @@ import fetch from "node-fetch";
 import {ResolveOptions} from "./resolveOptions";
 
 export class WebApi {
-    async encrypt(inputCombination: string, options: ResolveOptions = {}): Promise<EncryptResponse> {
-        const url = "https://www.idriss.xyz/v1/encrypt";
-        const searchParams = [];
-        searchParams.push(["InputCombination", inputCombination]);
-        if (options.coin != null)
-            searchParams.push(["coin", options.coin]);
-        if (options.network != null)
-            searchParams.push(["network", options.network]);
-        const response = await fetch(url + '?' + searchParams.map(x => encodeURIComponent(x[0]) + '=' + encodeURIComponent(x[1])).join('&'))
+    async getTwitterID(inputCombination: string): Promise<string> {
+        const response = await fetch("https://www.idriss.xyz/v1/getTwitterID?identifier=" + encodeURIComponent(inputCombination));
         if (response.status != 200) throw new Error("Idriss api responded with code " + response.status + " " + response.statusText + "\r\n" + await response.text())
-        return await (response.json());
+        const json = await response.json();
+        return json.twitterID;
     }
-}
-
-interface EncryptResponse {
-    result: { [index: string]: string }
 }

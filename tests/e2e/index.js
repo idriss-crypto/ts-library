@@ -19,6 +19,12 @@ describe('translating address', () => {
         assert.equal(resultTwitter["Rainbow ETH"], "0xe10A2331Ac5498e7544579167755d6a756786a9F")
 
     }).timeout(10000);
+    it('Basic request 2', async () => {
+        const obj = new IdrissCrypto("https://rpc-mumbai.maticvigil.com")
+        const resultTwitter = await obj.resolve("@idriss_xyz")
+        assert.equal(resultTwitter["Tally ETH"], "0xae6a2e9d69ea898fd6ed69e34fa8204a9598ddaa")
+
+    }).timeout(10000);
     it('Parametrized request 1', async () => {
         const obj = new IdrissCrypto()
         const resultEmail = await obj.resolve("hello@idriss.xyz", {network: "btc", coin: "BTC"})
@@ -42,6 +48,12 @@ describe('translating address', () => {
         const resultTwitter = await obj.resolve("@IDriss_xyz", {coin: "ETH"})
         assert.equal(resultTwitter["Tally ETH"], "0xa1ce10d433bb841cefd82a43f10b6b597538fa1d")
         assert.equal(Object.keys(resultTwitter).length, 6)
+    }).timeout(10000);
+    it('Empty response', async () => {
+        const obj = new IdrissCrypto()
+        const result = await obj.resolve("not@existing.email")
+        assert.deepEqual(result, {})
+
     }).timeout(10000);
 });
 describe('Authorization', () => {
