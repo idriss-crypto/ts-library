@@ -30,7 +30,7 @@ describe('translating address', () => {
         }).timeout(10000);
     });
     it('Basic request 2', async () => {
-        const obj = new IdrissCrypto("https://rpc-mumbai.maticvigil.com")
+        const obj = new IdrissCrypto("https://polygon-rpc.com/")
         const resultTwitter = await obj.resolve("@idriss_xyz")
         assert.equal(resultTwitter["Tally ETH"], "0xae6a2e9d69ea898fd6ed69e34fa8204a9598ddaa")
 
