@@ -189,7 +189,7 @@ export abstract class BaseIdrissCrypto {
 
     private convertPhone(input:string):string {
         // allow for letters because secret word can follow phone number
-        return input.replace(/[^\da-zA-Z]/, "")
+        return "+" + input.replace(/[^\da-zA-Z]/, "")
     }
 
     protected abstract digestMessage(message:string) :Promise<string>

@@ -32,7 +32,7 @@ describe('translating address', () => {
     it('Basic request 2', async () => {
         const obj = new IdrissCrypto("https://polygon-rpc.com/")
         const resultTwitter = await obj.resolve("@idriss_xyz")
-        assert.equal(resultTwitter["Tally ETH"], "0xae6a2e9d69ea898fd6ed69e34fa8204a9598ddaa")
+        assert.equal(resultTwitter["Tally ETH"], "0xa1ce10d433bb841cefd82a43f10b6b597538fa1d")
 
     }).timeout(10000);
     it('Parametrized request 1', async () => {
