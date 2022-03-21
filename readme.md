@@ -89,12 +89,12 @@ Params:
 * input (string) - e-mail address, phone number (starting with (+) country code) or Twitter handle (starting with "@") together with optional secret word
 * options (ResolveOptions object) - optional parameters
     * coin (string) - for example "ETH"
-        * currently supported coins: ETH, BNB, USDT, USDC, ELA, TLOS, MATIC, LINK, HT, FSN, FTM, AVAX, BTC, SOL and one ERC20 wildcard
+        * currently supported coins: ETH, BNB, USDT, USDC, ELA, MATIC, BTC, SOL and one ERC20 wildcard
     * network (string) - for example "evm"
         * currently supported network types: evm (for evm compatible addresses across different networks), btc and sol
     * currently, we support the following combinations:
         * network: evm
-            * coin: ETH, BNB, USDT, USDC, ELA, TLOS, MATIC, LINK, HT, FSN, FTM, AVAX, BTC, ERC20
+            * coin: ETH, BNB, USDT, USDC, ELA, MATIC, ERC20
         * network: btc
             * coin: BTC, ELA
         * network: sol
@@ -160,13 +160,7 @@ available tags:
 * "Solana SOL", "Coinbase SOL", "Trust SOL", "Binance SOL", "Phantom SOL",
 * "Metamask BNB", "Essentials BNB", 
 * "Essentials ELA SC", "Essentials ELA" (Smart Chain and native ELA network)
-* "Essentials TLOS", 
-* "Essentials MATIC", 
-* "Essentials LINK", 
-* "Essentials HT",  
-* "Essentials FSN", 
-* "Essentials FTM", 
-* "Essentials AVAX", 
+* "Essentials MATIC",  
 * "ERC20"
 
 tags must match address type, error thrown otherwise.

@@ -131,29 +131,8 @@ export abstract class BaseIdrissCrypto {
                 ELA: {
                     "Essentials ELA SC": "c17c556467fe7c9fe5667dde7ca8cdbca8a24d0473b9e9c1c2c8166c1f355f6c",
                 },
-                TLOS: {
-                    "Essentials TLOS": "c297e17abfe56ab18469697f49a41018e2e48c9952f3eedfa703be254846602b",
-                },
                 MATIC: {
                     "Essentials MATIC": "336fb6cdd7fec196c6e66966bd1c326072538a94e700b8bc1111d1574b8357ba",
-                },
-                LINK: {
-                    "Essentials LINK": "425f2cde8d65367f28827b904a62a8e22d6ce82b7a9c529bbc4699877b9dfe23",
-                },
-                HT: {
-                    "Essentials HT": "92c0be75cca6be88d3fa711e0762e996e11ef02aebdcbac919c92326e71edc11",
-                },
-                FSN: {
-                    "Essentials FSN": "2f62636c86151e056ad7970de8f3a11e82a95e6687337b30962b08e49f8f0845",
-                },
-                FTM: {
-                    "Essentials FTM": "f0fa71465b6638600287862a84f7b69e099482478fc67305b9d3ee6019092b0b",
-                },
-                AVAX: {
-                    "Essentials AVAX": "1f4fea2f6ca895a6ea192d6da51e721a3f39b0da9da0a80d63a287793d8a8837",
-                },
-                BTC: {
-                    "Essentials BTC": "39d18497a64591bb1b061940309c453495398d00f9d9deab8b2c1e0979e4cbe7",
                 },
                 ERC20: {
                     ERC20: "63d95e64e7caff988f97fdf32de5f16624f971149749c90fbc7bbe44244d3ced",
@@ -165,6 +144,7 @@ export abstract class BaseIdrissCrypto {
                     "Coinbase BTC": "b3c77df93f865dd21a6196266d5c291adad15c7db9c81ddc78409a22f36ebe84",
                     "Exchange BTC": "a3f104cace8d66ed9971b19f749a821ae4397349155ea1a8724451c3e680335b",
                     "Private BTC": "a7d3f51b26dad11f5f4842d29f2fc419a48e3471bdec0a2c713c7d18d3143d65",
+                    "Essentials BTC": "39d18497a64591bb1b061940309c453495398d00f9d9deab8b2c1e0979e4cbe7",
                 },
                 ELA: {
                     "Essentials ELA": "35ae820c72397977701524ee610e7ef2ca3d64539ccdc65e5198470d8e49eccb",
