@@ -13,21 +13,29 @@ export abstract class BaseIdrissCrypto {
         this.contract = this.generateContract();
     }
 
-    public async resolve(input: string, options: ResolveOptions = {}): Promise<{ [index: string]: string }> {
+    public static matchInput(input: string): "phone" | "mail" | "twitter" | null {
         const regPh = /^(\+\(?\d{1,4}\s?)\)?\-?\.?\s?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/;
         const regM = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
         const regT = /^@[^\s]+/;
+        if (input.match(regPh)) return "phone";
+        if (input.match(regM)) return "mail";
+        if (input.match(regT)) return "twitter";
+        return null;
+    }
+
+    public async resolve(input: string, options: ResolveOptions = {}): Promise<{ [index: string]: string }> {
 
         let twitterID;
         let identifierT;
-        let identifier=input;
+        let identifier = input;
         identifier = this.lowerFirst(identifier).replace(" ", "");
-        if (identifier.match(regPh)) {
+        const inputType=BaseIdrissCrypto.matchInput(input);
+        if (inputType=="phone") {
             identifier = this.convertPhone(identifier)
-        } else if (!identifier.match(regM) && !identifier.match(regT)) {
+        } else if (inputType===null) {
             throw new Error("Not a valid input. Input must start with valid phone number, email or @twitter handle.")
         }
-        if (identifier.match(regT)) {
+        if (inputType=="twitter") {
             identifierT = identifier;
             identifier = await this.webApi.getTwitterID(identifier);
             if (identifier == "Not found")

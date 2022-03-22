@@ -1,5 +1,6 @@
 const {IdrissCrypto, Authorization, CreateOTPResponse, WrongOTPException} = require("../../lib");
 const assert = require('assert');
+const {BaseIdrissCrypto} = require("../../lib/baseIdrissCrypto");
 describe('translating address', () => {
     describe('Basic request', () => {
         it('Email', async () => {
@@ -65,6 +66,14 @@ describe('translating address', () => {
         assert.deepEqual(result, {})
 
     }).timeout(10000);
+
+    it('Checking matching input', async () => {
+        assert.equal(BaseIdrissCrypto.matchInput("+48123456789"),"phone")
+        assert.equal(BaseIdrissCrypto.matchInput("name@gmail.com"),"mail")
+        assert.equal(BaseIdrissCrypto.matchInput("name@name.studio"),"mail")
+        assert.equal(BaseIdrissCrypto.matchInput("@twitter_username"),"twitter")
+        assert.equal(BaseIdrissCrypto.matchInput("something_else"),null)
+    });
 });
 describe('Authorization', () => {
     it('Wrong OTP', async () => {
