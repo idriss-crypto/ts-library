@@ -49,7 +49,8 @@ export abstract class BaseIdrissCrypto {
                 if (options.coin && coin != options.coin) continue;
                 for (let [tag, tag_key] of Object.entries(tags)) {
                     if (tag_key) {
-                        foundMatchesPromises[tag] = this.digestMessage(identifier + tag_key).then(digested => this.callWeb3(digested));
+                        foundMatchesPromises[tag] = this.digestMessage(identifier + tag_key).then(digested => this.callWeb3(digested));foundMatchesPromises[tag]
+                        foundMatchesPromises[tag].catch(()=>{})
                     }
                 }
             }
