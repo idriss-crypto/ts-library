@@ -1,4 +1,4 @@
-It's a node.js and webpack library, that uses [IDriss](https://www.idriss.xyz/) to translate e-mail addresses, phone numbers and Twitter handles to cryptocurrency wallet addresses.
+This is a node.js and webpack library, that uses [IDriss](https://www.idriss.xyz/) to translate e-mail addresses, phone numbers and Twitter handles to cryptocurrency wallet addresses.
 
 ## Sample usage
 from cli
