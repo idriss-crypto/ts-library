@@ -1,6 +1,22 @@
-This is a node.js and webpack library, that uses [IDriss](https://www.idriss.xyz/) to translate e-mail addresses, phone numbers and Twitter handles to cryptocurrency wallet addresses.
+# Integrate IDriss Into Your Project
 
-## Sample usage
+This is a node.js and webpack library for integrating [IDriss](https://www.idriss.xyz/) into your project.
+
+IDriss is a decentralized mapping of emails, phone numbers and Twitter usernames to cryptocurrency wallet addresses.
+
+These 3 interactions are possible with this library:
+1. Resolving IDriss names
+2. Reverse Resolving IDriss names
+3. Registering IDriss names inside your app
+
+
+
+
+
+
+***
+
+## Sample Usage
 from cli
 ```bash
 npm install idriss-crypto
