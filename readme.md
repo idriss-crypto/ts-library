@@ -4,7 +4,7 @@ This is a node.js and webpack library for integrating [IDriss](https://www.idris
 
 IDriss is a decentralized mapping of emails, phone numbers and Twitter usernames to cryptocurrency wallet addresses.
 
-These 3 interactions are possible with this library:
+This library has 3 functions:
 1. Resolving IDriss names
 2. Reverse Resolving IDriss names
 3. Registering IDriss names inside your app
@@ -14,10 +14,9 @@ These 3 interactions are possible with this library:
 
 
 
-***
 
 ## Sample Usage
-from cli
+From cli
 ```bash
 npm install idriss-crypto
 ```
@@ -53,7 +52,7 @@ The same is possible with Twitter handles:
     const resultTwitter = await idriss.resolve("@idriss_xyz");
     console.log(resultTwitter);
 ```
-resolves in 
+resolves to: 
 ```javascript
 {
     'Metamask ETH': '0x5ABca791C22E7f99237fCC04639E094Ffa0cCce9',
@@ -71,7 +70,7 @@ And phone numbers:
     const resultPhone = await idriss.resolve("+16506655942");
     console.log(resultPhone);
 ```
-resolves in 
+resolves to: 
 ```javascript
 {
     'Binance BTC': '1FdqxZsS6HVEs1NaQUdkoQWKYA9R9yfhdz',
@@ -79,10 +78,9 @@ resolves in
     'Phantom SOL': '6GmzRK2qLhBPK2WwYM14EGnxh95jBTsJGXMgFyM3VeVk'
 }
 ```
-## Documentation
+# Functions
+## I. Resolving IDriss names - class IdrissCrypto
 
-### Class IdrissCrypto
-### Resolve emails, phone numbers and Twitter handles to wallet addresses.
 #### constructor
 ```typescript
 type ResolveOptions = {
@@ -120,7 +118,20 @@ Params:
 Returns:
 Promise, that resolves to dictionary (object), in which keys are names addresses, and values are these addresses (see example). In case nothing was found, promise will resolve to empty object. If unknown network or coin (or combination) was provided, error returns. Example: "message": "Network not found."
 
-### Class Authorization
+## II. Reverse Resolving IDriss Names (coming soon)
+
+
+
+
+
+
+
+
+
+
+
+## III. Registering IDriss Names Inside Your App - Class Authorization
+
 ### Sign up new users with IDriss using this class. 
 
 
