@@ -4,7 +4,7 @@ This is a node.js and webpack library for integrating [IDriss](https://www.idris
 
 IDriss is a decentralized mapping of emails, phone numbers and Twitter usernames to cryptocurrency wallet addresses.
 
-This library has 3 functions:
+This library has 3 main functions:
 1. Resolving IDriss names
 2. Reverse Resolving IDriss names
 3. Registering IDriss names inside your app
@@ -79,7 +79,9 @@ resolves to:
 }
 ```
 # Functions
-## I. Resolving IDriss names - class IdrissCrypto
+## I. Resolving IDriss names
+
+*Class IdrissCrypto*
 
 #### constructor
 ```typescript
@@ -118,7 +120,23 @@ Params:
 Returns:
 Promise, that resolves to dictionary (object), in which keys are names addresses, and values are these addresses (see example). In case nothing was found, promise will resolve to empty object. If unknown network or coin (or combination) was provided, error returns. Example: "message": "Network not found."
 
-## II. Reverse Resolving IDriss Names (coming soon)
+## II. Reverse Resolving IDriss Names
+
+*Coming Soon...*
+
+In the meantime, you can call the smart contact directly:
+
+
+```typescript
+async function loadContractReverse(web3) {
+    return await new web3.eth.Contract([{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"reverseIDriss","outputs":   [{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"}],
+        "0x561f1b5145897A52A6E94E4dDD4a29Ea5dFF6f64"
+    );
+}
+
+let reverseContract = await loadContractReverse(defaultWeb3);
+reverse = await reverseContract.methods.reverseIDriss(address).call();
+```
 
 
 
@@ -127,16 +145,14 @@ Promise, that resolves to dictionary (object), in which keys are names addresses
 
 
 
-
-
-
-## III. Registering IDriss Names Inside Your App - Class Authorization
+## III. Registering IDriss Names Inside Your App - 
 
 ### Sign up new users with IDriss using this class. 
 
+*Class Authorization*
 
 <p align="center">
-<img src="img/signup.png" width=50% height=50%>
+<img src="img/Registering.png" width=50% height=50%>
 </p>
 Example signup functionality in any application. The workflow should follow this procedure:
 <br />
