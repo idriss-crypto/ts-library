@@ -8,18 +8,27 @@ This is a node.js and webpack library for integrating [IDriss](https://www.idris
 
 IDriss is a decentralized mapping of emails, phone numbers and Twitter usernames to cryptocurrency wallet addresses.
 
-This library has 3 main functions:
+The key benefits of integrating IDriss are:
+
+- User-friendly wallet address format that can be easily shared verbally, or in writing for the purpose of sending or receiving crypto
+- Effective organization and quicker access to your multiple wallet addresses (you have them available under one, memorable IDriss)
+- Easier deposits into your wallet from crypto exchanges and other wallets
+- (Coming soon) Additional revenue stream for your project
+
+**The library has 3 main functions:**
 1. Resolving IDriss names
 2. Reverse Resolving IDriss names
 3. Registering IDriss names inside your app
 
+**IDriss name - email, phone number or Twitter username*
+
 ## Sample Usage
-From cli
+From cli:
 ```bash
 npm install idriss-crypto
 ```
 
-And in code
+And in code:
 
 ```javascript
 //for nodejs
@@ -35,7 +44,7 @@ const resultEmail = await idriss.resolve("hello@idriss.xyz");
 console.log(resultEmail);
 ```
 
-And output of this is:
+And the output of this is:
 
 ```javascript
 {
@@ -44,13 +53,13 @@ And output of this is:
 }
 ```
 
-The same is possible with Twitter handles:
+The same is possible with Twitter usernames:
 
 ```javascript
     const resultTwitter = await idriss.resolve("@idriss_xyz");
     console.log(resultTwitter);
 ```
-resolves to: 
+Resolves to: 
 ```javascript
 {
     'Metamask ETH': '0x5ABca791C22E7f99237fCC04639E094Ffa0cCce9',
@@ -68,7 +77,7 @@ And phone numbers:
     const resultPhone = await idriss.resolve("+16506655942");
     console.log(resultPhone);
 ```
-resolves to: 
+Resolves to: 
 ```javascript
 {
     'Binance BTC': '1FdqxZsS6HVEs1NaQUdkoQWKYA9R9yfhdz',
