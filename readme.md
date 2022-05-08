@@ -154,15 +154,20 @@ async function loadContractReverse(web3) {
 let reverseContract = await loadContractReverse(defaultWeb3);
 reverse = await reverseContract.methods.reverseIDriss(address).call();
 ```
+
+*Note: The code above provides resolution to Twitter IDs. The IDs still must be translated to usernames with Twitter API.*
+
 An example of implementation in the user interface:
 
 <p align="center">
 <img alt="UI Implementation Example" src="img/reverse_resolving.png"/>
 </p>
 
-## 3. Registering IDriss Names Inside Your Project 
+## 3. Registering IDriss Names Inside Your Project
 
-### Onboard users to IDriss directly from your app's interface. 
+<span style="color:red">Awaits an update.</span>
+
+### Onboard users to IDriss directly from your app's interface.
 
 *Class Authorization*
 
