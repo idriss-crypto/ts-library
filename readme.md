@@ -1,7 +1,7 @@
 # Integrate IDriss Into Your Project
 
 <p align="center">
-<img alt="Let's Integrate!" src="img/integrate_idriss.png" width="600" />
+<img alt="Let's Integrate!" src="img/integrate_idriss.png"/>
 </p>
 
 This is a node.js and webpack library for integrating [IDriss](https://www.idriss.xyz/) into your project.
@@ -95,7 +95,7 @@ Resolves to:
 An example of implementation in the user interface:
 
 <p align="center">
-<img alt="UI Implementation Example" src="img/resolving.png" width="600" />
+<img alt="UI Implementation Example" src="img/resolving.png"/>
 </p>
 
 #### constructor
@@ -157,7 +157,7 @@ reverse = await reverseContract.methods.reverseIDriss(address).call();
 An example of implementation in the user interface:
 
 <p align="center">
-<img alt="UI Implementation Example" src="img/reverse_resolving.png" width="600" />
+<img alt="UI Implementation Example" src="img/reverse_resolving.png"/>
 </p>
 
 ## 3. Registering IDriss Names Inside Your Project 
@@ -169,14 +169,14 @@ An example of implementation in the user interface:
 An example of implementation in the user interface:
 
 <p align="center">
-<img alt="UI Implementation Example" src="img/registering.png" width="600" />
+<img alt="UI Implementation Example" src="img/registering.png"/>
 </p>
  
 
 The workflow should follow this procedure:
 
 <p align="center">
-<img alt="Registration Workflow" src="img/signupWorkflow.png" width="600" />
+<img alt="Registration Workflow" src="img/signupWorkflow.png"/>
 </p>
 
 
