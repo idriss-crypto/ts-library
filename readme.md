@@ -95,7 +95,7 @@ Resolves to:
 An example of implementation in the user interface:
 
 <p align="center">
-<img alt="UI Implementation Example" src="img/resolving.png"/>
+<img alt="UI Implementation Example" src="img/resolving_idriss.png"/>
 </p>
 
 #### constructor
@@ -169,7 +169,7 @@ An example of implementation in the user interface:
 An example of implementation in the user interface:
 
 <p align="center">
-<img alt="UI Implementation Example" src="img/registering.png"/>
+<img alt="UI Implementation Example" src="img/registering_idriss.png"/>
 </p>
  
 
