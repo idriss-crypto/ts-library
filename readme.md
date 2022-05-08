@@ -1,5 +1,9 @@
 # Integrate IDriss Into Your Project
 
+<p align="center">
+<img alt="Let's Integrate!" src="img/integrate_idriss.png" width="600" />
+</p>
+
 This is a node.js and webpack library for integrating [IDriss](https://www.idriss.xyz/) into your project.
 
 IDriss is a decentralized mapping of emails, phone numbers and Twitter usernames to cryptocurrency wallet addresses.
@@ -8,12 +12,6 @@ This library has 3 main functions:
 1. Resolving IDriss names
 2. Reverse Resolving IDriss names
 3. Registering IDriss names inside your app
-
-
-
-
-
-
 
 ## Sample Usage
 From cli
@@ -79,9 +77,17 @@ resolves to:
 }
 ```
 # Functions
-## I. Resolving IDriss names
+## 1. Resolving IDriss Names
+
+### Resolve emails, phone numbers, and Twitter usernames to wallet addresses.
 
 *Class IdrissCrypto*
+
+An example of implementation in the user interface:
+
+<p align="center">
+<img alt="UI Implementation Example" src="img/resolving.png" width="600" />
+</p>
 
 #### constructor
 ```typescript
@@ -120,7 +126,9 @@ Params:
 Returns:
 Promise, that resolves to dictionary (object), in which keys are names addresses, and values are these addresses (see example). In case nothing was found, promise will resolve to empty object. If unknown network or coin (or combination) was provided, error returns. Example: "message": "Network not found."
 
-## II. Reverse Resolving IDriss Names
+## 2. Reverse Resolving IDriss Names
+
+### Show emails, phone numbers, and Twitter usernames instead of wallet addresses.
 
 *Coming Soon...*
 
@@ -137,29 +145,31 @@ async function loadContractReverse(web3) {
 let reverseContract = await loadContractReverse(defaultWeb3);
 reverse = await reverseContract.methods.reverseIDriss(address).call();
 ```
+An example of implementation in the user interface:
 
+<p align="center">
+<img alt="UI Implementation Example" src="img/reverse_resolving.png" width="600" />
+</p>
 
+## 3. Registering IDriss Names Inside Your Project 
 
-
-
-
-
-
-## III. Registering IDriss Names Inside Your App - 
-
-### Sign up new users with IDriss using this class. 
+### Onboard users to IDriss directly from your app's interface. 
 
 *Class Authorization*
 
+An example of implementation in the user interface:
+
 <p align="center">
-<img src="img/Registering.png">
+<img alt="UI Implementation Example" src="img/registering.png" width="600" />
 </p>
-Example signup functionality in any application. The workflow should follow this procedure:
-<br />
-<br />
+ 
+
+The workflow should follow this procedure:
+
 <p align="center">
-<img src="img/signupWorkflow.png" width=70% height=70%>
+<img alt="Registration Workflow" src="img/signupWorkflow.png" width="600" />
 </p>
+
 
 #### CreateOTP
 
