@@ -152,7 +152,7 @@ reverse = await reverseContract.methods.reverseIDriss(address).call();
 *Class Authorization*
 
 <p align="center">
-<img src="img/Registering.png" width=50% height=50%>
+<img src="img/Registering.png">
 </p>
 Example signup functionality in any application. The workflow should follow this procedure:
 <br />
