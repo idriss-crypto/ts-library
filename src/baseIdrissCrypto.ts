@@ -79,7 +79,7 @@ export abstract class BaseIdrissCrypto {
         return await this.contract.methods.getIDriss(encrypted).call();
     }
 
-    private async callWeb3Reverse(address: string) {
+    private async callWeb3Reverse(address: string): Promise<string> {
         return await this.contractReverse.methods.reverseIDriss(address).call();
     }
 
@@ -205,6 +205,11 @@ export abstract class BaseIdrissCrypto {
     protected abstract digestMessage(message: string): Promise<string>
 
     public async reverseResolve(address: string) {
-        return this.callWeb3Reverse(address);
+        let result = await this.callWeb3Reverse(address);
+        if (+result) {
+            return '@' + await this.webApi.reverseTwitterID(result);
+        } else {
+            return result;
+        }
     }
 }

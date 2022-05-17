@@ -106,6 +106,14 @@ describe('Reversed translation', () => {
         assert.equal(result3, "@IDriss_xyz")
 
     }).timeout(10000);
+
+    it('Twitter2', async () => {
+        const obj = new IdrissCrypto()
+
+        const result1 = await obj.reverseResolve("0x4a3755eB99ae8b22AaFB8f16F0C51CF68Eb60b85")
+        assert.equal(result1, "@levertz_")
+
+    }).timeout(10000);
 });
 describe('Authorization', () => {
     it('Wrong OTP', async () => {
