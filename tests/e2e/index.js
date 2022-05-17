@@ -75,6 +75,38 @@ describe('translating address', () => {
         assert.equal(BaseIdrissCrypto.matchInput("something_else"),null)
     });
 });
+describe('Reversed translation', () => {
+
+    it('Email', async () => {
+        const obj = new IdrissCrypto()
+        const result1= await obj.reverseResolve("0x11E9F9344A9720d2B2B5F0753225bb805161139B")
+        const result2= await obj.reverseResolve("bc1qsvz5jumwew8haj4czxpzxujqz8z6xq4nxxh7vh")
+        assert.equal(result1, "hello@idriss.xyz")
+        assert.equal(result2, "hello@idriss.xyz")
+
+    }).timeout(10000);
+    it('Phone', async () => {
+        const obj = new IdrissCrypto()
+        const result1 = await obj.reverseResolve("6GmzRK2qLhBPK2WwYM14EGnxh95jBTsJGXMgFyM3VeVk")
+        const result2 = await obj.reverseResolve("EL4bLnZALyJKkoEf99qjZMrKVresHU76JU")
+        const result3 = await obj.reverseResolve("1FdqxZsS6HVEs1NaQUdkoQWKYA9R9yfhdz")
+        assert.equal(result1, "+16506655942")
+        assert.equal(result2, "+16506655942")
+        assert.equal(result3, "+16506655942")
+
+    }).timeout(10000);
+    it('Twitter', async () => {
+        const obj = new IdrissCrypto()
+
+        const result1 = await obj.reverseResolve("0x5ABca791C22E7f99237fCC04639E094Ffa0cCce9")
+        const result2 = await obj.reverseResolve("0x995945Fb74e0f8e345b3f35472c3e07202Eb38Ac")
+        const result3 = await obj.reverseResolve("0x4B994A4b85378906B3FE9C5292C749f79c9aD661")
+        assert.equal(result1, "@IDriss_xyz")
+        assert.equal(result2, "@IDriss_xyz")
+        assert.equal(result3, "@IDriss_xyz")
+
+    }).timeout(10000);
+});
 describe('Authorization', () => {
     it('Wrong OTP', async () => {
         const secretWord = Math.random().toString();

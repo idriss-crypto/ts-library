@@ -6,11 +6,13 @@ export abstract class BaseIdrissCrypto {
     private web3;
     private webApi;
     private contract;
+    private contractReverse;
 
     constructor(web3: Web3) {
         this.web3 = web3
         this.webApi = new WebApi()
         this.contract = this.generateContract();
+        this.contractReverse = this.generateContractReverse();
     }
 
     public static matchInput(input: string): "phone" | "mail" | "twitter" | null {
@@ -29,34 +31,36 @@ export abstract class BaseIdrissCrypto {
         let identifierT;
         let identifier = input;
         identifier = this.lowerFirst(identifier).replace(" ", "");
-        const inputType=BaseIdrissCrypto.matchInput(input);
-        if (inputType=="phone") {
+        const inputType = BaseIdrissCrypto.matchInput(input);
+        if (inputType == "phone") {
             identifier = this.convertPhone(identifier)
-        } else if (inputType===null) {
+        } else if (inputType === null) {
             throw new Error("Not a valid input. Input must start with valid phone number, email or @twitter handle.")
         }
-        if (inputType=="twitter") {
+        if (inputType == "twitter") {
             identifierT = identifier;
             identifier = await this.webApi.getTwitterID(identifier);
             if (identifier == "Not found")
                 throw new Error("Twitter handle not found.")
         }
 
-        let foundMatchesPromises:{ [key: string]: Promise<string>} = {}
+        let foundMatchesPromises: { [key: string]: Promise<string> } = {}
         for (let [network, coins] of Object.entries(BaseIdrissCrypto.getWalletTags())) {
             if (options.network && network != options.network) continue;
             for (let [coin, tags] of Object.entries(coins)) {
                 if (options.coin && coin != options.coin) continue;
                 for (let [tag, tag_key] of Object.entries(tags)) {
                     if (tag_key) {
-                        foundMatchesPromises[tag] = this.digestMessage(identifier + tag_key).then(digested => this.callWeb3(digested));foundMatchesPromises[tag]
-                        foundMatchesPromises[tag].catch(()=>{})
+                        foundMatchesPromises[tag] = this.digestMessage(identifier + tag_key).then(digested => this.callWeb3(digested));
+                        foundMatchesPromises[tag]
+                        foundMatchesPromises[tag].catch(() => {
+                        })
                     }
                 }
             }
         }
         ///awaiting on the end for better performance
-        let foundMatches:{ [key: string]: string} = {}
+        let foundMatches: { [key: string]: string } = {}
         for (let [tag, promise] of Object.entries(foundMatchesPromises)) {
             try {
                 let address = await promise;
@@ -75,33 +79,50 @@ export abstract class BaseIdrissCrypto {
         return await this.contract.methods.getIDriss(encrypted).call();
     }
 
+    private async callWeb3Reverse(address: string) {
+        return await this.contractReverse.methods.reverseIDriss(address).call();
+    }
+
 
     private generateContract() {
         return new this.web3.eth.Contract(
             [
-            {
-                "inputs": [
-                    {
-                        "internalType": "string",
-                        "name": "hashPub",
-                        "type": "string"
-                    }
-                ],
-                "name": "getIDriss",
-                "outputs": [
-                    {
-                        "internalType": "string",
-                        "name": "",
-                        "type": "string"
-                    }
-                ],
+                {
+                    "inputs": [
+                        {
+                            "internalType": "string",
+                            "name": "hashPub",
+                            "type": "string"
+                        }
+                    ],
+                    "name": "getIDriss",
+                    "outputs": [
+                        {
+                            "internalType": "string",
+                            "name": "",
+                            "type": "string"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                }
+            ]
+            , '0x2EcCb53ca2d4ef91A79213FDDF3f8c2332c2a814');
+    }
+
+    private generateContractReverse() {
+        return new this.web3.eth.Contract([{
+                "inputs": [{"internalType": "address", "name": "", "type": "address"}],
+                "name": "reverseIDriss",
+                "outputs": [{"internalType": "string", "name": "", "type": "string"}],
                 "stateMutability": "view",
                 "type": "function"
-            }
-        ]
-        , '0x2EcCb53ca2d4ef91A79213FDDF3f8c2332c2a814');
+            }],
+            "0x561f1b5145897A52A6E94E4dDD4a29Ea5dFF6f64"
+        );
     }
-    private static getWalletTags():{ [key: string]: { [key: string]: { [key: string]: string}}}{
+
+    private static getWalletTags(): { [key: string]: { [key: string]: { [key: string]: string } } } {
         return {
             evm: {
                 ETH: {
@@ -172,14 +193,18 @@ export abstract class BaseIdrissCrypto {
     }
 
 
-    private lowerFirst(input:string):string {
+    private lowerFirst(input: string): string {
         return input.charAt(0).toLowerCase() + input.slice(1);
     }
 
-    private convertPhone(input:string):string {
+    private convertPhone(input: string): string {
         // allow for letters because secret word can follow phone number
         return "+" + input.replace(/[^\da-zA-Z]/, "")
     }
 
-    protected abstract digestMessage(message:string) :Promise<string>
+    protected abstract digestMessage(message: string): Promise<string>
+
+    public async reverseResolve(address: string) {
+        return this.callWeb3Reverse(address);
+    }
 }
