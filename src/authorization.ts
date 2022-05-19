@@ -21,7 +21,7 @@ export class Authorization {
             throw new Error("Idriss api responded with code " + response.status + " " + response.statusText + "\r\n" + message);
         }
         const decodedResponse = await (response.json());
-        return new CreateOTPResponse(decodedResponse.session_key, decodedResponse.tries_left);
+        return new CreateOTPResponse(decodedResponse.session_key, decodedResponse.tries_left, decodedResponse.address, decodedResponse.hash, decodedResponse.message, decodedResponse.next_step, decodedResponse.twitter_id, decodedResponse.twitter_msg);
     }
 
     static async ValidateOTP(OTP: string, sessionKey: string): Promise<ValidateOTPResponse> {
@@ -48,15 +48,50 @@ export class Authorization {
         const decodedResponse = await (response.json());
         return new ValidateOTPResponse(decodedResponse.message, decodedResponse.txn_hash);
     }
+
+
+    static async CheckPayment(token: string, sessionKey: string): Promise<ValidateOTPResponse> {
+        const url = "https://www.idriss.xyz/v1/checkPayment";
+        const searchParams = [];
+        searchParams.push(["token", token]);
+        searchParams.push(["session_key", sessionKey]);
+        const response = await fetch(url + '?' + searchParams.map(x => encodeURIComponent(x[0]) + '=' + encodeURIComponent(x[1])).join('&'), {
+            method: 'GET'
+        })
+        if (response.status != 200) {
+            const responseText = await response.text();
+            let message;
+            try {
+                message = JSON.parse(responseText).message;
+            } catch (ex) {
+                message = responseText;
+            }
+            throw new Error("Idriss api responded with code " + response.status + " " + response.statusText + "\r\n" + message);
+        }
+        const decodedResponse = await (response.json());
+        return new CheckPaymentResponse(decodedResponse.message, decodedResponse.txn_hash, decodedResponse.session_key, decodedResponse.referralLink);
+    }
 }
 
 export class CreateOTPResponse {
     public sessionKey: string;
     public triesLeft: number;
+    public address: string;
+    public hash: string;
+    public message: string;
+    public nextStep: string;
+    public twitterId: string;
+    public twitterMsg: string;
 
-    constructor(sessionKey: string, triesLeft: number) {
+    constructor(sessionKey: string, triesLeft: number, address: string, hash: string, message: string, nextStep: string, twitterId: string, twitterMsg: string) {
         this.sessionKey = sessionKey;
         this.triesLeft = triesLeft;
+        this.address = address;
+        this.hash = hash;
+        this.message = message;
+        this.nextStep = nextStep;
+        this.twitterId = twitterId;
+        this.twitterMsg = twitterMsg;
     }
 }
 
@@ -67,6 +102,20 @@ export class ValidateOTPResponse {
     constructor(message: string, txnHash: string) {
         this.message = message;
         this.txnHash = txnHash;
+    }
+}
+
+export class CheckPaymentResponse {
+    public message: string;
+    public txnHash: string;
+    public sessionKey: string;
+    public referralLink: string;
+
+    constructor(message: string, txnHash: string, sessionKey: string, referralLink: string) {
+        this.message = message;
+        this.txnHash = txnHash;
+        this.sessionKey = sessionKey;
+        this.referralLink = referralLink;
     }
 }
 

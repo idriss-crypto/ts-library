@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc -d --declarationDir lib",
-    "buildDev": "tsc --watch",
+    "buildDev": "tsc -d --declarationDir lib --watch",
     "testE2e": "mocha tests/e2e"
   },
   "dependencies": {
