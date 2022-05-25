@@ -1,6 +1,6 @@
 {
   "name": "idriss-crypto",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "main": "lib/index.js",
   "repository": "https://github.com/idriss-crypto/ts-library.git",
   "author": "IDriss.xyz",
