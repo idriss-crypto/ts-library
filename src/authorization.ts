@@ -40,7 +40,7 @@ export class Authorization {
             } catch (ex) {
                 message = responseText;
             }
-            if (message == "Wrong OTP.")
+            if (message == "Validation failed")
                 throw new WrongOTPException("Idriss api responded with code " + response.status + " " + response.statusText + "\r\n" + message);
             else
                 throw new Error("Idriss api responded with code " + response.status + " " + response.statusText + "\r\n" + message);

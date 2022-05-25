@@ -68,19 +68,19 @@ describe('translating address', () => {
     }).timeout(10000);
 
     it('Checking matching input', async () => {
-        assert.equal(BaseIdrissCrypto.matchInput("+48123456789"),"phone")
-        assert.equal(BaseIdrissCrypto.matchInput("name@gmail.com"),"mail")
-        assert.equal(BaseIdrissCrypto.matchInput("name@name.studio"),"mail")
-        assert.equal(BaseIdrissCrypto.matchInput("@twitter_username"),"twitter")
-        assert.equal(BaseIdrissCrypto.matchInput("something_else"),null)
+        assert.equal(BaseIdrissCrypto.matchInput("+48123456789"), "phone")
+        assert.equal(BaseIdrissCrypto.matchInput("name@gmail.com"), "mail")
+        assert.equal(BaseIdrissCrypto.matchInput("name@name.studio"), "mail")
+        assert.equal(BaseIdrissCrypto.matchInput("@twitter_username"), "twitter")
+        assert.equal(BaseIdrissCrypto.matchInput("something_else"), null)
     });
 });
 describe('Reversed translation', () => {
 
     it('Email', async () => {
         const obj = new IdrissCrypto()
-        const result1= await obj.reverseResolve("0x11E9F9344A9720d2B2B5F0753225bb805161139B")
-        const result2= await obj.reverseResolve("bc1qsvz5jumwew8haj4czxpzxujqz8z6xq4nxxh7vh")
+        const result1 = await obj.reverseResolve("0x11E9F9344A9720d2B2B5F0753225bb805161139B")
+        const result2 = await obj.reverseResolve("bc1qsvz5jumwew8haj4czxpzxujqz8z6xq4nxxh7vh")
         assert.equal(result1, "hello@idriss.xyz")
         assert.equal(result2, "hello@idriss.xyz")
 
@@ -105,7 +105,7 @@ describe('Reversed translation', () => {
         assert.equal(result2, "@IDriss_xyz")
         assert.equal(result3, "@IDriss_xyz")
 
-    }).timeout(10000);
+    }).timeout(100000);
 
     it('Twitter2', async () => {
         const obj = new IdrissCrypto()
@@ -120,23 +120,23 @@ describe('Authorization', () => {
         const secretWord = Math.random().toString();
         const result = await Authorization.CreateOTP("Metamask ETH", "@IDriss_xyz", "0x11E9F9344A9720d2B2B5F0753225bb805161139B", secretWord)
         assert(result instanceof CreateOTPResponse);
-        assert(result.triesLeft==3);
-        assert(result.nextStep=="validateOTP");
-        // assert(result.address=="0x11E9F9344A9720d2B2B5F0753225bb805161139B");
-        // assert(result.twitterId=="1416199220978089987");
-        // assert(/^[0-9a-fA-F]{64}&/.test(result.hash));
-        // assert(result.twitterMsg.includes('#IDriss Verification-ID'));
+        assert(result.triesLeft == 3);
+        assert(result.nextStep == "validateOTP");
+        assert(result.address == "0x11E9F9344A9720d2B2B5F0753225bb805161139B");
+        assert(result.twitterId == "1416199220978089987");
+        assert(/^[0-9a-fA-F]{64}$/.test(result.hash));
+        assert(result.twitterMsg.includes('#IDriss Verification-ID'));
 
     }).timeout(10000);
     it('Wrong OTP', async () => {
         const secretWord = Math.random().toString();
         const result = await Authorization.CreateOTP("Metamask ETH", "hello@idriss.xyz", "0x11E9F9344A9720d2B2B5F0753225bb805161139B", secretWord)
         assert(result instanceof CreateOTPResponse);
-        assert(result.triesLeft==3);
-        assert(result.nextStep=="validateOTP");
-        // assert(result.address=="0x11E9F9344A9720d2B2B5F0753225bb805161139B");
-        // assert(result.twitterId=="0");
-        // assert(/^[0-9a-fA-F]{64}&/.test(result.hash));
+        assert(result.triesLeft == 3);
+        assert(result.nextStep == "validateOTP");
+        assert(result.address == "0x11E9F9344A9720d2B2B5F0753225bb805161139B");
+        //assert(result.twitterId=="0");
+        assert(/^[0-9a-fA-F]{64}$/.test(result.hash));
         let error = null;
         try {
             await Authorization.ValidateOTP("0", result.sessionKey, secretWord)
