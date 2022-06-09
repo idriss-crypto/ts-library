@@ -98,12 +98,8 @@ describe('Reversed translation', () => {
     it('Twitter', async () => {
         const obj = new IdrissCrypto()
 
-        const result1 = await obj.reverseResolve("0x5ABca791C22E7f99237fCC04639E094Ffa0cCce9")
-        const result2 = await obj.reverseResolve("0x995945Fb74e0f8e345b3f35472c3e07202Eb38Ac")
-        const result3 = await obj.reverseResolve("0x4B994A4b85378906B3FE9C5292C749f79c9aD661")
-        assert.equal(result1, "@IDriss_xyz")
-        assert.equal(result2, "@IDriss_xyz")
-        assert.equal(result3, "@IDriss_xyz")
+        const result = await obj.reverseResolve("0xcCbcAe3cB8C5DB237dAC1846edfF22D4c99288Dc")
+        assert.equal(result, "@matkra96")
 
     }).timeout(100000);
 
