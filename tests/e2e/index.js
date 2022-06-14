@@ -67,6 +67,7 @@ describe('translating address', () => {
 
     }).timeout(10000);
 
+
     it('Checking matching input', async () => {
         assert.equal(BaseIdrissCrypto.matchInput("+48123456789"), "phone")
         assert.equal(BaseIdrissCrypto.matchInput("name@gmail.com"), "mail")
@@ -77,40 +78,15 @@ describe('translating address', () => {
 });
 describe('Reversed translation', () => {
 
-    it('Email', async () => {
-        const obj = new IdrissCrypto()
-        const result1 = await obj.reverseResolve("0x11E9F9344A9720d2B2B5F0753225bb805161139B")
-        const result2 = await obj.reverseResolve("bc1qsvz5jumwew8haj4czxpzxujqz8z6xq4nxxh7vh")
-        assert.equal(result1, "hello@idriss.xyz")
-        assert.equal(result2, "hello@idriss.xyz")
-
-    }).timeout(10000);
-    it('Phone', async () => {
-        const obj = new IdrissCrypto()
-        const result1 = await obj.reverseResolve("6GmzRK2qLhBPK2WwYM14EGnxh95jBTsJGXMgFyM3VeVk")
-        const result2 = await obj.reverseResolve("EL4bLnZALyJKkoEf99qjZMrKVresHU76JU")
-        const result3 = await obj.reverseResolve("1FdqxZsS6HVEs1NaQUdkoQWKYA9R9yfhdz")
-        assert.equal(result1, "+16506655942")
-        assert.equal(result2, "+16506655942")
-        assert.equal(result3, "+16506655942")
-
-    }).timeout(10000);
-    it('Twitter', async () => {
-        const obj = new IdrissCrypto()
-
-        const result = await obj.reverseResolve("0xcCbcAe3cB8C5DB237dAC1846edfF22D4c99288Dc")
-        assert.equal(result, "@matkra96")
-
-    }).timeout(100000);
-
     it('Twitter2', async () => {
         const obj = new IdrissCrypto()
 
-        const result1 = await obj.reverseResolve("0x4a3755eB99ae8b22AaFB8f16F0C51CF68Eb60b85")
-        assert.equal(result1, "@levertz_")
+        const result1 = await obj.reverseResolve("0x995945Fb74e0f8e345b3f35472c3e07202Eb38Ac")
+        assert.equal(result1, "@idriss_xyz")
 
     }).timeout(10000);
 });
+
 describe('Authorization', () => {
     it('Twitter Create', async () => {
         const secretWord = Math.random().toString();
