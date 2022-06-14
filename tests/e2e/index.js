@@ -82,7 +82,7 @@ describe('Reversed translation', () => {
         const obj = new IdrissCrypto()
 
         const result1 = await obj.reverseResolve("0x995945Fb74e0f8e345b3f35472c3e07202Eb38Ac")
-        assert.equal(result1, "@IDriss_xyz")
+        assert.equal(result1, "@idriss_xyz")
 
     }).timeout(10000);
 });
