@@ -207,7 +207,7 @@ export abstract class BaseIdrissCrypto {
     public async reverseResolve(address: string) {
         let result = await this.callWeb3Reverse(address);
         if (+result) {
-            return '@' + await this.webApi.reverseTwitterID(result);
+            return ('@' + await this.webApi.reverseTwitterID(result)).toLowerCase();
         } else {
             return result;
         }
