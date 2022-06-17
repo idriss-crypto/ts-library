@@ -139,7 +139,18 @@ Promise, that resolves to dictionary (object), in which keys are names addresses
 
 ### Show emails, phone numbers, and Twitter usernames instead of wallet addresses.
 
-*Coming Soon...*
+```typescript
+const obj = new IdrissCrypto()
+
+const reverse = await obj.reverseResolve("0x995945Fb74e0f8e345b3f35472c3e07202Eb38Ac")
+
+console.log(reverse)
+
+```
+Resolves to: 
+```javascript
+"@idriss_xyz"
+```
 
 In the meantime, you can call the smart contact directly:
 
