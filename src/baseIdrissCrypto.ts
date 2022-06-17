@@ -3,16 +3,16 @@ import {ResolveOptions} from "./resolveOptions";
 import Web3 from "web3";
 
 export abstract class BaseIdrissCrypto {
-    private web3;
+    private web3Promise:Promise<Web3>;
     private webApi;
-    private contract;
-    private contractReverse;
+    private contractPromise;
+    private contractReversePromise;
 
-    constructor(web3: Web3) {
-        this.web3 = web3
+    constructor(web3: Web3|Promise<Web3>) {
+        this.web3Promise = Promise.resolve(web3)
         this.webApi = new WebApi()
-        this.contract = this.generateContract();
-        this.contractReverse = this.generateContractReverse();
+        this.contractPromise = this.generateContract();
+        this.contractReversePromise = this.generateContractReverse();
     }
 
     public static matchInput(input: string): "phone" | "mail" | "twitter" | null {
@@ -76,16 +76,16 @@ export abstract class BaseIdrissCrypto {
     }
 
     private async callWeb3(encrypted: string) {
-        return await this.contract.methods.getIDriss(encrypted).call();
+        return await (await this.contractPromise).methods.getIDriss(encrypted).call();
     }
 
     private async callWeb3Reverse(address: string): Promise<string> {
-        return await this.contractReverse.methods.reverseIDriss(address).call();
+        return await (await this.contractReversePromise).methods.reverseIDriss(address).call();
     }
 
 
-    private generateContract() {
-        return new this.web3.eth.Contract(
+    private async generateContract() {
+        return new (await this.web3Promise).eth.Contract(
             [
                 {
                     "inputs": [
@@ -110,8 +110,8 @@ export abstract class BaseIdrissCrypto {
             , '0x2EcCb53ca2d4ef91A79213FDDF3f8c2332c2a814');
     }
 
-    private generateContractReverse() {
-        return new this.web3.eth.Contract([{
+    private async generateContractReverse() {
+        return new (await this.web3Promise).eth.Contract([{
                 "inputs": [{"internalType": "address", "name": "", "type": "address"}],
                 "name": "reverseIDriss",
                 "outputs": [{"internalType": "string", "name": "", "type": "string"}],

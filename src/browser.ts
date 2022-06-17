@@ -4,7 +4,9 @@ const Web3 = require("web3/dist/web3.min.js");
 
 export class IdrissCrypto extends BaseIdrissCrypto {
     constructor(polygonEndpoint: string = "https://polygon-rpc.com/") {
-        super(new Web3(new Web3.providers.HttpProvider(polygonEndpoint)));
+        // @ts-ignore
+        const Web3Promise = import("web3/dist/web3.min.js")
+        super(Web3Promise.then(x=>x.default).then(Web3=>new Web3(new Web3.providers.HttpProvider(polygonEndpoint))));
     }
     protected async digestMessage(message:string) {
         const msgUint8 = new TextEncoder().encode(message);                           // encode as (utf-8) Uint8Array
