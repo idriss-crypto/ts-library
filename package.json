@@ -1,12 +1,19 @@
 {
   "name": "idriss-crypto",
-  "version": "1.6.0-beta.1",
-  "main": "lib/index.js",
+  "version": "1.6.0-beta.3",
+  "main": "./lib/index.js",
+  "module": "./lib/exnext/index.js",
+  "exports": {
+    ".": {
+      "import": "./lib/esnext/index.js",
+      "require": "./lib/index.js"
+    }
+  },
   "repository": "https://github.com/idriss-crypto/ts-library.git",
   "author": "IDriss.xyz",
   "license": "MIT",
   "scripts": {
-    "build": "tsc -d --declarationDir lib",
+    "build": "tsc -d --declarationDir lib --module commonjs && tsc -d --declarationDir lib/esnext --outDir lib/esnext --module es2020",
     "buildDev": "tsc -d --declarationDir lib --watch",
     "testE2e": "mocha tests/e2e"
   },
