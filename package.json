@@ -1,12 +1,24 @@
 {
   "name": "idriss-crypto",
-  "version": "1.6.0-beta.3",
+  "version": "1.6.0",
   "main": "./lib/index.js",
   "module": "./lib/exnext/index.js",
   "exports": {
     ".": {
       "import": "./lib/esnext/index.js",
       "require": "./lib/index.js"
+    },
+    "./lib/browser": {
+      "import": "./lib/esnext/browser.js",
+      "require": "./lib/browser.js"
+    },
+    "./lib/browser.js": {
+      "import": "./lib/esnext/browser.js",
+      "require": "./lib/browser.js"
+    },
+    "./browser": {
+      "import": "./lib/esnext/browser.js",
+      "require": "./lib/browser.js"
     }
   },
   "repository": "https://github.com/idriss-crypto/ts-library.git",
