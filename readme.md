@@ -139,7 +139,15 @@ Promise, that resolves to dictionary (object), in which keys are names addresses
 
 ### Show emails, phone numbers, and Twitter usernames instead of wallet addresses.
 
+Use reverseResolve
+
 ```typescript
+public async reverseResolve(input: string): Promise<string>
+```
+And in code:
+
+```typescript
+
 const obj = new IdrissCrypto()
 
 const reverse = await obj.reverseResolve("0x995945Fb74e0f8e345b3f35472c3e07202Eb38Ac")
@@ -147,13 +155,12 @@ const reverse = await obj.reverseResolve("0x995945Fb74e0f8e345b3f35472c3e07202Eb
 console.log(reverse)
 
 ```
-Resolves to: 
+This resolves to: 
 ```javascript
 "@idriss_xyz"
 ```
 
-In the meantime, you can call the smart contact directly:
-
+You can also call the smart contact directly:
 
 ```typescript
 async function loadContractReverse(web3) {
@@ -166,7 +173,7 @@ let reverseContract = await loadContractReverse(defaultWeb3);
 reverse = await reverseContract.methods.reverseIDriss(address).call();
 ```
 
-*Note: The code above provides resolution to Twitter IDs. The IDs still must be translated to usernames with Twitter API.*
+*Note: The code above provides resolution to Twitter IDs. The IDs still must be translated to usernames with Twitter API. Our library takes care of this translation.*
 
 An example of implementation in the user interface:
 
