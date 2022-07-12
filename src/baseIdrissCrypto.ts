@@ -1,6 +1,8 @@
 import {WebApi} from "./webApi";
 import {ResolveOptions} from "./resolveOptions";
 import Web3 from "web3";
+import {IDrissRegistryContract} from './abi/idrissRegistry.json';
+import {IDrissReverseMappingContract} from './abi/idrissReverseMapping.json';
 
 export abstract class BaseIdrissCrypto {
     private web3Promise:Promise<Web3>;
@@ -86,41 +88,11 @@ export abstract class BaseIdrissCrypto {
 
 
     private async generateContract() {
-        return new (await this.web3Promise).eth.Contract(
-            [
-                {
-                    "inputs": [
-                        {
-                            "internalType": "string",
-                            "name": "hashPub",
-                            "type": "string"
-                        }
-                    ],
-                    "name": "getIDriss",
-                    "outputs": [
-                        {
-                            "internalType": "string",
-                            "name": "",
-                            "type": "string"
-                        }
-                    ],
-                    "stateMutability": "view",
-                    "type": "function"
-                }
-            ]
-            , '0x2EcCb53ca2d4ef91A79213FDDF3f8c2332c2a814');
+        return new (await this.web3Promise).eth.Contract(IDrissRegistryContract, '0x2EcCb53ca2d4ef91A79213FDDF3f8c2332c2a814');
     }
 
     private async generateContractReverse() {
-        return new (await this.web3Promise).eth.Contract([{
-                "inputs": [{"internalType": "address", "name": "", "type": "address"}],
-                "name": "reverseIDriss",
-                "outputs": [{"internalType": "string", "name": "", "type": "string"}],
-                "stateMutability": "view",
-                "type": "function"
-            }],
-            "0x561f1b5145897A52A6E94E4dDD4a29Ea5dFF6f64"
-        );
+        return new (await this.web3Promise).eth.Contract(IDrissReverseMappingContract, "0x561f1b5145897A52A6E94E4dDD4a29Ea5dFF6f64");
     }
 
     private static getWalletTags(): { [key: string]: { [key: string]: { [key: string]: string } } } {
