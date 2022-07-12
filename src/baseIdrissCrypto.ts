@@ -26,19 +26,7 @@ export abstract class BaseIdrissCrypto {
     }
 
     public async resolve(input: string, options: ResolveOptions = {}): Promise<{ [index: string]: string }> {
-        let identifier = input;
-        identifier = this.lowerFirst(identifier).replace(" ", "");
-        const inputType = BaseIdrissCrypto.matchInput(input);
-        if (inputType == "phone") {
-            identifier = this.convertPhone(identifier)
-        } else if (inputType === null) {
-            throw new Error("Not a valid input. Input must start with valid phone number, email or @twitter handle.")
-        }
-        if (inputType == "twitter") {
-            identifier = await this.webApi.getTwitterID(identifier);
-            if (identifier == "Not found")
-                throw new Error("Twitter handle not found.")
-        }
+        let identifier = await this.transformIdentifier(input);
 
         let foundMatchesPromises: { [key: string]: Promise<string> } = {}
         for (let [network, coins] of Object.entries(BaseIdrissCrypto.getWalletTags())) {
@@ -69,6 +57,23 @@ export abstract class BaseIdrissCrypto {
         }
 
         return foundMatches
+    }
+
+    protected async transformIdentifier(input: string): Promise<string> {
+        let identifier = this.lowerFirst(input).replace(" ", "");
+        const inputType = BaseIdrissCrypto.matchInput(input);
+
+        if (inputType === null) {
+            throw new Error("Not a valid input. Input must start with valid phone number, email or @twitter handle.")
+        } else if (inputType == "phone") {
+            identifier = this.convertPhone(identifier)
+        } else if (inputType == "twitter") {
+            identifier = await this.webApi.getTwitterID(identifier);
+            if (identifier == "Not found")
+                throw new Error("Twitter handle not found.")
+        }
+
+        return identifier
     }
 
     private async callWeb3(encrypted: string) {
