@@ -107,11 +107,11 @@ export abstract class BaseIdrissCrypto {
         };
     }
 
-    private lowerFirst(input: string): string {
+    protected lowerFirst(input: string): string {
         return input.charAt(0).toLowerCase() + input.slice(1);
     }
 
-    private convertPhone(input: string): string {
+    protected convertPhone(input: string): string {
         // allow for letters because secret word can follow phone number
         return "+" + input.replace(/[^\da-zA-Z]/, "")
     }
