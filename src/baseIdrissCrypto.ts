@@ -6,15 +6,17 @@ import {IDrissReverseMappingContract} from './abi/idrissReverseMapping.json';
 
 export abstract class BaseIdrissCrypto {
     private web3Promise:Promise<Web3>;
-    private webApi;
-    private contractPromise;
-    private contractReversePromise;
+    private webApi:WebApi;
+    private idrissRegistryContractPromise;
+    private idrissReverseMappingContractPromise;
+    private IDRISS_REGISTRY_CONTRACT_ADDRESS = '0x2EcCb53ca2d4ef91A79213FDDF3f8c2332c2a814';
+    private IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS = '0x561f1b5145897A52A6E94E4dDD4a29Ea5dFF6f64';
 
     constructor(web3: Web3|Promise<Web3>) {
         this.web3Promise = Promise.resolve(web3)
         this.webApi = new WebApi()
-        this.contractPromise = this.generateContract();
-        this.contractReversePromise = this.generateContractReverse();
+        this.idrissRegistryContractPromise = this.generateIDrissRegistryContract();
+        this.idrissReverseMappingContractPromise = this.generateIDrissReverseMappingContract();
     }
 
     public static matchInput(input: string): "phone" | "mail" | "twitter" | null {
@@ -37,7 +39,7 @@ export abstract class BaseIdrissCrypto {
                 if (options.coin && coin != options.coin) continue;
                 for (let [tag, tag_key] of Object.entries(tags)) {
                     if (tag_key) {
-                        foundMatchesPromises[tag] = this.digestMessage(identifier + tag_key).then(digested => this.callWeb3(digested));
+                        foundMatchesPromises[tag] = this.digestMessage(identifier + tag_key).then(digested => this.callWeb3GetIDriss(digested));
                         foundMatchesPromises[tag]
                         foundMatchesPromises[tag].catch(() => {
                         })
@@ -78,21 +80,21 @@ export abstract class BaseIdrissCrypto {
         return identifier
     }
 
-    private async callWeb3(encrypted: string) {
-        return await (await this.contractPromise).methods.getIDriss(encrypted).call();
+    private async callWeb3GetIDriss(encrypted: string) {
+        return await (await this.idrissRegistryContractPromise).methods.getIDriss(encrypted).call();
     }
 
-    private async callWeb3Reverse(address: string): Promise<string> {
-        return await (await this.contractReversePromise).methods.reverseIDriss(address).call();
+    private async callWeb3ReverseIDriss(address: string): Promise<string> {
+        return await (await this.idrissReverseMappingContractPromise).methods.reverseIDriss(address).call();
     }
 
 
-    private async generateContract() {
-        return new (await this.web3Promise).eth.Contract(IDrissRegistryContract, '0x2EcCb53ca2d4ef91A79213FDDF3f8c2332c2a814');
+    private async generateIDrissRegistryContract() {
+        return new (await this.web3Promise).eth.Contract(IDrissRegistryContract, this.IDRISS_REGISTRY_CONTRACT_ADDRESS);
     }
 
-    private async generateContractReverse() {
-        return new (await this.web3Promise).eth.Contract(IDrissReverseMappingContract, "0x561f1b5145897A52A6E94E4dDD4a29Ea5dFF6f64");
+    private async generateIDrissReverseMappingContract() {
+        return new (await this.web3Promise).eth.Contract(IDrissReverseMappingContract, this.IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS);
     }
 
     private static getWalletTags(): { [key: string]: { [key: string]: { [key: string]: string } } } {
@@ -178,7 +180,7 @@ export abstract class BaseIdrissCrypto {
     protected abstract digestMessage(message: string): Promise<string>
 
     public async reverseResolve(address: string) {
-        let result = await this.callWeb3Reverse(address);
+        let result = await this.callWeb3ReverseIDriss(address);
         if (+result) {
             return ('@' + await this.webApi.reverseTwitterID(result)).toLowerCase();
         } else {
