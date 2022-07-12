@@ -26,9 +26,6 @@ export abstract class BaseIdrissCrypto {
     }
 
     public async resolve(input: string, options: ResolveOptions = {}): Promise<{ [index: string]: string }> {
-
-        let twitterID;
-        let identifierT;
         let identifier = input;
         identifier = this.lowerFirst(identifier).replace(" ", "");
         const inputType = BaseIdrissCrypto.matchInput(input);
@@ -38,7 +35,6 @@ export abstract class BaseIdrissCrypto {
             throw new Error("Not a valid input. Input must start with valid phone number, email or @twitter handle.")
         }
         if (inputType == "twitter") {
-            identifierT = identifier;
             identifier = await this.webApi.getTwitterID(identifier);
             if (identifier == "Not found")
                 throw new Error("Twitter handle not found.")
