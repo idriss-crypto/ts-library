@@ -1,22 +1,39 @@
+import Web3 from "web3";
+import {AbiItem} from "web3-utils";
+
 import {WebApi} from "./webApi";
 import {ResolveOptions} from "./resolveOptions";
-import Web3 from "web3";
-import IDrissRegistryContract from './abi/idrissRegistry.json';
-import IDrissReverseMappingContract from './abi/idrissReverseMapping.json';
+import { AssetLiability } from "./assetLiability";
+import IDrissRegistryAbi from "./abi/idrissRegistry.json";
+import IDrissReverseMappingAbi from "./abi/idrissReverseMapping.json";
+import IDrissPaymentAbi from "./abi/idrissPayment.json";
+import IDrissSendToAnyoneAbi from "./abi/idrissSendToAnyone.json";
+import PriceOracleAbi from "./abi/priceOracleV3Aggregator.json";
+import { AssetType } from "./assetType";
 
 export abstract class BaseIdrissCrypto {
     private web3Promise:Promise<Web3>;
     private webApi:WebApi;
     private idrissRegistryContractPromise;
     private idrissReverseMappingContractPromise;
+    private idrissSendToAnyoneContractPromise;
+    private idrissPaymentContractPromise;
+    private priceOracleContractPromise;
     private IDRISS_REGISTRY_CONTRACT_ADDRESS = '0x2EcCb53ca2d4ef91A79213FDDF3f8c2332c2a814';
     private IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS = '0x561f1b5145897A52A6E94E4dDD4a29Ea5dFF6f64';
+    //TODO: change contract addresses
+    private IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS = '0xCHANGEME';
+    private IDRISS_PAYMENT_CONTRACT_ADDRESS = '0xCHANGEME';
+    private PRICE_ORACLE_CONTRACT_ADDRESS = '0xCHANGEME';
 
     constructor(web3: Web3|Promise<Web3>) {
         this.web3Promise = Promise.resolve(web3)
         this.webApi = new WebApi()
         this.idrissRegistryContractPromise = this.generateIDrissRegistryContract();
         this.idrissReverseMappingContractPromise = this.generateIDrissReverseMappingContract();
+        this.idrissSendToAnyoneContractPromise = this.generateIDrissSendToAnyoneContract();
+        this.idrissPaymentContractPromise = this.generateIDrissPaymentContract();
+        this.priceOracleContractPromise = this.generatePriceOracleContract();
     }
 
     public static matchInput(input: string): "phone" | "mail" | "twitter" | null {
@@ -63,6 +80,29 @@ export abstract class BaseIdrissCrypto {
         return foundMatches
     }
 
+    public async reverseResolve(address: string) {
+        let result = await this.callWeb3ReverseIDriss(address);
+        if (+result) {
+            return ('@' + await this.webApi.reverseTwitterID(result)).toLowerCase();
+        } else {
+            return result;
+        }
+    }
+
+    public async transferToIDriss(beneficiary: string, tag: string, asset: AssetLiability) {
+        const hash = await this.digestMessage(beneficiary + tag)
+        const resolvedIDriss = await this.resolve(hash)
+        let result
+
+        if (resolvedIDriss[tag] && resolvedIDriss[tag].length > 0) {
+            result = await this.callWeb3ProcessPayment(hash, asset)
+        } else {
+            result = await this.callWeb3SendToAnyone(hash, asset)
+        }
+
+        return result
+    }
+
     protected async transformIdentifier(input: string): Promise<string> {
         let identifier = this.lowerFirst(input).replace(" ", "");
         const inputType = BaseIdrissCrypto.matchInput(input);
@@ -90,11 +130,61 @@ export abstract class BaseIdrissCrypto {
 
 
     private async generateIDrissRegistryContract() {
-        return new (await this.web3Promise).eth.Contract(IDrissRegistryContract, this.IDRISS_REGISTRY_CONTRACT_ADDRESS);
+        return new (await this.web3Promise).eth.Contract(
+                IDrissRegistryAbi as AbiItem[],
+                this.IDRISS_REGISTRY_CONTRACT_ADDRESS
+            );
     }
 
     private async generateIDrissReverseMappingContract() {
-        return new (await this.web3Promise).eth.Contract(IDrissReverseMappingContract, this.IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS);
+        return new (await this.web3Promise).eth.Contract(
+                IDrissReverseMappingAbi as AbiItem[],
+                this.IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS
+            );
+    }
+
+    private async callWeb3SendToAnyone(hash: string, asset: AssetLiability) {
+        const maticPrice = await this.getMaticPrice()
+        const maticToSend = asset.type === AssetType.Native ? asset.amount : maticPrice
+
+        //TODO: make sure that there is allowance for a token
+
+        return await (await this.idrissSendToAnyoneContractPromise).methods
+            .sendToAnyone(hash, asset.amount, asset.type.valueOf(), asset.assetContractAddress, asset.assetId)
+            .send({
+                value: maticToSend
+            });
+    }
+
+    //TODO: implement
+    private async callWeb3ProcessPayment(hash: string, asset: AssetLiability): Promise<string> {
+        return await (await this.idrissSendToAnyoneContractPromise).methods
+            .sendToAnyone(hash, asset.amount, asset.type.valueOf(), asset.assetContractAddress, asset.assetId)
+            .send({
+                value: asset.amount
+            });
+    }
+
+
+    private async generateIDrissSendToAnyoneContract() {
+        return new (await this.web3Promise).eth.Contract(
+                IDrissSendToAnyoneAbi as AbiItem[],
+                this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS
+            );
+    }
+
+    private async generateIDrissPaymentContract() {
+        return new (await this.web3Promise).eth.Contract(
+                IDrissPaymentAbi as AbiItem[],
+                this.IDRISS_PAYMENT_CONTRACT_ADDRESS
+            );
+    }
+
+    private async generatePriceOracleContract() {
+        return new (await this.web3Promise).eth.Contract(
+                PriceOracleAbi as AbiItem[],
+                this.PRICE_ORACLE_CONTRACT_ADDRESS
+            );
     }
 
     private static getWalletTags(): { [key: string]: { [key: string]: { [key: string]: string } } } {
@@ -167,6 +257,13 @@ export abstract class BaseIdrissCrypto {
         };
     }
 
+
+    //TODO: implement
+    protected async getMaticPrice(): Promise<number> {
+        const currentPriceData = await (await this.priceOracleContractPromise).methods.getLatestRoundData().call();
+        return 0
+    }
+
     protected lowerFirst(input: string): string {
         return input.charAt(0).toLowerCase() + input.slice(1);
     }
@@ -178,12 +275,4 @@ export abstract class BaseIdrissCrypto {
 
     protected abstract digestMessage(message: string): Promise<string>
 
-    public async reverseResolve(address: string) {
-        let result = await this.callWeb3ReverseIDriss(address);
-        if (+result) {
-            return ('@' + await this.webApi.reverseTwitterID(result)).toLowerCase();
-        } else {
-            return result;
-        }
-    }
 }
