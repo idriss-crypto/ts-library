@@ -21,10 +21,10 @@ export abstract class BaseIdrissCrypto {
     private priceOracleContractPromise;
     private IDRISS_REGISTRY_CONTRACT_ADDRESS = '0x2EcCb53ca2d4ef91A79213FDDF3f8c2332c2a814';
     private IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS = '0x561f1b5145897A52A6E94E4dDD4a29Ea5dFF6f64';
+    private PRICE_ORACLE_CONTRACT_ADDRESS = '0xAB594600376Ec9fD91F8e885dADF0CE036862dE0';
     //TODO: change contract addresses
     private IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS = '0xCHANGEME';
     private IDRISS_PAYMENT_CONTRACT_ADDRESS = '0xCHANGEME';
-    private PRICE_ORACLE_CONTRACT_ADDRESS = '0xCHANGEME';
 
     constructor(web3: Web3|Promise<Web3>) {
         this.web3Promise = Promise.resolve(web3)
@@ -144,7 +144,7 @@ export abstract class BaseIdrissCrypto {
     }
 
     private async callWeb3SendToAnyone(hash: string, asset: AssetLiability) {
-        const maticPrice = await this.getMaticPrice()
+        const maticPrice = await this.getMaticPriceInWei()
         const maticToSend = asset.type === AssetType.Native ? asset.amount : maticPrice
 
         //TODO: make sure that there is allowance for a token
@@ -258,10 +258,12 @@ export abstract class BaseIdrissCrypto {
     }
 
 
-    //TODO: implement
-    protected async getMaticPrice(): Promise<number> {
-        const currentPriceData = await (await this.priceOracleContractPromise).methods.getLatestRoundData().call();
-        return 0
+    public async getMaticPriceInWei(): Promise<number> {
+        const currentPriceData = await (await this.priceOracleContractPromise).methods.latestRoundData().call();
+        const priceDecimals = await (await this.priceOracleContractPromise).methods.decimals().call();
+
+        // same conversion as in smart contract: (10**18 * maticPriceMultiplier) / uint256(maticPrice);
+        return (Math.pow(10, 18) * Math.pow(10, priceDecimals)) / currentPriceData.answer
     }
 
     protected lowerFirst(input: string): string {
