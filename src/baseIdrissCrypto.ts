@@ -1,13 +1,22 @@
 import {WebApi} from "./webApi";
+import {ResolveOptions} from "./resolveOptions";
 import Web3 from "web3";
+import IDrissRegistryContract from './abi/idrissRegistry.json';
+import IDrissReverseMappingContract from './abi/idrissReverseMapping.json';
 
 export abstract class BaseIdrissCrypto {
-    protected web3Promise:Promise<Web3>;
-    protected webApi:WebApi;
+    private web3Promise:Promise<Web3>;
+    private webApi:WebApi;
+    private idrissRegistryContractPromise;
+    private idrissReverseMappingContractPromise;
+    private IDRISS_REGISTRY_CONTRACT_ADDRESS = '0x2EcCb53ca2d4ef91A79213FDDF3f8c2332c2a814';
+    private IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS = '0x561f1b5145897A52A6E94E4dDD4a29Ea5dFF6f64';
 
     constructor(web3: Web3|Promise<Web3>) {
         this.web3Promise = Promise.resolve(web3)
         this.webApi = new WebApi()
+        this.idrissRegistryContractPromise = this.generateIDrissRegistryContract();
+        this.idrissReverseMappingContractPromise = this.generateIDrissReverseMappingContract();
     }
 
     public static matchInput(input: string): "phone" | "mail" | "twitter" | null {
@@ -18,6 +27,40 @@ export abstract class BaseIdrissCrypto {
         if (input.match(regM)) return "mail";
         if (input.match(regT)) return "twitter";
         return null;
+    }
+
+    public async resolve(input: string, options: ResolveOptions = {}): Promise<{ [index: string]: string }> {
+        let identifier = await this.transformIdentifier(input);
+
+        let foundMatchesPromises: { [key: string]: Promise<string> } = {}
+        for (let [network, coins] of Object.entries(BaseIdrissCrypto.getWalletTags())) {
+            if (options.network && network != options.network) continue;
+            for (let [coin, tags] of Object.entries(coins)) {
+                if (options.coin && coin != options.coin) continue;
+                for (let [tag, tag_key] of Object.entries(tags)) {
+                    if (tag_key) {
+                        foundMatchesPromises[tag] = this.digestMessage(identifier + tag_key).then(digested => this.callWeb3GetIDriss(digested));
+                        foundMatchesPromises[tag]
+                        foundMatchesPromises[tag].catch(() => {
+                        })
+                    }
+                }
+            }
+        }
+        ///awaiting on the end for better performance
+        let foundMatches: { [key: string]: string } = {}
+        for (let [tag, promise] of Object.entries(foundMatchesPromises)) {
+            try {
+                let address = await promise;
+                if (address) {
+                    foundMatches[tag] = address;
+                }
+            } catch (e) {
+                //ommit
+            }
+        }
+
+        return foundMatches
     }
 
     protected async transformIdentifier(input: string): Promise<string> {
@@ -37,7 +80,24 @@ export abstract class BaseIdrissCrypto {
         return identifier
     }
 
-    protected static getWalletTags(): { [key: string]: { [key: string]: { [key: string]: string } } } {
+    private async callWeb3GetIDriss(encrypted: string) {
+        return await (await this.idrissRegistryContractPromise).methods.getIDriss(encrypted).call();
+    }
+
+    private async callWeb3ReverseIDriss(address: string): Promise<string> {
+        return await (await this.idrissReverseMappingContractPromise).methods.reverseIDriss(address).call();
+    }
+
+
+    private async generateIDrissRegistryContract() {
+        return new (await this.web3Promise).eth.Contract(IDrissRegistryContract, this.IDRISS_REGISTRY_CONTRACT_ADDRESS);
+    }
+
+    private async generateIDrissReverseMappingContract() {
+        return new (await this.web3Promise).eth.Contract(IDrissReverseMappingContract, this.IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS);
+    }
+
+    private static getWalletTags(): { [key: string]: { [key: string]: { [key: string]: string } } } {
         return {
             evm: {
                 ETH: {
@@ -117,4 +177,13 @@ export abstract class BaseIdrissCrypto {
     }
 
     protected abstract digestMessage(message: string): Promise<string>
+
+    public async reverseResolve(address: string) {
+        let result = await this.callWeb3ReverseIDriss(address);
+        if (+result) {
+            return ('@' + await this.webApi.reverseTwitterID(result)).toLowerCase();
+        } else {
+            return result;
+        }
+    }
 }
