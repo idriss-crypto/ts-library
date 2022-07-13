@@ -130,3 +130,12 @@ describe('Authorization', () => {
         assert(error instanceof Error)
     }).timeout(10000);
 });
+
+describe('Get price feed', () => {
+    it('is able to retrieve a price feed', async () => {
+        const obj = new IdrissCrypto()
+
+        const result = await obj.getMaticPriceInWei()
+        assert(result > 0)
+    }).timeout(10000);
+});
