@@ -140,7 +140,7 @@ export abstract class BaseIdrissCrypto {
     }
 
     private async callWeb3SendToAnyone(hash: string, asset: AssetLiability) {
-        const maticPrice = await this.getMaticPriceInWei()
+        const maticPrice = await this.getDollarPriceInWei()
         const maticToSend = asset.type === AssetType.Native ? asset.amount : maticPrice
 
         //TODO: make sure that there is allowance for a token
@@ -236,12 +236,11 @@ export abstract class BaseIdrissCrypto {
         };
     }
 
-
-    public async getMaticPriceInWei(): Promise<number> {
+    public async getDollarPriceInWei(): Promise<number> {
         const currentPriceData = await (await this.priceOracleContractPromise).methods.latestRoundData().call();
         const priceDecimals = await (await this.priceOracleContractPromise).methods.decimals().call();
 
-        // same conversion as in smart contract: (10**18 * maticPriceMultiplier) / uint256(maticPrice);
+        // because the Oracle provides only MATIC price, we calculate the opposite: dollar price in MATIC
         return (Math.pow(10, 18) * Math.pow(10, priceDecimals)) / currentPriceData.answer
     }
 
