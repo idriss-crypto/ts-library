@@ -289,3 +289,11 @@ try {
 }
 ```
 Error is thrown if session is not valid anymore (more than 3 wrong OTPs), wrong OTP is provided, the transaction failed or the session key is unknown.
+
+## Testing
+In order to run tests, please execute following commands:
+```
+yarn compileWeb3
+yarn hardhat node
+yarn testE2e
+```
