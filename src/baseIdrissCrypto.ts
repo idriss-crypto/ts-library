@@ -6,7 +6,6 @@ import {ResolveOptions} from "./resolveOptions";
 import { AssetLiability } from "./assetLiability";
 import IDrissRegistryAbi from "./abi/idrissRegistry.json";
 import IDrissReverseMappingAbi from "./abi/idrissReverseMapping.json";
-import IDrissPaymentAbi from "./abi/idrissPayment.json";
 import IDrissSendToAnyoneAbi from "./abi/idrissSendToAnyone.json";
 import PriceOracleAbi from "./abi/priceOracleV3Aggregator.json";
 import { AssetType } from "./assetType";
@@ -17,14 +16,12 @@ export abstract class BaseIdrissCrypto {
     private idrissRegistryContractPromise;
     private idrissReverseMappingContractPromise;
     private idrissSendToAnyoneContractPromise;
-    private idrissPaymentContractPromise;
     private priceOracleContractPromise;
     private IDRISS_REGISTRY_CONTRACT_ADDRESS = '0x2EcCb53ca2d4ef91A79213FDDF3f8c2332c2a814';
     private IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS = '0x561f1b5145897A52A6E94E4dDD4a29Ea5dFF6f64';
     private PRICE_ORACLE_CONTRACT_ADDRESS = '0xAB594600376Ec9fD91F8e885dADF0CE036862dE0';
     //TODO: change contract addresses
     private IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS = '0xCHANGEME';
-    private IDRISS_PAYMENT_CONTRACT_ADDRESS = '0xCHANGEME';
 
     constructor(web3: Web3|Promise<Web3>) {
         this.web3Promise = Promise.resolve(web3)
@@ -32,7 +29,6 @@ export abstract class BaseIdrissCrypto {
         this.idrissRegistryContractPromise = this.generateIDrissRegistryContract();
         this.idrissReverseMappingContractPromise = this.generateIDrissReverseMappingContract();
         this.idrissSendToAnyoneContractPromise = this.generateIDrissSendToAnyoneContract();
-        this.idrissPaymentContractPromise = this.generateIDrissPaymentContract();
         this.priceOracleContractPromise = this.generatePriceOracleContract();
     }
 
@@ -156,27 +152,10 @@ export abstract class BaseIdrissCrypto {
             });
     }
 
-    //TODO: implement
-    private async callWeb3ProcessPayment(hash: string, asset: AssetLiability): Promise<string> {
-        return await (await this.idrissSendToAnyoneContractPromise).methods
-            .sendToAnyone(hash, asset.amount, asset.type.valueOf(), asset.assetContractAddress, asset.assetId)
-            .send({
-                value: asset.amount
-            });
-    }
-
-
     private async generateIDrissSendToAnyoneContract() {
         return new (await this.web3Promise).eth.Contract(
                 IDrissSendToAnyoneAbi as AbiItem[],
                 this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS
-            );
-    }
-
-    private async generateIDrissPaymentContract() {
-        return new (await this.web3Promise).eth.Contract(
-                IDrissPaymentAbi as AbiItem[],
-                this.IDRISS_PAYMENT_CONTRACT_ADDRESS
             );
     }
 
