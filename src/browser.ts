@@ -13,7 +13,7 @@ export class IdrissCrypto extends BaseIdrissCrypto {
                 connectionOptions.web3Provider
                 ?? this.getInjectedEthereum()
                 ?? new Web3.providers.HttpProvider(polygonEndpoint)
-        )));
+        )), connectionOptions);
     }
 
     protected async digestMessage(message:string) {

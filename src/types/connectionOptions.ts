@@ -10,4 +10,5 @@ export type ConnectionOptions = {
    sendToAnyoneContractAddress?: string,
    idrissRegistryContractAddress?: string,
    reverseIDrissMappingContractAddress?: string,
+   priceOracleContractAddress?: string,
 }

@@ -11,7 +11,7 @@ export class IdrissCrypto extends BaseIdrissCrypto {
             .then(x=>x.default)
             .then(Web3=>new Web3(
                 connectionOptions.web3Provider ?? new Web3.providers.HttpProvider(polygonEndpoint)
-        )));
+        )), connectionOptions);
         }
 
     protected async digestMessage(message: string):Promise<string> {

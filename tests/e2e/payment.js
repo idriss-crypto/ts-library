@@ -37,7 +37,6 @@ describe('Payments', () => {
 
     before(async () => {
         url = hre.network.config.url;
-        idrissCryptoLib = new IdrissCrypto(url);
         [ownerAddress, signer1Address, signer2Address, signer3Address, signer4Address] = await hre.web3.eth.getAccounts()
 
         ownerHash   = await digestMessage('hello@idriss.xyz' + 'Metamask ETH')
@@ -63,6 +62,13 @@ describe('Payments', () => {
             mockTokenContract.deployed(),
         ])
 
+        idrissCryptoLib = new IdrissCrypto(url, {
+            // web3Provider: hre.web3.currentProvider,
+            sendToAnyoneContractAddress: sendToHashContract.address,
+            idrissRegistryContractAddress: idrissContract.adress,
+            priceOracleContractAddress: mockPriceOracleContract.adress,
+        });
+
         idrissContract.functions.addIDriss(ownerHash, ownerAddress)
         idrissContract.functions.addIDriss(signer1Hash, signer1Address)
         idrissContract.functions.addIDriss(signer2Hash, signer2Address)
@@ -78,7 +84,7 @@ describe('Payments', () => {
 
     describe('Send to existing hash', () => {
         it('is able to send coins to existing IDriss', async () => {
-            const result = await idrissCryptoLib.transferToIDriss('hello@idriss.xyz', 'Coinbase BTC', {
+            const result = await idrissCryptoLib.transferToIDriss('hello@idriss.xyz', 'Metamask ETH', {
                 amount: 100,
                 type: AssetType.Native,
             })

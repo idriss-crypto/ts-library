@@ -11,6 +11,7 @@ import PriceOracleAbi from "./abi/priceOracleV3Aggregator.json";
 import IERC20Abi from "./abi/ierc20.json";
 import IERC721Abi from "./abi/ierc721.json";
 import { AssetType } from "./types/assetType";
+import { ConnectionOptions } from "./types/connectionOptions";
 
 export abstract class BaseIdrissCrypto {
     private web3Promise:Promise<Web3>;
@@ -25,7 +26,16 @@ export abstract class BaseIdrissCrypto {
     //TODO: change contract addresses
     protected IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS = '0xCHANGEME';
 
-    constructor(web3: Web3|Promise<Web3>) {
+    constructor(web3: Web3|Promise<Web3>, connectionOptions: ConnectionOptions) {
+        this.IDRISS_REGISTRY_CONTRACT_ADDRESS = (typeof connectionOptions.idrissRegistryContractAddress !== 'undefined') ?
+            connectionOptions.idrissRegistryContractAddress : this.IDRISS_REGISTRY_CONTRACT_ADDRESS
+        this.IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS = (typeof connectionOptions.reverseIDrissMappingContractAddress !== 'undefined') ?
+            connectionOptions.reverseIDrissMappingContractAddress : this.IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS
+        this.PRICE_ORACLE_CONTRACT_ADDRESS = (typeof connectionOptions.priceOracleContractAddress !== 'undefined') ?
+            connectionOptions.priceOracleContractAddress : this.PRICE_ORACLE_CONTRACT_ADDRESS
+        this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS = (typeof connectionOptions.sendToAnyoneContractAddress !== 'undefined') ?
+            connectionOptions.sendToAnyoneContractAddress : this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS
+
         this.web3Promise = Promise.resolve(web3)
         this.webApi = new WebApi()
         this.idrissRegistryContractPromise = this.generateIDrissRegistryContract();
