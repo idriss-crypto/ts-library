@@ -1,5 +1,4 @@
 import fetch from "node-fetch";
-import {ResolveOptions} from "./resolveOptions";
 
 export class WebApi {
     async getTwitterID(inputCombination: string): Promise<string> {

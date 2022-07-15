@@ -2,13 +2,13 @@ import Web3 from "web3";
 import {AbiItem} from "web3-utils";
 
 import {WebApi} from "./webApi";
-import {ResolveOptions} from "./resolveOptions";
-import { AssetLiability } from "./assetLiability";
+import {ResolveOptions} from "./types/resolveOptions";
+import { AssetLiability } from "./types/assetLiability";
 import IDrissRegistryAbi from "./abi/idrissRegistry.json";
 import IDrissReverseMappingAbi from "./abi/idrissReverseMapping.json";
 import IDrissSendToAnyoneAbi from "./abi/idrissSendToAnyone.json";
 import PriceOracleAbi from "./abi/priceOracleV3Aggregator.json";
-import { AssetType } from "./assetType";
+import { AssetType } from "./types/assetType";
 
 export abstract class BaseIdrissCrypto {
     private web3Promise:Promise<Web3>;
