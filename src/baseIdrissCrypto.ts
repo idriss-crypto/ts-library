@@ -8,6 +8,8 @@ import IDrissRegistryAbi from "./abi/idrissRegistry.json";
 import IDrissReverseMappingAbi from "./abi/idrissReverseMapping.json";
 import IDrissSendToAnyoneAbi from "./abi/idrissSendToAnyone.json";
 import PriceOracleAbi from "./abi/priceOracleV3Aggregator.json";
+import IERC20Abi from "./abi/ierc20.json";
+import IERC721Abi from "./abi/ierc721.json";
 import { AssetType } from "./types/assetType";
 
 export abstract class BaseIdrissCrypto {
@@ -17,11 +19,11 @@ export abstract class BaseIdrissCrypto {
     private idrissReverseMappingContractPromise;
     private idrissSendToAnyoneContractPromise;
     private priceOracleContractPromise;
-    private IDRISS_REGISTRY_CONTRACT_ADDRESS = '0x2EcCb53ca2d4ef91A79213FDDF3f8c2332c2a814';
-    private IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS = '0x561f1b5145897A52A6E94E4dDD4a29Ea5dFF6f64';
-    private PRICE_ORACLE_CONTRACT_ADDRESS = '0xAB594600376Ec9fD91F8e885dADF0CE036862dE0';
+    protected IDRISS_REGISTRY_CONTRACT_ADDRESS = '0x2EcCb53ca2d4ef91A79213FDDF3f8c2332c2a814';
+    protected IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS = '0x561f1b5145897A52A6E94E4dDD4a29Ea5dFF6f64';
+    protected PRICE_ORACLE_CONTRACT_ADDRESS = '0xAB594600376Ec9fD91F8e885dADF0CE036862dE0';
     //TODO: change contract addresses
-    private IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS = '0xCHANGEME';
+    protected IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS = '0xCHANGEME';
 
     constructor(web3: Web3|Promise<Web3>) {
         this.web3Promise = Promise.resolve(web3)
@@ -86,13 +88,30 @@ export abstract class BaseIdrissCrypto {
     }
 
     public async transferToIDriss(beneficiary: string, tag: string, asset: AssetLiability) {
-        const hash = await this.digestMessage(beneficiary + tag)
-        const resolvedIDriss = await this.resolve(hash)
+        const cleanedTag = tag.trim()
+        const transformedBeneficiary = this.transformIdentifier(beneficiary)
+        const hash = await this.digestMessage(transformedBeneficiary + cleanedTag)
+        const resolvedIDriss = await this.resolve(beneficiary)
         let result
 
-        if (resolvedIDriss[tag] && resolvedIDriss[tag].length > 0) {
-            result = await this.callWeb3ProcessPayment(hash, asset)
+        if (resolvedIDriss && resolvedIDriss[cleanedTag] && resolvedIDriss[cleanedTag].length > 0) {
+            switch (asset.type) {
+                case AssetType.Native:
+                    
+                    break;
+                case AssetType.ERC20:
+                    
+                    break;
+                case AssetType.ERC721:
+                    
+                    break;
+                default:
+                    throw new Error("Unsupported asset type.");
+            }
+            result = await 1 //TODO: send directly
+            console.log("direct")
         } else {
+            //TODO: check allowance
             result = await this.callWeb3SendToAnyone(hash, asset)
         }
 
@@ -139,6 +158,35 @@ export abstract class BaseIdrissCrypto {
             );
     }
 
+    private async generateERC20Contract(contractAddress: string) {
+        return new (await this.web3Promise).eth.Contract(
+                IERC20Abi as AbiItem[],
+                contractAddress
+            );
+    }
+
+    private async generateERC721Contract(contractAddress: string) {
+        return new (await this.web3Promise).eth.Contract(
+                IERC721Abi as AbiItem[],
+                contractAddress
+            );
+    }
+
+    private async callWeb3TransferERC20(beneficiary: string, asset: AssetLiability) {
+        this.generateERC20Contract(asset.assetContractAddress!)
+            .then(contract => {
+                contract.methods.transfer(beneficiary, asset.amount).send()
+            })
+    }
+
+    private async callWeb3TransferERC721(beneficiary: string, asset: AssetLiability) {
+        // const sender = (await this.web3Promise).
+        this.generateERC721Contract(asset.assetContractAddress!)
+            .then(contract => {
+                contract.methods.safeTransferFrom(beneficiary, asset.assetId).send()
+            })
+    }
+
     private async callWeb3SendToAnyone(hash: string, asset: AssetLiability) {
         const maticPrice = await this.getDollarPriceInWei()
         const maticToSend = asset.type === AssetType.Native ? asset.amount : maticPrice
@@ -149,7 +197,7 @@ export abstract class BaseIdrissCrypto {
             .sendToAnyone(hash, asset.amount, asset.type.valueOf(), asset.assetContractAddress, asset.assetId)
             .send({
                 value: maticToSend
-            });
+            })
     }
 
     private async generateIDrissSendToAnyoneContract() {
@@ -255,4 +303,5 @@ export abstract class BaseIdrissCrypto {
 
     protected abstract digestMessage(message: string): Promise<string>
 
+    protected abstract getConnectedAccount(): Promise<string>
 }
