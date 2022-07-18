@@ -1,10 +1,9 @@
 const crypto = require('crypto');
 const assert = require('assert');
 const hre = require("hardhat");
-const { ethers } = require("hardhat");
+const HDWalletProvider = require("@truffle/hdwallet-provider");
 
-const { IdrissCrypto, Authorization, CreateOTPResponse, WrongOTPException } = require("../../lib");
-const { BaseIdrissCrypto } = require("../../lib/baseIdrissCrypto");
+const { IdrissCrypto } = require("../../lib");
 const { AssetType } = require("../../lib/assetType");
 
 const IDrissArtifact = require('../artifacts/tests/contracts/mocks/IDrissRegistryMock.sol/IDriss.json')
@@ -16,6 +15,7 @@ const SendToHashArtifact = require('../artifacts/tests/contracts/SendToHash.sol/
 describe('Payments', () => {
     let url
     let sendToHashContract
+    let testProvider
     let idrissContract
     let idrissCryptoLib
     let mockTokenContract
@@ -37,7 +37,8 @@ describe('Payments', () => {
 
     before(async () => {
         url = hre.network.config.url;
-        [ownerAddress, signer1Address, signer2Address, signer3Address, signer4Address] = await hre.web3.eth.getAccounts()
+        const accounts = await web3.eth.getAccounts();
+        [ownerAddress, signer1Address, signer2Address, signer3Address, signer4Address] = accounts
 
         ownerHash   = await digestMessage('hello@idriss.xyz' + 'Metamask ETH')
         signer1Hash = await digestMessage('+16506655942' + 'Coinbase ETH')
@@ -62,33 +63,44 @@ describe('Payments', () => {
             mockTokenContract.deployed(),
         ])
 
-        idrissCryptoLib = new IdrissCrypto(url, {
-            // web3Provider: hre.web3.currentProvider,
-            sendToAnyoneContractAddress: sendToHashContract.address,
-            idrissRegistryContractAddress: idrissContract.adress,
-            priceOracleContractAddress: mockPriceOracleContract.adress,
+        testProvider = new HDWalletProvider({
+            mnemonic: {
+                phrase: hre.config.networks.hardhat_node.accounts.mnemonic
+            },
+            providerOrUrl: url
         });
 
-        idrissContract.functions.addIDriss(ownerHash, ownerAddress)
-        idrissContract.functions.addIDriss(signer1Hash, signer1Address)
-        idrissContract.functions.addIDriss(signer2Hash, signer2Address)
-        idrissContract.functions.addIDriss(signer3Hash, signer3Address)
+        idrissCryptoLib = new IdrissCrypto(url, {
+            web3Provider: testProvider,
+            sendToAnyoneContractAddress: sendToHashContract.address,
+            idrissRegistryContractAddress: idrissContract.address,
+            priceOracleContractAddress: mockPriceOracleContract.address,
+        });
+
+        await idrissContract.functions.addIDriss(ownerHash, ownerAddress)
+        await idrissContract.functions.addIDriss(signer1Hash, signer1Address)
+        await idrissContract.functions.addIDriss(signer2Hash, signer2Address)
+        await idrissContract.functions.addIDriss(signer3Hash, signer3Address)
     });
 
     describe('Price feed', () => {
         it('is able to retrieve a price feed', async () => {
             const result = await idrissCryptoLib.getDollarPriceInWei()
             assert(result > 0)
-        }).timeout(10000);
+        }).timeout(1000000);
     });
 
     describe('Send to existing hash', () => {
         it('is able to send coins to existing IDriss', async () => {
+            const dollarPrice = await idrissCryptoLib.getDollarPriceInWei()
             const result = await idrissCryptoLib.transferToIDriss('hello@idriss.xyz', 'Metamask ETH', {
-                amount: 100,
+                // ethers uses BigNumber and rejects normal numbers that are bigger than certain threshold
+                // changing the value to string resolves the problem
+                amount: (dollarPrice + 1000) + '',
                 type: AssetType.Native,
             })
-            assert(result > 0)
+            
+            assert(result.status)
         }).timeout(10000);
     });
 });

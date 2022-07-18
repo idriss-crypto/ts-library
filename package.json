@@ -41,6 +41,7 @@
     "@nomiclabs/hardhat-truffle5": "^2.0.6",
     "@nomiclabs/hardhat-web3": "^2.0.0",
     "@openzeppelin/contracts": "^4.7.0",
+    "@truffle/hdwallet-provider": "^2.0.11",
     "ethers": "^5.6.9",
     "hardhat": "^2.10.1",
     "mocha": "^9.2.0",

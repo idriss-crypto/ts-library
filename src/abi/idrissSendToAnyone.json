@@ -1,25 +1,28 @@
 [
    {
-      "inputs": [],
-      "name": "decimals",
-      "outputs": [
-         {
-            "internalType": "uint8",
-            "name": "",
-            "type": "uint8"
-         }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-   },
-   {
-      "inputs": [],
-      "name": "description",
-      "outputs": [
+      "inputs": [
          {
             "internalType": "string",
-            "name": "",
+            "name": "_IDrissHash",
             "type": "string"
+         },
+         {
+            "internalType": "enum AssetType",
+            "name": "_assetType",
+            "type": "uint8"
+         },
+         {
+            "internalType": "address",
+            "name": "_assetContractAddress",
+            "type": "address"
+         }
+      ],
+      "name": "balanceOf",
+      "outputs": [
+         {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
          }
       ],
       "stateMutability": "view",
@@ -28,86 +31,80 @@
    {
       "inputs": [
          {
-            "internalType": "uint80",
-            "name": "_roundId",
-            "type": "uint80"
+            "internalType": "string",
+            "name": "_IDrissHash",
+            "type": "string"
+         },
+         {
+            "internalType": "enum AssetType",
+            "name": "_assetType",
+            "type": "uint8"
+         },
+         {
+            "internalType": "address",
+            "name": "_assetContractAddress",
+            "type": "address"
          }
       ],
-      "name": "getRoundData",
-      "outputs": [
-         {
-            "internalType": "uint80",
-            "name": "roundId",
-            "type": "uint80"
-         },
-         {
-            "internalType": "int256",
-            "name": "answer",
-            "type": "int256"
-         },
-         {
-            "internalType": "uint256",
-            "name": "startedAt",
-            "type": "uint256"
-         },
-         {
-            "internalType": "uint256",
-            "name": "updatedAt",
-            "type": "uint256"
-         },
-         {
-            "internalType": "uint80",
-            "name": "answeredInRound",
-            "type": "uint80"
-         }
-      ],
-      "stateMutability": "view",
+      "name": "claim",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
    },
    {
-      "inputs": [],
-      "name": "latestRoundData",
-      "outputs": [
+      "inputs": [
          {
-            "internalType": "uint80",
-            "name": "roundId",
-            "type": "uint80"
+            "internalType": "string",
+            "name": "_IDrissHash",
+            "type": "string"
          },
          {
-            "internalType": "int256",
-            "name": "answer",
-            "type": "int256"
+            "internalType": "enum AssetType",
+            "name": "_assetType",
+            "type": "uint8"
          },
          {
-            "internalType": "uint256",
-            "name": "startedAt",
-            "type": "uint256"
-         },
-         {
-            "internalType": "uint256",
-            "name": "updatedAt",
-            "type": "uint256"
-         },
-         {
-            "internalType": "uint80",
-            "name": "answeredInRound",
-            "type": "uint80"
+            "internalType": "address",
+            "name": "_assetContractAddress",
+            "type": "address"
          }
       ],
-      "stateMutability": "view",
+      "name": "revertPayment",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
    },
    {
-      "inputs": [],
-      "name": "version",
-      "outputs": [
+      "inputs": [
+         {
+            "internalType": "string",
+            "name": "_IDrissHash",
+            "type": "string"
+         },
          {
             "internalType": "uint256",
-            "name": "",
+            "name": "_amount",
+            "type": "uint256"
+         },
+         {
+            "internalType": "enum AssetType",
+            "name": "_assetType",
+            "type": "uint8"
+         },
+         {
+            "internalType": "address",
+            "name": "_assetContractAddress",
+            "type": "address"
+         },
+         {
+            "internalType": "uint256",
+            "name": "_assetId",
             "type": "uint256"
          }
       ],
-      "stateMutability": "view",
+      "name": "sendToAnyone",
+      "outputs": [],
+      "stateMutability": "payable",
       "type": "function"
    }
 ]

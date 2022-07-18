@@ -12,7 +12,7 @@ module.exports = {
   mocha: {
     timeout: 100000000000
   },
-  defaultNetwork: "hardhat",
+  defaultNetwork: "hardhat_node",
   networks: {
     hardhat: {
       chainId: 1337,
@@ -24,6 +24,13 @@ module.exports = {
     hardhat_node: {
       chainId: 1337,
       url: "http://127.0.0.1:8545",
+      accounts: {
+        mnemonic: "test test test test test test test test test test test junk",
+        path: "m/44'/60'/0'/0",
+        initialIndex: 0,
+        count: 20,
+        passphrase: "",
+      },
     }
   }
 };
