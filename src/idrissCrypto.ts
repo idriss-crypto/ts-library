@@ -1,3 +1,4 @@
+import Web3 from "web3";
 import {BaseIdrissCrypto} from "./baseIdrissCrypto";
 import { ConnectionOptions } from "./types/connectionOptions";
 
@@ -19,6 +20,8 @@ export class IdrissCrypto extends BaseIdrissCrypto {
     }
 
     protected async getConnectedAccount(): Promise<string> {
-        throw new Error("Method not implemented.");
+        return this.web3Promise
+            .then(web3 => {return web3.eth.getAccounts()})
+            .then(acc => {return acc[0]})
     }
 }
