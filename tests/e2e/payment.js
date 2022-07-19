@@ -171,7 +171,74 @@ describe('Payments', () => {
                 type: AssetType.Native,
             })
 
+            const userBalanceAfter = await sendToHashContract.functions.balanceOf(testHash, 0, idrissCryptoLib.ZERO_ADDRESS)
+            const contractBalanceAfter = await web3.eth.getBalance(sendToHashContract.address)
+
             assert(result.status)
+            assert.equal(contractBalanceBefore, 0)
+            assert.equal(contractBalanceAfter, BigNumber.from(amountToSend))
+            assert.equal(userBalanceBefore, 0)
+            assert.equal(userBalanceAfter, BigNumber.from(1000))
+        }).timeout(10000);
+
+        it('is able to send ERC20 to nonexisting IDriss', async () => {
+            const dollarPrice = await idrissCryptoLib.getDollarPriceInWei()
+            const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
+            const testMail = 'nonexisting@idriss.xyz'
+            const testHash = digestMessage(testMail + walletTagHash)
+            const amountToSend = 50
+
+            const userBalanceBefore = await sendToHashContract.functions.balanceOf(testHash, 1, mockTokenContract.address)
+            const contractBalanceBefore = await web3.eth.getBalance(sendToHashContract.address)
+            const ownerBalanceBefore = await web3.eth.getBalance(ownerAddress)
+
+            const result = await idrissCryptoLib.transferToIDriss(testMail, testWalletType, {
+                // ethers uses BigNumber and rejects normal numbers that are bigger than certain threshold
+                // changing the value to string resolves the problem
+                amount: amountToSend,
+                type: AssetType.ERC20,
+                assetContractAddress: mockTokenContract.address,
+            })
+
+            const userBalanceAfter = await sendToHashContract.functions.balanceOf(testHash, 1, mockTokenContract.address)
+            const contractBalanceAfter = await web3.eth.getBalance(sendToHashContract.address)
+            const ownerBalanceAfter = await web3.eth.getBalance(ownerAddress)
+
+            assert(result.status)
+            assert.equal(userBalanceBefore, 0)
+            assert.equal(userBalanceAfter, BigNumber.from(amountToSend))
+            assert.equal(contractBalanceBefore, 0)
+            assert.equal(contractBalanceAfter, BigNumber.from(amountToSend))
+            assert.equal(ownerBalanceBefore.sub(ownerBalanceAfter), dollarPrice)
+        }).timeout(10000);
+
+        it('is able to send ERC721 to nonexisting IDriss', async () => {
+            const dollarPrice = await idrissCryptoLib.getDollarPriceInWei()
+            const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
+            const testMail = 'nonexisting@idriss.xyz'
+            const testHash = digestMessage(testMail + walletTagHash)
+            const amountToSend = (dollarPrice + 1000) + ''
+
+            const userBalanceBefore = await sendToHashContract.functions.balanceOf(testHash, 0, idrissCryptoLib.ZERO_ADDRESS)
+            const contractBalanceBefore = await web3.eth.getBalance(sendToHashContract.address)
+
+            const result = await idrissCryptoLib.transferToIDriss(testMail, testWalletType, {
+                // ethers uses BigNumber and rejects normal numbers that are bigger than certain threshold
+                // changing the value to string resolves the problem
+                amount: amountToSend,
+                type: AssetType.ERC721,
+                assetContractAddress: mockNFTContract.address,
+                assetId: 1
+            })
+
+            const userBalanceAfter = await sendToHashContract.functions.balanceOf(testHash, 0, idrissCryptoLib.ZERO_ADDRESS)
+            const contractBalanceAfter = await web3.eth.getBalance(sendToHashContract.address)
+
+            assert(result.status)
+            assert.equal(userBalanceBefore, 0)
+            assert.equal(userBalanceAfter, BigNumber.from(1000))
+            assert.equal(contractBalanceBefore, 0)
+            assert.equal(contractBalanceAfter, BigNumber.from(amountToSend))
         }).timeout(10000);
     });
 });
