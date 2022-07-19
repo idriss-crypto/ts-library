@@ -104,11 +104,10 @@ export abstract class BaseIdrissCrypto {
         const transformedBeneficiary = this.transformIdentifier(beneficiary)
         const hash = await this.digestMessage(transformedBeneficiary + cleanedTag)
         const resolvedIDriss = await this.resolve(beneficiary)
-        const resolvedIDrissTagged = resolvedIDriss[cleanedTag]
-        let result: boolean
+        let result: TransactionReceipt
 
-        if (resolvedIDriss && resolvedIDrissTagged && resolvedIDrissTagged.length > 0) {
-            result = await this.sendAsset(resolvedIDrissTagged, asset)
+        if (resolvedIDriss && resolvedIDriss[cleanedTag] && resolvedIDriss[cleanedTag].length > 0) {
+            result = await this.sendAsset(resolvedIDriss[cleanedTag], asset)
         } else {
             //TODO: check and ask for allowance
             result = await this.callWeb3SendToAnyone(hash, asset)
@@ -117,13 +116,13 @@ export abstract class BaseIdrissCrypto {
         return result
     }
 
-    protected async sendAsset(beneficiaryAddress: string, asset: AssetLiability): Promise<boolean> {
+    protected async sendAsset(beneficiaryAddress: string, asset: AssetLiability): Promise<TransactionReceipt> {
         const connectedAccount = await this.getConnectedAccount()
-        let transactionStatus: TransactionReceipt
+        let transactionReceipt: TransactionReceipt
 
         switch (asset.type) {
             case AssetType.Native:
-                transactionStatus = await (await this.web3Promise).eth.sendTransaction({
+                transactionReceipt = await (await this.web3Promise).eth.sendTransaction({
                     from: connectedAccount,
                     to: beneficiaryAddress,
                     value: asset.amount
@@ -131,7 +130,7 @@ export abstract class BaseIdrissCrypto {
                 break;
 
             case AssetType.ERC20:
-                transactionStatus = await this.generateERC20Contract(asset.assetContractAddress!)
+                transactionReceipt = await this.generateERC20Contract(asset.assetContractAddress!)
                     .then(contract => {
                         return contract.methods
                             .transfer(beneficiaryAddress, asset.amount)
@@ -142,7 +141,7 @@ export abstract class BaseIdrissCrypto {
                 break;
 
             case AssetType.ERC721:
-                transactionStatus = await this.generateERC721Contract(asset.assetContractAddress!)
+                transactionReceipt = await this.generateERC721Contract(asset.assetContractAddress!)
                     .then(contract => {
                         return contract.methods
                             .safeTransferFrom(connectedAccount, beneficiaryAddress, asset.assetId)
@@ -156,7 +155,7 @@ export abstract class BaseIdrissCrypto {
                 throw new Error("Unsupported asset type.");
         }
 
-        return transactionStatus.status
+        return transactionReceipt
     }
 
 
@@ -214,22 +213,7 @@ export abstract class BaseIdrissCrypto {
             );
     }
 
-    private async callWeb3TransferERC20(beneficiary: string, asset: AssetLiability) {
-        this.generateERC20Contract(asset.assetContractAddress!)
-            .then(contract => {
-                contract.methods.transfer(beneficiary, asset.amount).send()
-            })
-    }
-
-    private async callWeb3TransferERC721(beneficiary: string, asset: AssetLiability) {
-        // const sender = (await this.web3Promise).
-        this.generateERC721Contract(asset.assetContractAddress!)
-            .then(contract => {
-                contract.methods.safeTransferFrom(beneficiary, asset.assetId).send()
-            })
-    }
-
-    private async callWeb3SendToAnyone(hash: string, asset: AssetLiability) {
+    private async callWeb3SendToAnyone(hash: string, asset: AssetLiability):Promise<TransactionReceipt> {
         const maticPrice = await this.getDollarPriceInWei()
         const maticToSend = asset.type === AssetType.Native ? asset.amount : maticPrice
 

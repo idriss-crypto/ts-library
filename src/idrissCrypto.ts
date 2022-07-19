@@ -1,8 +1,5 @@
-import Web3 from "web3";
 import {BaseIdrissCrypto} from "./baseIdrissCrypto";
 import { ConnectionOptions } from "./types/connectionOptions";
-
-
 var crypto = require('crypto');
 
 export class IdrissCrypto extends BaseIdrissCrypto {

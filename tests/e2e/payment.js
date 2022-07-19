@@ -11,7 +11,6 @@ const MaticPriceAggregatorV3MockArtifact = require('../artifacts/tests/contracts
 const MockNFTArtifact = require('../artifacts/tests/contracts/mocks/IDrissRegistryMock.sol/MockNFT.json')
 const MockTokenArtifact = require('../artifacts/tests/contracts/mocks/IDrissRegistryMock.sol/MockToken.json')
 const SendToHashArtifact = require('../artifacts/tests/contracts/SendToHash.sol/SendToHash.json')
-const {BaseIdrissCrypto} = require("../../lib/baseIdrissCrypto");
 const {BigNumber} = require("ethers");
 
 describe('Payments', () => {
@@ -28,8 +27,6 @@ describe('Payments', () => {
     let signer2Address
     let signer3Address
     let signer4Address
-    let signer5Address
-    let ownerHash
     let signer1Hash
     let signer2Hash
     let signer3Hash
@@ -41,8 +38,13 @@ describe('Payments', () => {
 
     beforeEach(async () => {
         url = hre.network.config.url;
-        const accounts = await web3.eth.getAccounts();
-        [ownerAddress, signer1Address, signer2Address, signer3Address, signer4Address] = accounts
+        [
+            ownerAddress,
+            signer1Address,
+            signer2Address,
+            signer3Address,
+            signer4Address
+        ] = await web3.eth.getAccounts();
 
         signer1Hash = await digestMessage('hello@idriss.xyz' + "5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321")
         signer2Hash = await digestMessage('+16506655942' + "92c7f97fb58ddbcb06c0d5a7cb720d74bc3c3aa52a0d706e477562cba68eeb73")
@@ -85,9 +87,9 @@ describe('Payments', () => {
         await idrissContract.functions.addIDriss(signer2Hash, signer2Address)
         await idrissContract.functions.addIDriss(signer3Hash, signer3Address)
         await idrissContract.functions.addIDriss(signer4Hash, signer4Address)
-        await mockNFTContract.functions.safeMint(ownerAddress, 0).catch(e => {})
-        await mockNFTContract.functions.safeMint(ownerAddress, 1).catch(e => {})
-        await mockNFTContract.functions.safeMint(ownerAddress, 2).catch(e => {})
+        await mockNFTContract.functions.safeMint(ownerAddress, 0).catch(e => {console.log(e)})
+        await mockNFTContract.functions.safeMint(ownerAddress, 1).catch(e => {console.log(e)})
+        await mockNFTContract.functions.safeMint(ownerAddress, 2).catch(e => {console.log(e)})
     });
 
     describe('Price feed', () => {
@@ -108,7 +110,7 @@ describe('Payments', () => {
 
             const balanceAfter = await web3.eth.getBalance(signer1Address)
 
-            assert(result)
+            assert(result.status)
             assert.equal(BigNumber.from(balanceAfter).sub(BigNumber.from(balanceBefore)), 1000)
         })
 
@@ -123,7 +125,7 @@ describe('Payments', () => {
 
             const balanceAfter = await mockTokenContract.functions.balanceOf(signer1Address)
 
-            assert(result)
+            assert(result.status)
             assert.equal(balanceAfter - balanceBefore, 1000)
         })
 
@@ -140,14 +142,14 @@ describe('Payments', () => {
 
             const ownerAfter = await mockNFTContract.functions.ownerOf(testNFTid)
 
-            assert(result)
+            assert(result.status)
             assert.equal(ownerBefore, ownerAddress)
             assert.equal(ownerAfter, signer1Address)
         })
     });
 
     describe('Send to nonexisting hash', () => {
-        it('is able to send coins to existing IDriss', async () => {
+        it('is able to send coins to nonexisting IDriss', async () => {
             const dollarPrice = await idrissCryptoLib.getDollarPriceInWei()
             const result = await idrissCryptoLib.transferToIDriss('nonexisting@idriss.xyz', 'Metamask ETH', {
                 // ethers uses BigNumber and rejects normal numbers that are bigger than certain threshold
