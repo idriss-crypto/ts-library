@@ -31,12 +31,17 @@ describe('Payments', () => {
     let signer2Hash
     let signer3Hash
     let signer4Hash
+    const testWalletType = {
+        network: 'evm',
+        coin: 'ETH',
+        walletTag: 'Metamask ETH',
+    }
 
     const digestMessage = async (message) => {
         return crypto.createHash('sha256').update(message).digest('hex');
     }
 
-    beforeEach(async () => {
+    before(async () => {
         url = hre.network.config.url;
         [
             ownerAddress,
@@ -103,7 +108,7 @@ describe('Payments', () => {
         it('is able to send coins to existing IDriss', async () => {
             const balanceBefore = await web3.eth.getBalance(signer1Address)
 
-            const result = await idrissCryptoLib.transferToIDriss('hello@idriss.xyz', 'Metamask ETH', {
+            const result = await idrissCryptoLib.transferToIDriss('hello@idriss.xyz', testWalletType, {
                 amount: 1000,
                 type: AssetType.Native,
             })
@@ -117,7 +122,7 @@ describe('Payments', () => {
         it('is able to send ERC20 to existing IDriss', async () => {
             const balanceBefore = await mockTokenContract.functions.balanceOf(signer1Address)
 
-            const result = await idrissCryptoLib.transferToIDriss('hello@idriss.xyz', 'Metamask ETH', {
+            const result = await idrissCryptoLib.transferToIDriss('hello@idriss.xyz', testWalletType, {
                 amount: 1000,
                 type: AssetType.ERC20,
                 assetContractAddress: mockTokenContract.address
@@ -133,7 +138,7 @@ describe('Payments', () => {
             const testNFTid = 0
             const ownerBefore = await mockNFTContract.functions.ownerOf(testNFTid)
 
-            const result = await idrissCryptoLib.transferToIDriss('hello@idriss.xyz', 'Metamask ETH', {
+            const result = await idrissCryptoLib.transferToIDriss('hello@idriss.xyz', testWalletType, {
                 amount: 1,
                 type: AssetType.ERC721,
                 assetContractAddress: mockNFTContract.address,
@@ -151,10 +156,18 @@ describe('Payments', () => {
     describe('Send to nonexisting hash', () => {
         it('is able to send coins to nonexisting IDriss', async () => {
             const dollarPrice = await idrissCryptoLib.getDollarPriceInWei()
-            const result = await idrissCryptoLib.transferToIDriss('nonexisting@idriss.xyz', 'Metamask ETH', {
+            const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
+            const testMail = 'nonexisting@idriss.xyz'
+            const testHash = digestMessage(testMail + walletTagHash)
+            const amountToSend = (dollarPrice + 1000) + ''
+
+            const userBalanceBefore = await sendToHashContract.functions.balanceOf(testHash, 0, idrissCryptoLib.ZERO_ADDRESS)
+            const contractBalanceBefore = await web3.eth.getBalance(sendToHashContract.address)
+
+            const result = await idrissCryptoLib.transferToIDriss(testMail, testWalletType, {
                 // ethers uses BigNumber and rejects normal numbers that are bigger than certain threshold
                 // changing the value to string resolves the problem
-                amount: (dollarPrice + 1000) + '',
+                amount: amountToSend,
                 type: AssetType.Native,
             })
 

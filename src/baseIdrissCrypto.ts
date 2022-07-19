@@ -99,15 +99,22 @@ export abstract class BaseIdrissCrypto {
         }
     }
 
-    public async transferToIDriss(beneficiary: string, tag: string, asset: AssetLiability) {
-        const cleanedTag = tag.trim()
-        const transformedBeneficiary = this.transformIdentifier(beneficiary)
+    public async transferToIDriss(
+        beneficiary: string,
+        walletType: Required<ResolveOptions>,
+        asset: AssetLiability
+    ):Promise<TransactionReceipt> {
+        const walletTags = BaseIdrissCrypto.getWalletTags()
+        const cleanedTag = walletTags[walletType.network!][walletType.coin!][walletType.walletTag!.trim()]
+        const transformedBeneficiary = await this.transformIdentifier(beneficiary)
         const hash = await this.digestMessage(transformedBeneficiary + cleanedTag)
         const resolvedIDriss = await this.resolve(beneficiary)
         let result: TransactionReceipt
 
-        if (resolvedIDriss && resolvedIDriss[cleanedTag] && resolvedIDriss[cleanedTag].length > 0) {
-            result = await this.sendAsset(resolvedIDriss[cleanedTag], asset)
+        if (resolvedIDriss
+            && resolvedIDriss[walletType.walletTag!]
+            && resolvedIDriss[walletType.walletTag!].length > 0) {
+            result = await this.sendAsset(resolvedIDriss[walletType.walletTag!], asset)
         } else {
             //TODO: check and ask for allowance
             result = await this.callWeb3SendToAnyone(hash, asset)
