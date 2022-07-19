@@ -1,5 +1,6 @@
 import Web3 from "web3";
 import {AbiItem} from "web3-utils";
+import {TransactionReceipt} from "web3-core";
 
 import {WebApi} from "./webApi";
 import {ResolveOptions} from "./types/resolveOptions";
@@ -14,12 +15,13 @@ import { AssetType } from "./types/assetType";
 import { ConnectionOptions } from "./types/connectionOptions";
 
 export abstract class BaseIdrissCrypto {
-    private web3Promise:Promise<Web3>;
+    protected web3Promise:Promise<Web3>;
     private webApi:WebApi;
     private idrissRegistryContractPromise;
     private idrissReverseMappingContractPromise;
     private idrissSendToAnyoneContractPromise;
     private priceOracleContractPromise;
+    protected ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
     protected IDRISS_REGISTRY_CONTRACT_ADDRESS = '0x2EcCb53ca2d4ef91A79213FDDF3f8c2332c2a814';
     protected IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS = '0x561f1b5145897A52A6E94E4dDD4a29Ea5dFF6f64';
     protected PRICE_ORACLE_CONTRACT_ADDRESS = '0xAB594600376Ec9fD91F8e885dADF0CE036862dE0';
@@ -102,31 +104,61 @@ export abstract class BaseIdrissCrypto {
         const transformedBeneficiary = this.transformIdentifier(beneficiary)
         const hash = await this.digestMessage(transformedBeneficiary + cleanedTag)
         const resolvedIDriss = await this.resolve(beneficiary)
-        let result
+        const resolvedIDrissTagged = resolvedIDriss[cleanedTag]
+        let result: boolean
 
-        if (resolvedIDriss && resolvedIDriss[cleanedTag] && resolvedIDriss[cleanedTag].length > 0) {
-            switch (asset.type) {
-                case AssetType.Native:
-                    
-                    break;
-                case AssetType.ERC20:
-                    
-                    break;
-                case AssetType.ERC721:
-                    
-                    break;
-                default:
-                    throw new Error("Unsupported asset type.");
-            }
-            result = await 1 //TODO: send directly
-            console.log("direct")
+        if (resolvedIDriss && resolvedIDrissTagged && resolvedIDrissTagged.length > 0) {
+            result = await this.sendAsset(resolvedIDrissTagged, asset)
         } else {
-            //TODO: check allowance
+            //TODO: check and ask for allowance
             result = await this.callWeb3SendToAnyone(hash, asset)
         }
 
         return result
     }
+
+    protected async sendAsset(beneficiaryAddress: string, asset: AssetLiability): Promise<boolean> {
+        const connectedAccount = await this.getConnectedAccount()
+        let transactionStatus: TransactionReceipt
+
+        switch (asset.type) {
+            case AssetType.Native:
+                transactionStatus = await (await this.web3Promise).eth.sendTransaction({
+                    from: connectedAccount,
+                    to: beneficiaryAddress,
+                    value: asset.amount
+                });
+                break;
+
+            case AssetType.ERC20:
+                transactionStatus = await this.generateERC20Contract(asset.assetContractAddress!)
+                    .then(contract => {
+                        return contract.methods
+                            .transfer(beneficiaryAddress, asset.amount)
+                            .send({
+                                from: connectedAccount
+                            })
+                    })
+                break;
+
+            case AssetType.ERC721:
+                transactionStatus = await this.generateERC721Contract(asset.assetContractAddress!)
+                    .then(contract => {
+                        return contract.methods
+                            .safeTransferFrom(connectedAccount, beneficiaryAddress, asset.assetId)
+                            .send({
+                                from: connectedAccount
+                            })
+                    })
+                break;
+
+            default:
+                throw new Error("Unsupported asset type.");
+        }
+
+        return transactionStatus.status
+    }
+
 
     protected async transformIdentifier(input: string): Promise<string> {
         let identifier = this.lowerFirst(input).replace(" ", "");
@@ -202,10 +234,10 @@ export abstract class BaseIdrissCrypto {
         const maticToSend = asset.type === AssetType.Native ? asset.amount : maticPrice
 
         //TODO: make sure that there is allowance for a token
-
         return await (await this.idrissSendToAnyoneContractPromise).methods
-            .sendToAnyone(hash, asset.amount, asset.type.valueOf(), asset.assetContractAddress, asset.assetId)
+            .sendToAnyone(hash, asset.amount, asset.type.valueOf(), asset.assetContractAddress ?? this.ZERO_ADDRESS, asset.assetId ?? 0)
             .send({
+                from: await this.getConnectedAccount(),
                 value: maticToSend
             })
     }
@@ -295,8 +327,9 @@ export abstract class BaseIdrissCrypto {
     }
 
     public async getDollarPriceInWei(): Promise<number> {
-        const currentPriceData = await (await this.priceOracleContractPromise).methods.latestRoundData().call();
-        const priceDecimals = await (await this.priceOracleContractPromise).methods.decimals().call();
+        const contract = (await this.priceOracleContractPromise)
+        const currentPriceData = await contract.methods.latestRoundData().call();
+        const priceDecimals = await contract.methods.decimals().call();
 
         // because the Oracle provides only MATIC price, we calculate the opposite: dollar price in MATIC
         return (Math.pow(10, 18) * Math.pow(10, priceDecimals)) / currentPriceData.answer
