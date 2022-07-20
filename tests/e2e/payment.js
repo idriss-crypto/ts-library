@@ -158,8 +158,12 @@ describe('Payments', () => {
             const dollarPrice = await idrissCryptoLib.getDollarPriceInWei()
             const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
             const testMail = 'nonexisting@idriss.xyz'
-            const testHash = digestMessage(testMail + walletTagHash)
-            const amountToSend = (dollarPrice + 1000) + ''
+            const testHash = await digestMessage(testMail + walletTagHash)
+            const amountToSend = BigNumber.from(dollarPrice).add('159755594')
+
+            //2727550391902622700 - contract
+            //2727550391902623000 - mul
+            //2727550391902622959 - BN
 
             const userBalanceBefore = await sendToHashContract.functions.balanceOf(testHash, 0, idrissCryptoLib.ZERO_ADDRESS)
             const contractBalanceBefore = await web3.eth.getBalance(sendToHashContract.address)
@@ -171,21 +175,24 @@ describe('Payments', () => {
                 type: AssetType.Native,
             })
 
+            const transaction = await web3.eth.getTransaction(result.transactionHash)
+
             const userBalanceAfter = await sendToHashContract.functions.balanceOf(testHash, 0, idrissCryptoLib.ZERO_ADDRESS)
             const contractBalanceAfter = await web3.eth.getBalance(sendToHashContract.address)
 
             assert(result.status)
+            assert.equal(transaction.value, amountToSend.toString())
             assert.equal(contractBalanceBefore, 0)
-            assert.equal(contractBalanceAfter, BigNumber.from(amountToSend))
+            assert.equal(contractBalanceAfter, amountToSend)
             assert.equal(userBalanceBefore, 0)
-            assert.equal(userBalanceAfter, BigNumber.from(1000))
-        }).timeout(10000);
+            assert.equal(userBalanceAfter.toString(), '159755594')
+        })
 
         it('is able to send ERC20 to nonexisting IDriss', async () => {
             const dollarPrice = await idrissCryptoLib.getDollarPriceInWei()
             const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
             const testMail = 'nonexisting@idriss.xyz'
-            const testHash = digestMessage(testMail + walletTagHash)
+            const testHash = await digestMessage(testMail + walletTagHash)
             const amountToSend = 50
 
             const userBalanceBefore = await sendToHashContract.functions.balanceOf(testHash, 1, mockTokenContract.address)
@@ -210,7 +217,7 @@ describe('Payments', () => {
             assert.equal(contractBalanceBefore, 0)
             assert.equal(contractBalanceAfter, BigNumber.from(amountToSend))
             assert.equal(ownerBalanceBefore.sub(ownerBalanceAfter), dollarPrice)
-        }).timeout(10000);
+        })
 
         it('is able to send ERC721 to nonexisting IDriss', async () => {
             const dollarPrice = await idrissCryptoLib.getDollarPriceInWei()

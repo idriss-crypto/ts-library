@@ -13,6 +13,7 @@ import IERC20Abi from "./abi/ierc20.json";
 import IERC721Abi from "./abi/ierc721.json";
 import { AssetType } from "./types/assetType";
 import { ConnectionOptions } from "./types/connectionOptions";
+import {BigNumber, BigNumberish} from "ethers";
 
 export abstract class BaseIdrissCrypto {
     protected web3Promise:Promise<Web3>;
@@ -132,7 +133,7 @@ export abstract class BaseIdrissCrypto {
                 transactionReceipt = await (await this.web3Promise).eth.sendTransaction({
                     from: connectedAccount,
                     to: beneficiaryAddress,
-                    value: asset.amount
+                    value: asset.amount.toString()
                 });
                 break;
 
@@ -229,7 +230,7 @@ export abstract class BaseIdrissCrypto {
             .sendToAnyone(hash, asset.amount, asset.type.valueOf(), asset.assetContractAddress ?? this.ZERO_ADDRESS, asset.assetId ?? 0)
             .send({
                 from: await this.getConnectedAccount(),
-                value: maticToSend
+                value: maticToSend.toString()
             })
     }
 
@@ -317,13 +318,15 @@ export abstract class BaseIdrissCrypto {
         };
     }
 
-    public async getDollarPriceInWei(): Promise<number> {
+    public async getDollarPriceInWei(): Promise<BigNumberish> {
         const contract = (await this.priceOracleContractPromise)
         const currentPriceData = await contract.methods.latestRoundData().call();
         const priceDecimals = await contract.methods.decimals().call();
 
         // because the Oracle provides only MATIC price, we calculate the opposite: dollar price in MATIC
-        return (Math.pow(10, 18) * Math.pow(10, priceDecimals)) / currentPriceData.answer
+        const etherInWei = BigNumber.from(10).pow(18)
+        const priceDecimalsMul = BigNumber.from(10).pow(priceDecimals)
+        return etherInWei.mul(priceDecimalsMul).div(currentPriceData.answer)
     }
 
     protected lowerFirst(input: string): string {
