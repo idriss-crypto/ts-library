@@ -1,8 +1,8 @@
+import {TwitterNameResolver} from "./twitterNameResolver";
 import Web3 from "web3";
 import {AbiItem} from "web3-utils";
 import {TransactionReceipt} from "web3-core";
 
-import {WebApi} from "./webApi";
 import {ResolveOptions} from "./types/resolveOptions";
 import { AssetLiability } from "./types/assetLiability";
 import IDrissRegistryAbi from "./abi/idrissRegistry.json";
@@ -17,11 +17,11 @@ import {BigNumber, BigNumberish} from "ethers";
 
 export abstract class BaseIdrissCrypto {
     protected web3Promise:Promise<Web3>;
-    private webApi:WebApi;
     private idrissRegistryContractPromise;
     private idrissReverseMappingContractPromise;
     private idrissSendToAnyoneContractPromise;
     private priceOracleContractPromise;
+    private twitterNameResolver: TwitterNameResolver;
     protected ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
     protected IDRISS_REGISTRY_CONTRACT_ADDRESS = '0x2EcCb53ca2d4ef91A79213FDDF3f8c2332c2a814';
     protected IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS = '0x561f1b5145897A52A6E94E4dDD4a29Ea5dFF6f64';
@@ -40,7 +40,7 @@ export abstract class BaseIdrissCrypto {
             connectionOptions.sendToAnyoneContractAddress : this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS
 
         this.web3Promise = Promise.resolve(web3)
-        this.webApi = new WebApi()
+        this.twitterNameResolver = new TwitterNameResolver()
         this.idrissRegistryContractPromise = this.generateIDrissRegistryContract();
         this.idrissReverseMappingContractPromise = this.generateIDrissReverseMappingContract();
         this.idrissSendToAnyoneContractPromise = this.generateIDrissSendToAnyoneContract();
@@ -59,7 +59,6 @@ export abstract class BaseIdrissCrypto {
 
     public async resolve(input: string, options: ResolveOptions = {}): Promise<{ [index: string]: string }> {
         let identifier = await this.transformIdentifier(input);
-
         let foundMatchesPromises: { [key: string]: Promise<string> } = {}
         for (let [network, coins] of Object.entries(BaseIdrissCrypto.getWalletTags())) {
             if (options.network && network != options.network) continue;
@@ -89,15 +88,6 @@ export abstract class BaseIdrissCrypto {
         }
 
         return foundMatches
-    }
-
-    public async reverseResolve(address: string) {
-        let result = await this.callWeb3ReverseIDriss(address);
-        if (+result) {
-            return ('@' + await this.webApi.reverseTwitterID(result)).toLowerCase();
-        } else {
-            return result;
-        }
     }
 
     //TODO: only polygon is supported
@@ -178,7 +168,7 @@ export abstract class BaseIdrissCrypto {
         } else if (inputType == "phone") {
             identifier = this.convertPhone(identifier)
         } else if (inputType == "twitter") {
-            identifier = await this.webApi.getTwitterID(identifier);
+            identifier = await this.twitterNameResolver.getTwitterID(identifier);
             if (identifier == "Not found")
                 throw new Error("Twitter handle not found.")
         }
@@ -250,7 +240,7 @@ export abstract class BaseIdrissCrypto {
             );
     }
 
-    private static getWalletTags(): { [key: string]: { [key: string]: { [key: string]: string } } } {
+    protected static getWalletTags(): { [key: string]: { [key: string]: { [key: string]: string } } } {
         return {
             evm: {
                 ETH: {
@@ -343,4 +333,13 @@ export abstract class BaseIdrissCrypto {
     protected abstract digestMessage(message: string): Promise<string>
 
     protected abstract getConnectedAccount(): Promise<string>
+
+    public async reverseResolve(address: string) {
+        let result = await this.callWeb3ReverseIDriss(address);
+        if (+result) {
+            return ('@' + await this.twitterNameResolver.reverseTwitterID(result)).toLowerCase();
+        } else {
+            return result;
+        }
+    }
 }
