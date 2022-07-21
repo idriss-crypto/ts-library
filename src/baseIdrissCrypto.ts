@@ -4,15 +4,15 @@ import {AbiItem} from "web3-utils";
 import {TransactionReceipt} from "web3-core";
 
 import {ResolveOptions} from "./types/resolveOptions";
-import { AssetLiability } from "./types/assetLiability";
+import {AssetLiability} from "./types/assetLiability";
 import IDrissRegistryAbi from "./abi/idrissRegistry.json";
 import IDrissReverseMappingAbi from "./abi/idrissReverseMapping.json";
 import IDrissSendToAnyoneAbi from "./abi/idrissSendToAnyone.json";
 import PriceOracleAbi from "./abi/priceOracleV3Aggregator.json";
 import IERC20Abi from "./abi/ierc20.json";
 import IERC721Abi from "./abi/ierc721.json";
-import { AssetType } from "./types/assetType";
-import { ConnectionOptions } from "./types/connectionOptions";
+import {AssetType} from "./types/assetType";
+import {ConnectionOptions} from "./types/connectionOptions";
 import {BigNumber, BigNumberish} from "ethers";
 
 export abstract class BaseIdrissCrypto {
@@ -109,7 +109,6 @@ export abstract class BaseIdrissCrypto {
             && resolvedIDriss[walletType.walletTag!].length > 0) {
             result = await this.sendAsset(resolvedIDriss[walletType.walletTag!], asset)
         } else {
-            //TODO: check and ask for allowance
             result = await this.callWeb3SendToAnyone(hash, asset)
         }
 
@@ -184,7 +183,6 @@ export abstract class BaseIdrissCrypto {
         return await (await this.idrissReverseMappingContractPromise).methods.reverseIDriss(address).call();
     }
 
-
     private async generateIDrissRegistryContract() {
         return new (await this.web3Promise).eth.Contract(
                 IDrissRegistryAbi as AbiItem[],
@@ -216,13 +214,46 @@ export abstract class BaseIdrissCrypto {
     private async callWeb3SendToAnyone(hash: string, asset: AssetLiability):Promise<TransactionReceipt> {
         const maticPrice = await this.getDollarPriceInWei()
         const maticToSend = asset.type === AssetType.Native ? asset.amount : maticPrice
+        const signer = await this.getConnectedAccount()
+        let transactionReceipt: TransactionReceipt | undefined = undefined
 
-        //TODO: make sure that there is allowance for a token
+        if (asset.type === AssetType.ERC20) {
+            transactionReceipt = await this.authorizeERC20ForSendToAnyoneContract(signer, asset)
+        } else if (asset.type === AssetType.ERC721) {
+            transactionReceipt = await this.authorizeERC721ForSendToAnyoneContract(signer, asset)
+        }
+
+        if (transactionReceipt && !transactionReceipt.status) {
+            throw new Error("Setting asset allowance for SendToAnyone contract failed. Please check your token/NFT balance.")
+        }
+
         return await (await this.idrissSendToAnyoneContractPromise).methods
             .sendToAnyone(hash, asset.amount, asset.type.valueOf(), asset.assetContractAddress ?? this.ZERO_ADDRESS, asset.assetId ?? 0)
             .send({
                 from: await this.getConnectedAccount(),
                 value: maticToSend.toString()
+            })
+    }
+
+    private async authorizeERC20ForSendToAnyoneContract (signer: string, asset: AssetLiability): Promise<TransactionReceipt> {
+        return await this.generateERC20Contract(asset.assetContractAddress!)
+            .then(contract => {
+                return contract.methods
+                    .approve(this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS, asset.amount.toString())
+                    .send({
+                        from: signer
+                    })
+            })
+    }
+
+    private async authorizeERC721ForSendToAnyoneContract (signer: string, asset: AssetLiability): Promise<TransactionReceipt> {
+        return await this.generateERC721Contract(asset.assetContractAddress!)
+            .then(contract => {
+                return contract.methods
+                    .approve(this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS, asset.assetId)
+                    .send ({
+                        from: signer
+                    })
             })
     }
 
