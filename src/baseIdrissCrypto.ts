@@ -1,16 +1,16 @@
-import {WebApi} from "./webApi";
+import {TwitterNameResolver} from "./webApi";
 import {ResolveOptions} from "./resolveOptions";
 import Web3 from "web3";
 
 export abstract class BaseIdrissCrypto {
-    private web3Promise:Promise<Web3>;
-    private webApi;
+    private web3Promise: Promise<Web3>;
+    private twitterNameResolver: TwitterNameResolver;
     private contractPromise;
     private contractReversePromise;
 
-    constructor(web3: Web3|Promise<Web3>) {
+    constructor(web3: Web3 | Promise<Web3>) {
         this.web3Promise = Promise.resolve(web3)
-        this.webApi = new WebApi()
+        this.twitterNameResolver = new TwitterNameResolver()
         this.contractPromise = this.generateContract();
         this.contractReversePromise = this.generateContractReverse();
     }
@@ -39,7 +39,7 @@ export abstract class BaseIdrissCrypto {
         }
         if (inputType == "twitter") {
             identifierT = identifier;
-            identifier = await this.webApi.getTwitterID(identifier);
+            identifier = await this.twitterNameResolver.getTwitterID(identifier);
             if (identifier == "Not found")
                 throw new Error("Twitter handle not found.")
         }
@@ -122,7 +122,7 @@ export abstract class BaseIdrissCrypto {
         );
     }
 
-    private static getWalletTags(): { [key: string]: { [key: string]: { [key: string]: string } } } {
+    protected static getWalletTags(): { [key: string]: { [key: string]: { [key: string]: string } } } {
         return {
             evm: {
                 ETH: {
@@ -207,7 +207,7 @@ export abstract class BaseIdrissCrypto {
     public async reverseResolve(address: string) {
         let result = await this.callWeb3Reverse(address);
         if (+result) {
-            return ('@' + await this.webApi.reverseTwitterID(result)).toLowerCase();
+            return ('@' + await this.twitterNameResolver.reverseTwitterID(result)).toLowerCase();
         } else {
             return result;
         }

@@ -1,6 +1,6 @@
 {
   "name": "idriss-crypto",
-  "version": "1.6.0",
+  "version": "1.6.1-beta.6",
   "main": "./lib/index.js",
   "module": "./lib/exnext/index.js",
   "exports": {
@@ -17,6 +17,10 @@
       "require": "./lib/browser.js"
     },
     "./browser": {
+      "import": "./lib/esnext/browser.js",
+      "require": "./lib/browser.js"
+    },
+    "./cjs/browser": {
       "import": "./lib/esnext/browser.js",
       "require": "./lib/browser.js"
     }
