@@ -20,7 +20,9 @@ describe('Payments', () => {
     let idrissContract
     let idrissCryptoLib
     let mockTokenContract
+    let mockToken2Contract
     let mockNFTContract
+    let mockNFT2Contract
     let mockPriceOracleContract
     let ownerAddress
     let signer1Address
@@ -66,12 +68,16 @@ describe('Payments', () => {
 
         sendToHashContract = await hre.ethers.getContractFactoryFromArtifact(SendToHashArtifact).then(contract => contract.deploy(idrissContract.address, mockPriceOracleContract.address))
         mockNFTContract = await hre.ethers.getContractFactoryFromArtifact(MockNFTArtifact).then(contract => contract.deploy())
+        mockNFT2Contract = await hre.ethers.getContractFactoryFromArtifact(MockNFTArtifact).then(contract => contract.deploy())
         mockTokenContract = await hre.ethers.getContractFactoryFromArtifact(MockTokenArtifact).then(contract => contract.deploy())
+        mockToken2Contract = await hre.ethers.getContractFactoryFromArtifact(MockTokenArtifact).then(contract => contract.deploy())
 
         await Promise.all([
             sendToHashContract.deployed(),
             mockNFTContract.deployed(),
+            mockNFT2Contract.deployed(),
             mockTokenContract.deployed(),
+            mockToken2Contract.deployed(),
         ])
 
         testProvider = new HDWalletProvider({
@@ -95,6 +101,8 @@ describe('Payments', () => {
         await mockNFTContract.functions.safeMint(ownerAddress, 0).catch(e => {console.log(e)})
         await mockNFTContract.functions.safeMint(ownerAddress, 1).catch(e => {console.log(e)})
         await mockNFTContract.functions.safeMint(ownerAddress, 2).catch(e => {console.log(e)})
+        await mockToken2Contract.functions.transfer(signer4Address, (await mockToken2Contract.functions.totalSupply()).toString())
+        await mockNFT2Contract.functions.safeMint(signer4Address, 1).catch(e => {console.log(e)})
     });
 
     describe('Price feed', () => {
@@ -161,10 +169,6 @@ describe('Payments', () => {
             const testHash = await digestMessage(testMail + walletTagHash)
             const amountToSend = BigNumber.from(dollarPrice).add('159755594')
 
-            //2727550391902622700 - contract
-            //2727550391902623000 - mul
-            //2727550391902622959 - BN
-
             const userBalanceBefore = await sendToHashContract.functions.balanceOf(testHash, 0, idrissCryptoLib.ZERO_ADDRESS)
             const contractBalanceBefore = await web3.eth.getBalance(sendToHashContract.address)
 
@@ -189,63 +193,87 @@ describe('Payments', () => {
         })
 
         it('is able to send ERC20 to nonexisting IDriss', async () => {
-            const dollarPrice = await idrissCryptoLib.getDollarPriceInWei()
             const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
             const testMail = 'nonexisting@idriss.xyz'
             const testHash = await digestMessage(testMail + walletTagHash)
             const amountToSend = 50
 
             const userBalanceBefore = await sendToHashContract.functions.balanceOf(testHash, 1, mockTokenContract.address)
-            const contractBalanceBefore = await web3.eth.getBalance(sendToHashContract.address)
-            const ownerBalanceBefore = await web3.eth.getBalance(ownerAddress)
+            const contractBalanceBefore = await mockTokenContract.functions.balanceOf(sendToHashContract.address)
 
             const result = await idrissCryptoLib.transferToIDriss(testMail, testWalletType, {
-                // ethers uses BigNumber and rejects normal numbers that are bigger than certain threshold
-                // changing the value to string resolves the problem
                 amount: amountToSend,
                 type: AssetType.ERC20,
                 assetContractAddress: mockTokenContract.address,
             })
 
             const userBalanceAfter = await sendToHashContract.functions.balanceOf(testHash, 1, mockTokenContract.address)
-            const contractBalanceAfter = await web3.eth.getBalance(sendToHashContract.address)
-            const ownerBalanceAfter = await web3.eth.getBalance(ownerAddress)
+            const contractBalanceAfter = await mockTokenContract.functions.balanceOf(sendToHashContract.address)
 
             assert(result.status)
             assert.equal(userBalanceBefore, 0)
-            assert.equal(userBalanceAfter, BigNumber.from(amountToSend))
+            assert.equal(userBalanceAfter.toString(), amountToSend)
             assert.equal(contractBalanceBefore, 0)
-            assert.equal(contractBalanceAfter, BigNumber.from(amountToSend))
-            assert.equal(ownerBalanceBefore.sub(ownerBalanceAfter), dollarPrice)
+            assert.equal(contractBalanceAfter.toString(), amountToSend)
         })
 
         it('is able to send ERC721 to nonexisting IDriss', async () => {
-            const dollarPrice = await idrissCryptoLib.getDollarPriceInWei()
             const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
             const testMail = 'nonexisting@idriss.xyz'
             const testHash = digestMessage(testMail + walletTagHash)
-            const amountToSend = (dollarPrice + 1000) + ''
+            const amountToSend = 1
 
-            const userBalanceBefore = await sendToHashContract.functions.balanceOf(testHash, 0, idrissCryptoLib.ZERO_ADDRESS)
-            const contractBalanceBefore = await web3.eth.getBalance(sendToHashContract.address)
+            const userBalanceBefore = await sendToHashContract.functions.balanceOf(testHash, 2, mockNFTContract.address)
+            const contractBalanceBefore = await mockNFTContract.functions.balanceOf(sendToHashContract.address)
 
             const result = await idrissCryptoLib.transferToIDriss(testMail, testWalletType, {
-                // ethers uses BigNumber and rejects normal numbers that are bigger than certain threshold
-                // changing the value to string resolves the problem
                 amount: amountToSend,
                 type: AssetType.ERC721,
                 assetContractAddress: mockNFTContract.address,
                 assetId: 1
             })
 
-            const userBalanceAfter = await sendToHashContract.functions.balanceOf(testHash, 0, idrissCryptoLib.ZERO_ADDRESS)
-            const contractBalanceAfter = await web3.eth.getBalance(sendToHashContract.address)
+            const userBalanceAfter = await sendToHashContract.functions.balanceOf(testHash, 2, mockNFTContract.address)
+            const contractBalanceAfter = await mockNFTContract.functions.balanceOf(sendToHashContract.address)
 
             assert(result.status)
             assert.equal(userBalanceBefore, 0)
-            assert.equal(userBalanceAfter, BigNumber.from(1000))
+            assert.equal(userBalanceAfter.toString(), 1)
             assert.equal(contractBalanceBefore, 0)
-            assert.equal(contractBalanceAfter, BigNumber.from(amountToSend))
-        }).timeout(10000);
+            assert.equal(contractBalanceAfter.toString(), 1)
+        });
+
+        it('it throws an error if it is unable to set allowance for an ERC20 token', async () => {
+            const testMail = 'nonexisting@idriss.xyz'
+            let error
+            try {
+                await idrissCryptoLib.transferToIDriss(testMail, testWalletType, {
+                    amount: 15,
+                    type: AssetType.ERC20,
+                    assetContractAddress: mockToken2Contract.address,
+                })
+            } catch (e) {
+                error = e
+            }
+
+            assert(error instanceof Error)
+        });
+
+        it('it throws an error if it is unable to set allowance for an ERC721 token', async () => {
+            const testMail = 'nonexisting@idriss.xyz'
+            let error
+            try {
+                await idrissCryptoLib.transferToIDriss(testMail, testWalletType, {
+                    amount: 1,
+                    type: AssetType.ERC721,
+                    assetContractAddress: mockNFT2Contract.address,
+                    assetId: 1
+                })
+            } catch (e) {
+                error = e
+            }
+
+            assert(error instanceof Error)
+        });
     });
 });
