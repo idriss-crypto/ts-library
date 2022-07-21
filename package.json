@@ -1,6 +1,6 @@
 {
   "name": "idriss-crypto",
-  "version": "1.6.1-beta.7",
+  "version": "1.6.1",
   "main": "./lib/index.js",
   "module": "./lib/exnext/index.js",
   "exports": {
@@ -35,7 +35,7 @@
   "dependencies": {
     "@types/node-fetch": "^2.5.12",
     "node-fetch": "^2.6.7",
-    "web3": "^1.6.0"
+    "web3": "^1.7.4"
   },
   "devDependencies": {
     "mocha": "^9.2.0",
