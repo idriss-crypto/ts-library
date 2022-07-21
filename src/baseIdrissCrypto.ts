@@ -1,4 +1,4 @@
-import {TwitterNameResolver} from "./webApi";
+import {TwitterNameResolver} from "./twitterNameResolver";
 import {ResolveOptions} from "./resolveOptions";
 import Web3 from "web3";
 
