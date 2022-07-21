@@ -100,6 +100,8 @@ export abstract class BaseIdrissCrypto {
         }
     }
 
+    //TODO: only polygon is supported
+    //TODO: change CI/CD to run hardhat node
     public async transferToIDriss(
         beneficiary: string,
         walletType: Required<ResolveOptions>,
