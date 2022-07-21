@@ -1,4 +1,4 @@
-import fetch from "node-fetch";
+import {fetchSafe} from "./utils";
 
 export class Authorization {
     static async CreateOTP(tag: string, identifier: string, address: string, secretWord: string | null = null): Promise<CreateOTPResponse> {
@@ -9,7 +9,7 @@ export class Authorization {
         searchParams.push(["address", address]);
         if (secretWord != null)
             searchParams.push(["secretWord", secretWord]);
-        const response = await fetch(url + '?' + searchParams.map(x => encodeURIComponent(x[0]) + '=' + encodeURIComponent(x[1])).join('&'))
+        const response = await fetchSafe(url + '?' + searchParams.map(x => encodeURIComponent(x[0]) + '=' + encodeURIComponent(x[1])).join('&'))
         if (response.status != 200) {
             const responseText = await response.text();
             let message;
@@ -29,7 +29,7 @@ export class Authorization {
         const searchParams = [];
         searchParams.push(["OTP", OTP]);
         searchParams.push(["session_key", sessionKey]);
-        const response = await fetch(url + '?' + searchParams.map(x => encodeURIComponent(x[0]) + '=' + encodeURIComponent(x[1])).join('&'), {
+        const response = await fetchSafe(url + '?' + searchParams.map(x => encodeURIComponent(x[0]) + '=' + encodeURIComponent(x[1])).join('&'), {
             method: 'POST'
         })
         if (response.status != 200) {
@@ -55,7 +55,7 @@ export class Authorization {
         const searchParams = [];
         searchParams.push(["token", token]);
         searchParams.push(["session_key", sessionKey]);
-        const response = await fetch(url + '?' + searchParams.map(x => encodeURIComponent(x[0]) + '=' + encodeURIComponent(x[1])).join('&'), {
+        const response = await fetchSafe(url + '?' + searchParams.map(x => encodeURIComponent(x[0]) + '=' + encodeURIComponent(x[1])).join('&'), {
             method: 'GET'
         })
         if (response.status != 200) {
