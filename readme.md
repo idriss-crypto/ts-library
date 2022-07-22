@@ -15,10 +15,11 @@ The key benefits of integrating IDriss are:
 - Easier deposits into your wallet from crypto exchanges and other wallets
 - (Coming soon) Additional revenue stream for your project
 
-**The library has 3 main functions:**
+**The library has 4 main functions:**
 1. Resolving IDriss names
 2. Reverse Resolving IDriss names
-3. Registering IDriss names inside your app
+3. Sending MATIC/ERC20/ERC721 to existing and nonexistent IDriss users
+4. Registering IDriss names inside your app
 
 **IDriss name - email, phone number or Twitter username*
 
@@ -180,6 +181,64 @@ An example of implementation in the user interface:
 <p align="center">
 <img alt="UI Implementation Example" src="img/reverse_resolving.png"/>
 </p>
+
+## 3. Sending MATIC/ERC20/ERC721 to existing and nonexistent IDriss users
+
+### Send MATIC/ERC20/ERC721 to send assets to both users that have IDriss registered, and to those who are yet to have one
+In case that the user resolves to an address in IDriss registry, asset transfer is performed directly to the user.
+The asset is being send to SendToAnyone smart contract, so that the user can claim it after registering.
+
+Use transferToIDriss
+
+```typescript
+public async transferToIDriss (
+    beneficiary: string,
+    walletType: Required<ResolveOptions>,
+    asset: AssetLiability
+): Promise<TransactionReceipt>
+```
+And in code:
+
+```typescript
+
+const obj = new IdrissCrypto()
+
+const transactionReceipt = await obj.transferToIDriss(
+    "hello@idriss.xyz",
+    {
+        network: "evm",
+        coin: "MATIC",
+        walletTag: "Metamask ETH"
+    },
+    {
+        type: AssetType.ERC20,
+        amount: 150,
+        assetContractAddress: "0x995945Fb74e0f8e345b3f35472c3e07202Eb38Ac"
+    })
+
+console.log(transactionReceipt)
+
+```
+This resolves to TransactionReceipt object, which gives info about the transaction that was performed
+
+You can also call the smart contact directly:
+
+```typescript
+async function loadContractSendToAnyone(web3) {
+    return await new web3.eth.Contract(
+        [{ "inputs": [ { "internalType": "string", "name": "_IDrissHash", "type": "string" }, { "internalType": "uint256", "name": "_amount", "type": "uint256" }, { "internalType": "enum AssetType", "name": "_assetType", "type": "uint8" }, { "internalType": "address", "name": "_assetContractAddress", "type": "address" }, { "internalType": "uint256", "name": "_assetId", "type": "uint256" }], "name": "sendToAnyone", "outputs": [], "stateMutability": "payable", "type": "function"}],
+        "0xTODOchangeme"
+    );
+}
+
+let sendToAnyoneContract = await loadContractSendToAnyone(defaultWeb3);
+reverse = await sendToAnyoneContract.methods
+    .sendToAnyone('idrisshash', 150, ASSET_TYPE_ERC20, '0x995945Fb74e0f8e345b3f35472c3e07202Eb38Ac', 0)
+    .send({
+        from: '0x5559C5Fb84e0f8e34bb3B35b72cAe0770AEb38Ac',
+        value: 1_000_000_000_000_000
+    });
+```
 
 ## 3. Registering IDriss Names Inside Your Project
 
