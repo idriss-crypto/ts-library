@@ -21,8 +21,10 @@ jobs:
           
       - name: E2E tests
         run: |
+          yarn hardhat node > /dev/null &
+          sleep 5
           yarn testE2e
-          
+
       - name: Artifacts
         uses: actions/upload-artifact@v2
         with:

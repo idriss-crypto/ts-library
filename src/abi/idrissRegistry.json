@@ -1,0 +1,21 @@
+[
+   {
+      "inputs": [
+         {
+            "internalType": "string",
+            "name": "hashPub",
+            "type": "string"
+         }
+      ],
+      "name": "getIDriss",
+      "outputs": [
+         {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+         }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+   }
+]
