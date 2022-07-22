@@ -4,7 +4,7 @@ const hre = require("hardhat");
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 
 const { IdrissCrypto } = require("../../lib");
-const { AssetType } = require("../../lib/assetType");
+const { AssetType } = require("../../lib/types/assetType");
 
 const IDrissArtifact = require('../artifacts/tests/contracts/mocks/IDrissRegistryMock.sol/IDriss.json')
 const MaticPriceAggregatorV3MockArtifact = require('../artifacts/tests/contracts/mocks/MaticPriceAggregatorV3Mock.sol/MaticPriceAggregatorV3Mock.json')
