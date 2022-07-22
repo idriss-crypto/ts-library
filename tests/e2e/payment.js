@@ -109,7 +109,7 @@ describe('Payments', () => {
         it('is able to retrieve a price feed', async () => {
             const result = await idrissCryptoLib.getDollarPriceInWei()
             assert(result > 0)
-        }).timeout(1000000);
+        })
     });
 
     describe('Send to existing hash', () => {
