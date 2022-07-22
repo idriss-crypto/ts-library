@@ -21,6 +21,6 @@ jobs:
           
       - name: E2E tests
         run: |
-          yarn hardhat node &
+          yarn hardhat node > /dev/null &
           sleep 5
           yarn testE2e
