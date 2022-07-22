@@ -182,9 +182,9 @@ An example of implementation in the user interface:
 <img alt="UI Implementation Example" src="img/reverse_resolving.png"/>
 </p>
 
-## 3. Sending MATIC/ERC20/ERC721 to existing and nonexistent IDriss users
+## 3. Sending MATIC/ERC20/ERC721 to existing and nonexistent IDriss users on Polygon
 
-### Send MATIC/ERC20/ERC721 to send assets to both users that have IDriss registered, and to those who are yet to have one
+### Send MATIC/ERC20/ERC721 to send assets to both users that have IDriss registered, and to those who are yet to have one on Polygon chain
 In case that the user resolves to an address in IDriss registry, asset transfer is performed directly to the user.
 The asset is being send to SendToAnyone smart contract, so that the user can claim it after registering.
 

@@ -128,15 +128,15 @@ describe('Payments', () => {
         })
 
         it('is able to send ERC20 to existing IDriss', async () => {
-            const balanceBefore = await mockTokenContract.functions.balanceOf(signer1Address)
+            const balanceBefore = await mockTokenContract.functions.balanceOf(signer2Address)
 
-            const result = await idrissCryptoLib.transferToIDriss('hello@idriss.xyz', testWalletType, {
+            const result = await idrissCryptoLib.transferToIDriss('+16506655942', {...testWalletType, walletTag: "Coinbase ETH"}, {
                 amount: 1000,
                 type: AssetType.ERC20,
                 assetContractAddress: mockTokenContract.address
             })
 
-            const balanceAfter = await mockTokenContract.functions.balanceOf(signer1Address)
+            const balanceAfter = await mockTokenContract.functions.balanceOf(signer2Address)
 
             assert(result.status)
             assert.equal(balanceAfter - balanceBefore, 1000)
@@ -264,6 +264,23 @@ describe('Payments', () => {
             let error
             try {
                 await idrissCryptoLib.transferToIDriss(testMail, testWalletType, {
+                    amount: 1,
+                    type: AssetType.ERC721,
+                    assetContractAddress: mockNFT2Contract.address,
+                    assetId: 1
+                })
+            } catch (e) {
+                error = e
+            }
+
+            assert(error instanceof Error)
+        });
+
+        it('it throws an error if non-evm network is passed in wallet', async () => {
+            const testMail = 'nonexisting@idriss.xyz'
+            let error
+            try {
+                await idrissCryptoLib.transferToIDriss(testMail, {...testWalletType, network: 'sol'}, {
                     amount: 1,
                     type: AssetType.ERC721,
                     assetContractAddress: mockNFT2Contract.address,

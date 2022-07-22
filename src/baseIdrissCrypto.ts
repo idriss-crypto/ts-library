@@ -90,13 +90,15 @@ export abstract class BaseIdrissCrypto {
         return foundMatches
     }
 
-    //TODO: only polygon is supported
-    //TODO: change CI/CD to run hardhat node
     public async transferToIDriss(
         beneficiary: string,
         walletType: Required<ResolveOptions>,
         asset: AssetLiability
     ):Promise<TransactionReceipt> {
+        if (walletType.network !== 'evm') {
+            throw new Error('Only transfers on Polygon are supported at the moment')
+        }
+
         const walletTags = BaseIdrissCrypto.getWalletTags()
         const cleanedTag = walletTags[walletType.network!][walletType.coin!][walletType.walletTag!.trim()]
         const transformedBeneficiary = await this.transformIdentifier(beneficiary)
