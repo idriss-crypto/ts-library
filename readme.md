@@ -92,9 +92,16 @@ And in code:
 ```javascript
 import {IdrissCrypto, Authorization} from "idriss-crypto/browser";
 ```
-## webpage without webpack
+## Webpage without webpack
+If using ES6 modules, you can import library
+```js
+import {IdrissCrypto, Authorization} from "https://unpkg.com/idriss-crypto/lib/bundle/modules.js"
+```
+
+If not, you can simply load js file in html
+
 ```html
-<script src="https://unpkg.com/browse/idriss-crypto/lib/bundle/bundle.js"></script>
+<script src="https://unpkg.com/idriss-crypto/lib/bundle/global.js"></script>
 ```
 then the objects are available as global variables under IdrissCrypto, for example
 ```js
