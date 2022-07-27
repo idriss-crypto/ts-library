@@ -1,6 +1,6 @@
 {
   "name": "idriss-crypto",
-  "version": "1.6.4",
+  "version": "1.6.5",
   "main": "./lib/index.js",
   "module": "./lib/exnext/index.js",
   "exports": {
@@ -28,7 +28,7 @@
   "author": "IDriss.xyz",
   "license": "MIT",
   "scripts": {
-    "build": "tsc -d --declarationDir lib --module commonjs && tsc -d --declarationDir lib/esnext --outDir lib/esnext --module es2020 && webpack",
+    "build": "tsc -d --declarationDir lib --module commonjs && tsc -d --declarationDir lib/esnext --outDir lib/esnext --module es2020 && webpack --env m=1  && webpack --env m=2",
     "buildDev": "tsc -d --declarationDir lib --watch",
     "testE2e": "mocha tests/e2e"
   },
