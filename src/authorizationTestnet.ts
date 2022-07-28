@@ -1,8 +1,8 @@
 import fetch from "node-fetch";
 
-export class Authorization {
-    static async CreateOTP(tag: string, identifier: string, address: string, secretWord: string | null = null): Promise<CreateOTPResponse> {
-        const url = "https://www.idriss.xyz/v1/createOTP";
+export class AuthorizationTestnet {
+    static async CreateOTP(tag: string, identifier: string, address: string, secretWord: string | null = null): Promise<CreateOTPResponseTestnet> {
+        const url = "https://www.idriss.xyz/v1/createOTP/testnet";
         const searchParams = [];
         searchParams.push(["tag", tag]);
         searchParams.push(["identifier", identifier]);
@@ -21,11 +21,11 @@ export class Authorization {
             throw new Error("IDriss api responded with code " + response.status + " " + response.statusText + "\r\n" + message);
         }
         const decodedResponse = await (response.json());
-        return new CreateOTPResponse(decodedResponse.session_key, decodedResponse.tries_left, decodedResponse.address, decodedResponse.hash, decodedResponse.message, decodedResponse.next_step, decodedResponse.twitter_id, decodedResponse.twitter_msg);
+        return new CreateOTPResponseTestnet(decodedResponse.network, decodedResponse.session_key, decodedResponse.tries_left, decodedResponse.address, decodedResponse.hash, decodedResponse.message, decodedResponse.next_step, decodedResponse.twitter_id, decodedResponse.twitter_msg);
     }
 
-    static async ValidateOTP(OTP: string, sessionKey: string): Promise<ValidateOTPResponse> {
-        const url = "https://www.idriss.xyz/v1/validateOTP";
+    static async ValidateOTP(OTP: string, sessionKey: string): Promise<ValidateOTPResponseTestnet> {
+        const url = "https://www.idriss.xyz/v1/validateOTP/testnet";
         const searchParams = [];
         searchParams.push(["OTP", OTP]);
         searchParams.push(["session_key", sessionKey]);
@@ -41,17 +41,17 @@ export class Authorization {
                 message = responseText;
             }
             if (message == "Validation failed")
-                throw new WrongOTPException("IDriss api responded with code " + response.status + " " + response.statusText + "\r\n" + message);
+                throw new WrongOTPExceptionTestnet("IDriss api responded with code " + response.status + " " + response.statusText + "\r\n" + message);
             else
                 throw new Error("IDriss api responded with code " + response.status + " " + response.statusText + "\r\n" + message);
         }
         const decodedResponse = await (response.json());
-        return new ValidateOTPResponse(decodedResponse.message, decodedResponse.txn_hash);
+        return new ValidateOTPResponseTestnet(decodedResponse.network, decodedResponse.message, decodedResponse.txn_hash);
     }
 
 
-    static async CheckPayment(token: string, sessionKey: string): Promise<ValidateOTPResponse> {
-        const url = "https://www.idriss.xyz/v1/checkPayment";
+    static async CheckPayment(token: string, sessionKey: string): Promise<ValidateOTPResponseTestnet> {
+        const url = "https://www.idriss.xyz/v1/checkPayment/testnet";
         const searchParams = [];
         searchParams.push(["token", token]);
         searchParams.push(["session_key", sessionKey]);
@@ -69,11 +69,12 @@ export class Authorization {
             throw new Error("IDriss api responded with code " + response.status + " " + response.statusText + "\r\n" + message);
         }
         const decodedResponse = await (response.json());
-        return new CheckPaymentResponse(decodedResponse.message, decodedResponse.txn_hash, decodedResponse.session_key, decodedResponse.referralLink);
+        return new CheckPaymentResponseTestnet(decodedResponse.network, decodedResponse.message, decodedResponse.txn_hash, decodedResponse.session_key, decodedResponse.referralLink);
     }
 }
 
-export class CreateOTPResponse {
+export class CreateOTPResponseTestnet {
+    public network: string;
     public sessionKey: string;
     public triesLeft: number;
     public address: string;
@@ -83,7 +84,8 @@ export class CreateOTPResponse {
     public twitterId: string;
     public twitterMsg: string;
 
-    constructor(sessionKey: string, triesLeft: number, address: string, hash: string, message: string, nextStep: string, twitterId: string, twitterMsg: string) {
+    constructor(network: string, sessionKey: string, triesLeft: number, address: string, hash: string, message: string, nextStep: string, twitterId: string, twitterMsg: string) {
+        this.network = network;
         this.sessionKey = sessionKey;
         this.triesLeft = triesLeft;
         this.address = address;
@@ -95,23 +97,27 @@ export class CreateOTPResponse {
     }
 }
 
-export class ValidateOTPResponse {
+export class ValidateOTPResponseTestnet {
+    public network: string;
     public message: string;
     public txnHash: string;
 
-    constructor(message: string, txnHash: string) {
+    constructor(network: string, message: string, txnHash: string) {
+        this.network = network;
         this.message = message;
         this.txnHash = txnHash;
     }
 }
 
-export class CheckPaymentResponse {
+export class CheckPaymentResponseTestnet {
+    public network: string;
     public message: string;
     public txnHash: string;
     public sessionKey: string;
     public referralLink: string;
 
-    constructor(message: string, txnHash: string, sessionKey: string, referralLink: string) {
+    constructor(network: string, message: string, txnHash: string, sessionKey: string, referralLink: string) {
+        this.network = network;
         this.message = message;
         this.txnHash = txnHash;
         this.sessionKey = sessionKey;
@@ -119,7 +125,7 @@ export class CheckPaymentResponse {
     }
 }
 
-export class WrongOTPException extends Error {
+export class WrongOTPExceptionTestnet extends Error {
     constructor(message: string) {
         super(message);
     }
