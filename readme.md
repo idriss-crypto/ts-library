@@ -187,6 +187,7 @@ An example of implementation in the user interface:
 ### Send MATIC/ERC20/ERC721 to send assets to both users that have IDriss registered, and to those who are yet to have one on Polygon chain
 In case that the user resolves to an address in IDriss registry, asset transfer is performed directly to the user.
 The asset is being send to SendToAnyone smart contract, so that the user can claim it after registering.
+Please note that if the smart contract is used, it additionally invokes approve function for the contract to be able to hold it in hte escrow.
 
 Use transferToIDriss
 
@@ -219,7 +220,7 @@ const transactionReceipt = await obj.transferToIDriss(
 console.log(transactionReceipt)
 
 ```
-This resolves to TransactionReceipt object, which gives info about the transaction that was performed
+This resolves to SendToHashTransactionReceipt object, which gives info about the transaction that was performed and if SendToHash smart contract was used, it returns claim password for the user
 
 You can also call the smart contact directly:
 
@@ -231,9 +232,12 @@ async function loadContractSendToAnyone(web3) {
     );
 }
 
+const hashWithPassword = await (await this.idrissSendToAnyoneContractPromise).methods
+    .hashIDrissWithPassword(IDrissHash, claimPassword).call()
+
 let sendToAnyoneContract = await loadContractSendToAnyone(defaultWeb3);
 reverse = await sendToAnyoneContract.methods
-    .sendToAnyone('idrisshash', 150, ASSET_TYPE_ERC20, '0x995945Fb74e0f8e345b3f35472c3e07202Eb38Ac', 0)
+    .sendToAnyone(hashWithPassword, 150, ASSET_TYPE_ERC20, '0x995945Fb74e0f8e345b3f35472c3e07202Eb38Ac', 0)
     .send({
         from: '0x5559C5Fb84e0f8e34bb3B35b72cAe0770AEb38Ac',
         value: 1_000_000_000_000_000

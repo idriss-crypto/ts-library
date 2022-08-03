@@ -14,6 +14,7 @@ import IERC721Abi from "./abi/ierc721.json";
 import {AssetType} from "./types/assetType";
 import {ConnectionOptions} from "./types/connectionOptions";
 import {BigNumber, BigNumberish} from "ethers";
+import {SendToHashTransactionReceipt} from "./types/sendToHashTransactionReceipt";
 
 export abstract class BaseIdrissCrypto {
     protected web3Promise:Promise<Web3>;
@@ -94,7 +95,7 @@ export abstract class BaseIdrissCrypto {
         beneficiary: string,
         walletType: Required<ResolveOptions>,
         asset: AssetLiability
-    ):Promise<TransactionReceipt> {
+    ):Promise<SendToHashTransactionReceipt> {
         if (walletType.network !== 'evm') {
             throw new Error('Only transfers on Polygon are supported at the moment')
         }
@@ -104,12 +105,12 @@ export abstract class BaseIdrissCrypto {
         const transformedBeneficiary = await this.transformIdentifier(beneficiary)
         const hash = await this.digestMessage(transformedBeneficiary + cleanedTag)
         const resolvedIDriss = await this.resolve(beneficiary)
-        let result: TransactionReceipt
+        let result: SendToHashTransactionReceipt
 
         if (resolvedIDriss
             && resolvedIDriss[walletType.walletTag!]
             && resolvedIDriss[walletType.walletTag!].length > 0) {
-            result = await this.sendAsset(resolvedIDriss[walletType.walletTag!], asset)
+            result = {transactionReceipt: await this.sendAsset(resolvedIDriss[walletType.walletTag!], asset)}
         } else {
             result = await this.callWeb3SendToAnyone(hash, asset)
         }
@@ -213,11 +214,12 @@ export abstract class BaseIdrissCrypto {
             );
     }
 
-    private async callWeb3SendToAnyone(hash: string, asset: AssetLiability):Promise<TransactionReceipt> {
+    private async callWeb3SendToAnyone(hash: string, asset: AssetLiability):Promise<SendToHashTransactionReceipt> {
         const maticPrice = await this.getDollarPriceInWei()
         const maticToSend = asset.type === AssetType.Native ? asset.amount : maticPrice
         const signer = await this.getConnectedAccount()
-        let transactionReceipt: TransactionReceipt | undefined = undefined
+        let transactionReceipt: TransactionReceipt
+        const sendToHashContract = await this.idrissSendToAnyoneContractPromise
 
         if (asset.type === AssetType.ERC20) {
             transactionReceipt = await this.authorizeERC20ForSendToAnyoneContract(signer, asset)
@@ -225,16 +227,30 @@ export abstract class BaseIdrissCrypto {
             transactionReceipt = await this.authorizeERC721ForSendToAnyoneContract(signer, asset)
         }
 
+        // @ts-ignore
         if (transactionReceipt && !transactionReceipt.status) {
             throw new Error("Setting asset allowance for SendToAnyone contract failed. Please check your token/NFT balance.")
         }
 
-        return await (await this.idrissSendToAnyoneContractPromise).methods
-            .sendToAnyone(hash, asset.amount, asset.type.valueOf(), asset.assetContractAddress ?? this.ZERO_ADDRESS, asset.assetId ?? 0)
+        const claimPassword = await this.generateClaimPassword()
+        const hashWithPassword = await sendToHashContract.methods.hashIDrissWithPassword(hash, claimPassword).call()
+
+        transactionReceipt = await sendToHashContract.methods
+            .sendToAnyone(hashWithPassword, asset.amount, asset.type.valueOf(),
+                asset.assetContractAddress ?? this.ZERO_ADDRESS, asset.assetId ?? 0)
             .send({
-                from: await this.getConnectedAccount(),
+                from: signer,
                 value: maticToSend.toString()
             })
+
+        return {
+            transactionReceipt,
+            claimPassword
+        }
+    }
+
+    protected async generateClaimPassword(): Promise<string> {
+        return (await this.web3Promise).utils.randomHex(16).slice(2)
     }
 
     private async authorizeERC20ForSendToAnyoneContract (signer: string, asset: AssetLiability): Promise<TransactionReceipt> {

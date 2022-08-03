@@ -123,7 +123,7 @@ describe('Payments', () => {
 
             const balanceAfter = await web3.eth.getBalance(signer1Address)
 
-            assert(result.status)
+            assert(result.transactionReceipt.status)
             assert.equal(BigNumber.from(balanceAfter).sub(BigNumber.from(balanceBefore)), 1000)
         })
 
@@ -138,7 +138,7 @@ describe('Payments', () => {
 
             const balanceAfter = await mockTokenContract.functions.balanceOf(signer2Address)
 
-            assert(result.status)
+            assert(result.transactionReceipt.status)
             assert.equal(balanceAfter - balanceBefore, 1000)
         })
 
@@ -155,7 +155,7 @@ describe('Payments', () => {
 
             const ownerAfter = await mockNFTContract.functions.ownerOf(testNFTid)
 
-            assert(result.status)
+            assert(result.transactionReceipt.status)
             assert.equal(ownerBefore, ownerAddress)
             assert.equal(ownerAfter, signer1Address)
         })
@@ -169,26 +169,25 @@ describe('Payments', () => {
             const testHash = await digestMessage(testMail + walletTagHash)
             const amountToSend = BigNumber.from(dollarPrice).add('159755594')
 
-            const userBalanceBefore = await sendToHashContract.functions.balanceOf(testHash, 0, idrissCryptoLib.ZERO_ADDRESS)
             const contractBalanceBefore = await web3.eth.getBalance(sendToHashContract.address)
 
             const result = await idrissCryptoLib.transferToIDriss(testMail, testWalletType, {
-                // ethers uses BigNumber and rejects normal numbers that are bigger than certain threshold
-                // changing the value to string resolves the problem
                 amount: amountToSend,
                 type: AssetType.Native,
             })
 
-            const transaction = await web3.eth.getTransaction(result.transactionHash)
+            const transaction = await web3.eth.getTransaction(result.transactionReceipt.transactionHash)
+            const hashWithPassword = (await sendToHashContract.functions
+                .hashIDrissWithPassword(testHash, result.claimPassword))[0]
 
-            const userBalanceAfter = await sendToHashContract.functions.balanceOf(testHash, 0, idrissCryptoLib.ZERO_ADDRESS)
+            const userBalanceAfter = await sendToHashContract.functions.balanceOf(hashWithPassword, 0, idrissCryptoLib.ZERO_ADDRESS)
             const contractBalanceAfter = await web3.eth.getBalance(sendToHashContract.address)
 
-            assert(result.status)
+            assert(result.transactionReceipt.status)
+            assert.equal(result.claimPassword.length, 32)
             assert.equal(transaction.value, amountToSend.toString())
             assert.equal(contractBalanceBefore, 0)
             assert.equal(contractBalanceAfter, amountToSend)
-            assert.equal(userBalanceBefore, 0)
             assert.equal(userBalanceAfter.toString(), '159755594')
         })
 
@@ -198,7 +197,6 @@ describe('Payments', () => {
             const testHash = await digestMessage(testMail + walletTagHash)
             const amountToSend = 50
 
-            const userBalanceBefore = await sendToHashContract.functions.balanceOf(testHash, 1, mockTokenContract.address)
             const contractBalanceBefore = await mockTokenContract.functions.balanceOf(sendToHashContract.address)
 
             const result = await idrissCryptoLib.transferToIDriss(testMail, testWalletType, {
@@ -207,11 +205,14 @@ describe('Payments', () => {
                 assetContractAddress: mockTokenContract.address,
             })
 
-            const userBalanceAfter = await sendToHashContract.functions.balanceOf(testHash, 1, mockTokenContract.address)
+            const hashWithPassword = (await sendToHashContract.functions
+                .hashIDrissWithPassword(testHash, result.claimPassword))[0]
+
+            const userBalanceAfter = await sendToHashContract.functions.balanceOf(hashWithPassword, 1, mockTokenContract.address)
             const contractBalanceAfter = await mockTokenContract.functions.balanceOf(sendToHashContract.address)
 
-            assert(result.status)
-            assert.equal(userBalanceBefore, 0)
+            assert(result.transactionReceipt.status)
+            assert.equal(result.claimPassword.length, 32)
             assert.equal(userBalanceAfter.toString(), amountToSend)
             assert.equal(contractBalanceBefore, 0)
             assert.equal(contractBalanceAfter.toString(), amountToSend)
@@ -223,7 +224,6 @@ describe('Payments', () => {
             const testHash = digestMessage(testMail + walletTagHash)
             const amountToSend = 1
 
-            const userBalanceBefore = await sendToHashContract.functions.balanceOf(testHash, 2, mockNFTContract.address)
             const contractBalanceBefore = await mockNFTContract.functions.balanceOf(sendToHashContract.address)
 
             const result = await idrissCryptoLib.transferToIDriss(testMail, testWalletType, {
@@ -233,11 +233,14 @@ describe('Payments', () => {
                 assetId: 1
             })
 
-            const userBalanceAfter = await sendToHashContract.functions.balanceOf(testHash, 2, mockNFTContract.address)
+            const hashWithPassword = (await sendToHashContract.functions
+                .hashIDrissWithPassword(testHash, result.claimPassword))[0]
+
+            const userBalanceAfter = await sendToHashContract.functions.balanceOf(hashWithPassword, 2, mockNFTContract.address)
             const contractBalanceAfter = await mockNFTContract.functions.balanceOf(sendToHashContract.address)
 
-            assert(result.status)
-            assert.equal(userBalanceBefore, 0)
+            assert(result.transactionReceipt.status)
+            assert.equal(result.claimPassword.length, 32)
             assert.equal(userBalanceAfter.toString(), 1)
             assert.equal(contractBalanceBefore, 0)
             assert.equal(contractBalanceAfter.toString(), 1)
