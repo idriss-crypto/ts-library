@@ -12,10 +12,10 @@ import { AssetType } from "../enums/IDrissEnums.sol";
  */
 contract SendToHashReentrancyMock {
     ISendToHash contractToAttack;
-    string hashToPerformAttackOn;
+    bytes32 hashToPerformAttackOn;
     uint256 public reentrancyCounter;
 
-    constructor (address _sendToHashAddress, string memory _hash) {
+    constructor (address _sendToHashAddress, bytes32 _hash) {
         contractToAttack = ISendToHash(_sendToHashAddress);
         hashToPerformAttackOn = _hash;
     }

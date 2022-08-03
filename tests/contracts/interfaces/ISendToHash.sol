@@ -5,7 +5,7 @@ import { AssetType } from "../enums/IDrissEnums.sol";
 
 interface ISendToHash {
     function sendToAnyone (
-        string memory _IDrissHash,
+        bytes32 _IDrissHash,
         uint256 _amount,
         AssetType _assetType,
         address _assetContractAddress,
@@ -14,19 +14,32 @@ interface ISendToHash {
 
     function claim (
         string memory _IDrissHash,
+        string memory _claimPassword,
         AssetType _assetType,
         address _assetContractAddress
     ) external;
 
     function revertPayment (
-        string memory _IDrissHash,
+        bytes32 _IDrissHash,
+        AssetType _assetType,
+        address _assetContractAddress
+    ) external;
+
+    function moveAssetToOtherHash (
+        bytes32 _FromIDrissHash,
+        bytes32 _ToIDrissHash,
         AssetType _assetType,
         address _assetContractAddress
     ) external;
 
     function balanceOf (
-        string memory _IDrissHash,
+        bytes32 _IDrissHash,
         AssetType _assetType,
         address _assetContractAddress
     ) external view returns (uint256);
+
+    function hashIDrissWithPassword (
+        string memory  _IDrissHash,
+        string memory _claimPassword
+    ) external pure returns (bytes32);
 }

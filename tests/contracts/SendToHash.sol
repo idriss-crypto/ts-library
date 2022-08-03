@@ -27,26 +27,30 @@ contract SendToHash is ISendToHash, Ownable, ReentrancyGuard, IERC721Receiver, I
     using SafeCast for int256;
 
     // payer => beneficiaryHash => assetType => assetAddress => AssetLiability
-    mapping(address => mapping(string => mapping(AssetType => mapping(address => AssetLiability)))) payerAssetMap;
+    mapping(address => mapping(bytes32 => mapping(AssetType => mapping(address => AssetLiability)))) payerAssetMap;
     // beneficiaryHash => assetType => assetAddress => AssetLiability
-    mapping(string => mapping(AssetType => mapping(address => AssetLiability))) beneficiaryAssetMap;
+    mapping(bytes32 => mapping(AssetType => mapping(address => AssetLiability))) beneficiaryAssetMap;
     // beneficiaryHash => assetType => assetAddress => payer[]
-    mapping(string => mapping(AssetType => mapping(address => address[]))) beneficiaryPayersArray;
+    mapping(bytes32 => mapping(AssetType => mapping(address => address[]))) beneficiaryPayersArray;
     // beneficiaryHash => assetType => assetAddress => payer => didPay
-    mapping(string => mapping(AssetType => mapping(address => mapping(address => bool)))) beneficiaryPayersMap;
+    mapping(bytes32 => mapping(AssetType => mapping(address => mapping(address => bool)))) beneficiaryPayersMap;
 
     AggregatorV3Interface internal immutable MATIC_USD_PRICE_FEED;
     address public immutable IDRISS_ADDR;
-    uint256 public constant PAYMENT_FEE_PERCENTAGE = 10;
-    uint256 public constant PAYMENT_FEE_PERCENTAGE_DENOMINATOR = 1000;
     uint256 public constant PAYMENT_FEE_SLIPPAGE_PERCENT = 5;
+    uint256 public PAYMENT_FEE_PERCENTAGE = 10;
+    uint256 public PAYMENT_FEE_PERCENTAGE_DENOMINATOR = 1000;
+    uint256 public MINIMAL_PAYMENT_FEE = 1;
+    uint256 public MINIMAL_PAYMENT_FEE_DENOMINATOR = 1;
     uint256 public paymentFeesBalance;
 
-    event AssetTransferred(string indexed toHash, address indexed from,
+    event AssetTransferred(bytes32 indexed toHash, address indexed from,
         address indexed assetContractAddress, uint256 amount);
-    event AssetClaimed(string indexed toHash, address indexed beneficiary,
+    event AssetMoved(bytes32 indexed fromHash, bytes32 indexed toHash,
+        address indexed from, address assetContractAddress);
+    event AssetClaimed(bytes32 indexed toHash, address indexed beneficiary,
         address indexed assetContractAddress, uint256 amount);
-    event AssetTransferReverted(string indexed toHash, address indexed from,
+    event AssetTransferReverted(bytes32 indexed toHash, address indexed from,
         address indexed assetContractAddress, uint256 amount);
 
     constructor( address _IDrissAddr, address _maticUsdAggregator) {
@@ -65,7 +69,7 @@ contract SendToHash is ISendToHash, Ownable, ReentrancyGuard, IERC721Receiver, I
      *      `increaseAllowance` in OpenZeppelin to mitigate risk of race condition and double spend.
      */
     function sendToAnyone (
-        string memory _IDrissHash,
+        bytes32 _IDrissHash,
         uint256 _amount,
         AssetType _assetType,
         address _assetContractAddress,
@@ -73,13 +77,40 @@ contract SendToHash is ISendToHash, Ownable, ReentrancyGuard, IERC721Receiver, I
     ) external override nonReentrant() payable {
         address adjustedAssetAddress = _adjustAddress(_assetContractAddress, _assetType);
         (uint256 fee, uint256 paymentValue) = _splitPayment(msg.value);
+        if (_assetType != AssetType.Coin) { paymentValue = _amount; }
+
+        setStateForSendToAnyone(_IDrissHash, paymentValue, fee, _assetType, _assetContractAddress, _assetId);
+
+        if (_assetType == AssetType.Token) {
+            _sendTokenAssetFrom(paymentValue, msg.sender, address(this), _assetContractAddress);
+        } else if (_assetType == AssetType.NFT) {
+            uint256 [] memory assetIds = new uint[](1);
+            assetIds[0] = _assetId;
+            _sendNFTAsset(assetIds, msg.sender, address(this), _assetContractAddress);
+        }
+
+        emit AssetTransferred(_IDrissHash, msg.sender, adjustedAssetAddress, paymentValue);
+    }
+
+    /**
+     * @notice Sets state for sendToAnyone function invocation
+     */
+    function setStateForSendToAnyone (
+        bytes32 _IDrissHash,
+        uint256 _amount,
+        uint256 _fee,
+        AssetType _assetType,
+        address _assetContractAddress,
+        uint256 _assetId
+    ) internal {
+        address adjustedAssetAddress = _adjustAddress(_assetContractAddress, _assetType);
 
         AssetLiability storage beneficiaryAsset = beneficiaryAssetMap[_IDrissHash][_assetType][adjustedAssetAddress];
         AssetLiability storage payerAsset = payerAssetMap[msg.sender][_IDrissHash][_assetType][adjustedAssetAddress];
 
 
         if (_assetType == AssetType.Coin) {
-            _checkNonZeroValue(paymentValue, "Transferred value has to be bigger than 0");
+            _checkNonZeroValue(_amount, "Transferred value has to be bigger than 0");
         } else {
             _checkNonZeroValue(_amount, "Asset amount has to be bigger than 0");
             _checkNonZeroAddress(_assetContractAddress, "Asset address cannot be 0");
@@ -91,42 +122,36 @@ contract SendToHash is ISendToHash, Ownable, ReentrancyGuard, IERC721Receiver, I
             beneficiaryPayersMap[_IDrissHash][_assetType][adjustedAssetAddress][msg.sender] = true;
         }
 
-        if (_assetType != AssetType.Coin) { paymentValue = _amount; } 
-        beneficiaryAsset.amount += paymentValue;
-        payerAsset.amount += paymentValue;
-        paymentFeesBalance += fee;
-        
-        if (_assetType == AssetType.Token) {
-            _sendTokenAssetFrom(paymentValue, msg.sender, address(this), _assetContractAddress);
-        } else if (_assetType == AssetType.NFT) {
-            uint256 [] memory assetIds = new uint[](1);
-            assetIds[0] = _assetId;
+        if (_assetType == AssetType.NFT) { _amount = 1; }
+        beneficiaryAsset.amount += _amount;
+        payerAsset.amount += _amount;
+        paymentFeesBalance += _fee;
+
+        if (_assetType == AssetType.NFT) {
             beneficiaryAsset.assetIds[msg.sender].push(_assetId);
             payerAsset.assetIds[msg.sender].push(_assetId);
-            _sendNFTAsset(assetIds, msg.sender, address(this), _assetContractAddress);
         }
-
-        emit AssetTransferred(_IDrissHash, msg.sender, adjustedAssetAddress, paymentValue);
     }
 
     /**
      * @notice Calculates value of a fee from sent msg.value
      * @param _value - payment value, taken from msg.value 
-     * @return fee - processing fee, minimum 1$, max 1%, but few percent of slippage is allowed for smaller values
+     * @return fee - processing fee, few percent of slippage is allowed
      * @return value - payment value after substracting fee
      */
     function _splitPayment(uint256 _value) internal view returns (uint256 fee, uint256 value) {
         uint256 dollarPriceInWei = _dollarToWei();
+        uint256 minimalPaymentFee = (dollarPriceInWei * MINIMAL_PAYMENT_FEE) / MINIMAL_PAYMENT_FEE_DENOMINATOR;
         uint256 feeFromValue = (_value * PAYMENT_FEE_PERCENTAGE) / PAYMENT_FEE_PERCENTAGE_DENOMINATOR;
 
-        if (feeFromValue > dollarPriceInWei) {
+        if (feeFromValue > minimalPaymentFee) {
             fee = feeFromValue;
         // we accept slippage of matic price
-        } else if (_value >= dollarPriceInWei * (100 - PAYMENT_FEE_SLIPPAGE_PERCENT) / 100
-                        && _value <= dollarPriceInWei) {
+        } else if (_value >= minimalPaymentFee * (100 - PAYMENT_FEE_SLIPPAGE_PERCENT) / 100
+                        && _value <= minimalPaymentFee) {
             fee = _value;
         } else {
-            fee = dollarPriceInWei;
+            fee = minimalPaymentFee;
         }
 
         require (_value >= fee, "Value sent is smaller than minimal fee.");
@@ -139,13 +164,16 @@ contract SendToHash is ISendToHash, Ownable, ReentrancyGuard, IERC721Receiver, I
      */
     function claim (
         string memory _IDrissHash,
+        string memory _claimPassword,
         AssetType _assetType,
         address _assetContractAddress
     ) external override nonReentrant() {
         address ownerIDrissAddr = _getAddressFromHash(_IDrissHash);
+        bytes32 hashWithPassword = hashIDrissWithPassword(_IDrissHash, _claimPassword);
+
         address adjustedAssetAddress = _adjustAddress(_assetContractAddress, _assetType);
-        AssetLiability storage beneficiaryAsset = beneficiaryAssetMap[_IDrissHash][_assetType][adjustedAssetAddress];
-        address [] memory payers = beneficiaryPayersArray[_IDrissHash][_assetType][adjustedAssetAddress];
+        AssetLiability storage beneficiaryAsset = beneficiaryAssetMap[hashWithPassword][_assetType][adjustedAssetAddress];
+        address [] memory payers = beneficiaryPayersArray[hashWithPassword][_assetType][adjustedAssetAddress];
         uint256 amountToClaim = beneficiaryAsset.amount;
 
         _checkNonZeroValue(amountToClaim, "Nothing to claim.");
@@ -154,10 +182,10 @@ contract SendToHash is ISendToHash, Ownable, ReentrancyGuard, IERC721Receiver, I
         beneficiaryAsset.amount = 0;
 
         for (uint256 i = 0; i < payers.length; i++) {
-            beneficiaryPayersArray[_IDrissHash][_assetType][adjustedAssetAddress].pop();
-            delete payerAssetMap[payers[i]][_IDrissHash][_assetType][adjustedAssetAddress].assetIds[payers[i]];
-            delete payerAssetMap[payers[i]][_IDrissHash][_assetType][adjustedAssetAddress];
-            delete beneficiaryPayersMap[_IDrissHash][_assetType][adjustedAssetAddress][payers[i]];
+            beneficiaryPayersArray[hashWithPassword][_assetType][adjustedAssetAddress].pop();
+            delete payerAssetMap[payers[i]][hashWithPassword][_assetType][adjustedAssetAddress].assetIds[payers[i]];
+            delete payerAssetMap[payers[i]][hashWithPassword][_assetType][adjustedAssetAddress];
+            delete beneficiaryPayersMap[hashWithPassword][_assetType][adjustedAssetAddress][payers[i]];
             if (_assetType == AssetType.NFT) {
                 uint256[] memory assetIds = beneficiaryAsset.assetIds[payers[i]];
                 delete beneficiaryAsset.assetIds[payers[i]];
@@ -165,7 +193,7 @@ contract SendToHash is ISendToHash, Ownable, ReentrancyGuard, IERC721Receiver, I
             }
         }
 
-        delete beneficiaryAssetMap[_IDrissHash][_assetType][adjustedAssetAddress];
+        delete beneficiaryAssetMap[hashWithPassword][_assetType][adjustedAssetAddress];
 
         if (_assetType == AssetType.Coin) {
             _sendCoin(ownerIDrissAddr, amountToClaim);
@@ -173,14 +201,14 @@ contract SendToHash is ISendToHash, Ownable, ReentrancyGuard, IERC721Receiver, I
             _sendTokenAsset(amountToClaim, ownerIDrissAddr, _assetContractAddress);
         }
 
-        emit AssetClaimed(_IDrissHash, ownerIDrissAddr, adjustedAssetAddress, amountToClaim);
+        emit AssetClaimed(hashWithPassword, ownerIDrissAddr, adjustedAssetAddress, amountToClaim);
     }
 
     /**
      * @notice Get balance of given asset for IDrissHash
      */
     function balanceOf (
-        string memory _IDrissHash,
+        bytes32 _IDrissHash,
         AssetType _assetType,
         address _assetContractAddress
     ) external override view returns (uint256) {
@@ -192,13 +220,35 @@ contract SendToHash is ISendToHash, Ownable, ReentrancyGuard, IERC721Receiver, I
      * @notice Reverts sending tokens to an IDriss hash and claim them back
      */
     function revertPayment (
-        string memory _IDrissHash,
+        bytes32 _IDrissHash,
         AssetType _assetType,
         address _assetContractAddress
     ) external override nonReentrant() {
         address adjustedAssetAddress = _adjustAddress(_assetContractAddress, _assetType);
-        uint256 amountToRevert = payerAssetMap[msg.sender][_IDrissHash][_assetType][adjustedAssetAddress].amount;
         uint256[] memory assetIds = beneficiaryAssetMap[_IDrissHash][_assetType][adjustedAssetAddress].assetIds[msg.sender];
+        uint256 amountToRevert = setStateForRevertPayment(_IDrissHash, _assetType, _assetContractAddress);
+
+        if (_assetType == AssetType.Coin) {
+            _sendCoin(msg.sender, amountToRevert);
+        } else if (_assetType == AssetType.Token) {
+            _sendTokenAsset(amountToRevert, msg.sender, _assetContractAddress);
+        } else if (_assetType == AssetType.NFT) {
+            _sendNFTAsset(assetIds, address(this), msg.sender, _assetContractAddress);
+        } 
+
+        emit AssetTransferReverted(_IDrissHash, msg.sender, adjustedAssetAddress, amountToRevert);
+    }
+
+    /**
+     * @notice Sets the state for reverting the payment for a user
+     */
+    function setStateForRevertPayment (
+        bytes32 _IDrissHash,
+        AssetType _assetType,
+        address _assetContractAddress
+    ) internal returns(uint256 amountToRevert) {
+        address adjustedAssetAddress = _adjustAddress(_assetContractAddress, _assetType);
+        amountToRevert = payerAssetMap[msg.sender][_IDrissHash][_assetType][adjustedAssetAddress].amount;
         AssetLiability storage beneficiaryAsset = beneficiaryAssetMap[_IDrissHash][_assetType][adjustedAssetAddress];
 
         _checkNonZeroValue(amountToRevert, "Nothing to revert.");
@@ -220,16 +270,35 @@ contract SendToHash is ISendToHash, Ownable, ReentrancyGuard, IERC721Receiver, I
             }
         }
 
-        if (_assetType == AssetType.Coin) {
-            _sendCoin(msg.sender, amountToRevert);
-        } else if (_assetType == AssetType.Token) {
-            _sendTokenAsset(amountToRevert, msg.sender, _assetContractAddress);
-        } else if (_assetType == AssetType.NFT) {
+        if (_assetType == AssetType.NFT) {
             delete beneficiaryAsset.assetIds[msg.sender];
-            _sendNFTAsset(assetIds, address(this), msg.sender, _assetContractAddress);
-        } 
+        }
+}
 
-        emit AssetTransferReverted(_IDrissHash, msg.sender, adjustedAssetAddress, amountToRevert);
+    /**
+     * @notice This function allows a user to move tokens or coins they already sent to other IDriss
+     */
+    function moveAssetToOtherHash (
+        bytes32 _FromIDrissHash,
+        bytes32 _ToIDrissHash,
+        AssetType _assetType,
+        address _assetContractAddress
+    ) external override nonReentrant() {
+        address adjustedAssetAddress = _adjustAddress(_assetContractAddress, _assetType);
+        uint256[] memory assetIds = beneficiaryAssetMap[_FromIDrissHash][_assetType][adjustedAssetAddress].assetIds[msg.sender];
+        uint256 _amount = setStateForRevertPayment(_FromIDrissHash, _assetType, _assetContractAddress);
+
+        _checkNonZeroValue(_amount, "Nothing to transfer");
+
+        if (_assetType == AssetType.NFT) {
+            for (uint256 i = 0; i < assetIds.length; i++) {
+                setStateForSendToAnyone(_ToIDrissHash, _amount, 0, _assetType, _assetContractAddress, assetIds[i]);
+            }
+        } else {
+            setStateForSendToAnyone(_ToIDrissHash, _amount, 0, _assetType, _assetContractAddress, 0);
+        }
+
+        emit AssetMoved(_FromIDrissHash, _ToIDrissHash, msg.sender, adjustedAssetAddress);
     }
 
     /**
@@ -364,6 +433,43 @@ contract SendToHash is ISendToHash, Ownable, ReentrancyGuard, IERC721Receiver, I
     */
     function _checkNonZeroValue (uint256 _value, string memory message) internal pure {
         require(_value > 0, message);
+    }
+
+    /**
+    * @notice adjust payment fee percentage for big native currenct transfers
+    * @dev Solidity is not good when it comes to handling floats. We use denominator then, 
+    *      e.g. to set payment fee to 1.5% , just pass paymentFee = 15 & denominator = 1000 => 15 / 1000 = 0.015 = 1.5%
+    */
+    function changePaymentFeePercentage (uint256 _paymentFeePercentage, uint256 _paymentFeeDenominator) external onlyOwner {
+        _checkNonZeroValue(_paymentFeePercentage, "Payment fee has to be bigger than 0");
+        _checkNonZeroValue(_paymentFeeDenominator, "Payment fee denominator has to be bigger than 0");
+
+        PAYMENT_FEE_PERCENTAGE = _paymentFeePercentage;
+        PAYMENT_FEE_PERCENTAGE_DENOMINATOR = _paymentFeeDenominator;
+    }
+
+    /**
+    * @notice adjust minimal payment fee for all asset transfers
+    * @dev Solidity is not good when it comes to handling floats. We use denominator then, 
+    *      e.g. to set minimal payment fee to 2.2$ , just pass paymentFee = 22 & denominator = 10 => 22 / 10 = 2.2
+    */
+    function changeMinimalPaymentFee (uint256 _minimalPaymentFee, uint256 _paymentFeeDenominator) external onlyOwner {
+        _checkNonZeroValue(_minimalPaymentFee, "Payment fee has to be bigger than 0");
+        _checkNonZeroValue(_paymentFeeDenominator, "Payment fee denominator has to be bigger than 0");
+
+        MINIMAL_PAYMENT_FEE = _minimalPaymentFee;
+        MINIMAL_PAYMENT_FEE_DENOMINATOR = _paymentFeeDenominator;
+    }
+
+    /**
+    * @notice Get bytes32 hash of IDriss and password. It's used to obfuscate real IDriss that received a payment until the owner claims it.
+    *         Because it's a pure function, it won't be visible in mempool, and it's safe to execute.
+    */
+    function hashIDrissWithPassword (
+        string memory  _IDrissHash,
+        string memory _claimPassword
+    ) public pure override returns (bytes32) {
+        return keccak256(abi.encodePacked(_IDrissHash, _claimPassword));
     }
 
     /*

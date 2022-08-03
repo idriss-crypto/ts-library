@@ -55,7 +55,7 @@ contract SendToHashMock is SendToHash {
 
     function getPayerAssetMapAmount(
         address _payerAddress,
-        string memory _IDrissHash,
+        bytes32 _IDrissHash,
         AssetType _assetType,
         address _assetContractAddress) external view returns (uint256) {
             return payerAssetMap[_payerAddress][_IDrissHash][_assetType][_assetContractAddress].amount;
@@ -63,21 +63,21 @@ contract SendToHashMock is SendToHash {
 
     function getPayerAssetMapAssetIds(
         address _payerAddress,
-        string memory _IDrissHash,
+        bytes32 _IDrissHash,
         AssetType _assetType,
         address _assetContractAddress) external view returns (uint256[] memory) {
             return payerAssetMap[_payerAddress][_IDrissHash][_assetType][_assetContractAddress].assetIds[_payerAddress];
     }
 
     function getBeneficiaryMapAmount(
-        string memory _IDrissHash,
+        bytes32 _IDrissHash,
         AssetType _assetType,
         address _assetContractAddress) external view returns (uint256) {
             return beneficiaryAssetMap[_IDrissHash][_assetType][_assetContractAddress].amount;
     }
 
     function getBeneficiaryMapAssetIds(
-        string memory _IDrissHash,
+        bytes32 _IDrissHash,
         AssetType _assetType,
         address _assetContractAddress,
         address _payerAddress) external view returns (uint256[] memory) {
@@ -85,7 +85,7 @@ contract SendToHashMock is SendToHash {
     }
 
     function getBeneficiaryPayersArray(
-        string memory _IDrissHash,
+        bytes32 _IDrissHash,
         AssetType _assetType,
         address _assetContractAddress) external view returns (address[] memory) {
             return beneficiaryPayersArray[_IDrissHash][_assetType][_assetContractAddress];
@@ -93,7 +93,7 @@ contract SendToHashMock is SendToHash {
 
     function getBeneficiaryPayersMap(
         address _payerAddress,
-        string memory _IDrissHash,
+        bytes32 _IDrissHash,
         AssetType _assetType,
         address _assetContractAddress) external view returns (bool) {
             return beneficiaryPayersMap[_IDrissHash][_assetType][_assetContractAddress][_payerAddress];
