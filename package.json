@@ -1,6 +1,6 @@
 {
   "name": "idriss-crypto",
-  "version": "1.7.0",
+  "version": "1.7.0-experimental",
   "main": "./lib/index.js",
   "module": "./lib/exnext/index.js",
   "exports": {
