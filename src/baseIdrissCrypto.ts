@@ -100,10 +100,7 @@ export abstract class BaseIdrissCrypto {
             throw new Error('Only transfers on Polygon are supported at the moment')
         }
 
-        const walletTags = BaseIdrissCrypto.getWalletTags()
-        const cleanedTag = walletTags[walletType.network!][walletType.coin!][walletType.walletTag!.trim()]
-        const transformedBeneficiary = await this.transformIdentifier(beneficiary)
-        const hash = await this.digestMessage(transformedBeneficiary + cleanedTag)
+        const hash = await this.getUserHash(walletType, beneficiary);
         const resolvedIDriss = await this.resolve(beneficiary)
         let result: SendToHashTransactionReceipt
 
@@ -116,6 +113,32 @@ export abstract class BaseIdrissCrypto {
         }
 
         return result
+    }
+
+    private async getUserHash(walletType: Required<ResolveOptions>, beneficiary: string) {
+        const cleanedTag = this.getWalletTag(walletType);
+        const transformedBeneficiary = await this.transformIdentifier(beneficiary)
+        return await this.digestMessage(transformedBeneficiary + cleanedTag);
+    }
+
+    private getWalletTag(walletType: Required<ResolveOptions>) {
+        const walletTags = BaseIdrissCrypto.getWalletTags()
+        return walletTags[walletType.network!][walletType.coin!][walletType.walletTag!.trim()];
+    }
+
+    public async claim(
+        beneficiary: string,
+        claimPassword: string,
+        walletType: Required<ResolveOptions>,
+        asset: AssetLiability
+    ):Promise<TransactionReceipt> {
+        if (walletType.network !== 'evm') {
+            throw new Error('Only transfers on Polygon are supported at the moment')
+        }
+
+        const hash = await this.getUserHash(walletType, beneficiary);
+
+        return await this.callWeb3ClaimPayment(hash, claimPassword, asset)
     }
 
     protected async sendAsset(beneficiaryAddress: string, asset: AssetLiability): Promise<TransactionReceipt> {
@@ -247,6 +270,24 @@ export abstract class BaseIdrissCrypto {
             transactionReceipt,
             claimPassword
         }
+    }
+
+    private async callWeb3ClaimPayment(hash: string, claimPass: string, asset: AssetLiability):Promise<TransactionReceipt> {
+        const signer = await this.getConnectedAccount()
+        const sendToHashContract = await this.idrissSendToAnyoneContractPromise
+
+        if (asset.type !== AssetType.Native && (!asset.assetContractAddress || asset.assetContractAddress.length === 0)) {
+            throw Error("Invalid asset contract address sent for claiming")
+        }
+
+
+        return await sendToHashContract.methods
+            .claim(hash, claimPass, asset.type.valueOf(), asset.assetContractAddress ?? this.ZERO_ADDRESS)
+            .send({
+                from: signer,
+                //TODO: check on this, should work automatically
+                nonce: await (await this.web3Promise).eth.getTransactionCount(signer)
+            })
     }
 
     protected async generateClaimPassword(): Promise<string> {
