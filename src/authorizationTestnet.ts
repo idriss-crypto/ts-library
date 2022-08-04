@@ -46,11 +46,11 @@ export class AuthorizationTestnet {
                 throw new Error("IDriss api responded with code " + response.status + " " + response.statusText + "\r\n" + message);
         }
         const decodedResponse = await (response.json());
-        return new ValidateOTPResponseTestnet(decodedResponse.network, decodedResponse.message, decodedResponse.txn_hash);
+        return new ValidateOTPResponseTestnet(decodedResponse.message, decodedResponse.session_key, decodedResponse.priceMATIC, decodedResponse.priceETH, decodedResponse.priceBNB, decodedResponse.receiptID, decodedResponse.gas, decodedResponse.network);
     }
 
 
-    static async CheckPayment(token: string, sessionKey: string): Promise<ValidateOTPResponseTestnet> {
+    static async CheckPayment(token: string, sessionKey: string): Promise<CheckPaymentResponseTestnet> {
         const url = "https://www.idriss.xyz/v1/checkPayment/testnet";
         const searchParams = [];
         searchParams.push(["token", token]);
@@ -98,14 +98,24 @@ export class CreateOTPResponseTestnet {
 }
 
 export class ValidateOTPResponseTestnet {
-    public network: string;
     public message: string;
-    public txnHash: string;
+    public session_key: string;
+    public priceMATIC: number;
+    public priceETH: number;
+    public priceBNB: number;
+    public receiptID: string
+    public gas: number;
+    public network: string;
 
-    constructor(network: string, message: string, txnHash: string) {
-        this.network = network;
+    constructor(message: string, session_key: string, priceMATIC: number, priceETH: number, priceBNB: number, receiptID: string, gas: number, network: string) {
         this.message = message;
-        this.txnHash = txnHash;
+        this.session_key = session_key;
+        this.priceMATIC = priceMATIC;
+        this.priceETH = priceETH;
+        this.priceBNB = priceBNB;
+        this.receiptID = receiptID;
+        this.gas = gas;
+        this.network = network;
     }
 }
 

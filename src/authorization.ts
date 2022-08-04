@@ -46,11 +46,11 @@ export class Authorization {
                 throw new Error("IDriss api responded with code " + response.status + " " + response.statusText + "\r\n" + message);
         }
         const decodedResponse = await (response.json());
-        return new ValidateOTPResponse(decodedResponse.message, decodedResponse.txn_hash);
+        return new ValidateOTPResponse(decodedResponse.message, decodedResponse.session_key, decodedResponse.priceMATIC, decodedResponse.priceETH, decodedResponse.priceBNB, decodedResponse.receiptID, decodedResponse.gas);
     }
 
 
-    static async CheckPayment(token: string, sessionKey: string): Promise<ValidateOTPResponse> {
+    static async CheckPayment(token: string, sessionKey: string): Promise<CheckPaymentResponse> {
         const url = "https://www.idriss.xyz/v1/checkPayment";
         const searchParams = [];
         searchParams.push(["token", token]);
@@ -97,11 +97,21 @@ export class CreateOTPResponse {
 
 export class ValidateOTPResponse {
     public message: string;
-    public txnHash: string;
+    public session_key: string;
+    public priceMATIC: number;
+    public priceETH: number;
+    public priceBNB: number;
+    public receiptID: string
+    public gas: number;
 
-    constructor(message: string, txnHash: string) {
+    constructor(message: string, session_key: string, priceMATIC: number, priceETH: number, priceBNB: number, receiptID: string, gas: number) {
         this.message = message;
-        this.txnHash = txnHash;
+        this.session_key = session_key;
+        this.priceMATIC = priceMATIC;
+        this.priceETH = priceETH;
+        this.priceBNB = priceBNB;
+        this.receiptID = receiptID;
+        this.gas = gas;
     }
 }
 
