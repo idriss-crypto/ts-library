@@ -1,4 +1,4 @@
-const {IdrissCrypto, Authorization, CreateOTPResponse, WrongOTPException} = require("../../lib");
+const {IdrissCrypto, Authorization, CreateOTPResponse, WrongOTPException, AuthorizationTestnet, CreateOTPResponseTestnet, WrongOTPExceptionTestnet} = require("../../lib");
 const assert = require('assert');
 const {BaseIdrissCrypto} = require("../../lib/baseIdrissCrypto");
 describe('translating address', () => {
@@ -124,6 +124,51 @@ describe('Authorization', () => {
         let error = null;
         try {
             await Authorization.CheckPayment("MATIC", result.sessionKey)
+        } catch (e) {
+            error = e;
+        }
+        assert(error instanceof Error)
+    }).timeout(10000);
+});
+
+describe('AuthorizationTestnet', () => {
+    it('Twitter Create', async () => {
+        const secretWord = Math.random().toString();
+        const result = await AuthorizationTestnet.CreateOTP("Metamask ETH", "@IDriss_xyz", "0x11E9F9344A9720d2B2B5F0753225bb805161139B", secretWord)
+        assert(result instanceof CreateOTPResponseTestnet);
+        assert(result.triesLeft == 3);
+        assert(result.nextStep == "validateOTP");
+        assert(result.address == "0x11E9F9344A9720d2B2B5F0753225bb805161139B");
+        assert(result.twitterId == "1416199220978089987");
+        assert(result.network == "mumbai");
+        assert(/^[0-9a-fA-F]{64}$/.test(result.hash));
+        assert(result.twitterMsg.includes('#IDriss Verification-ID'));
+
+    }).timeout(10000);
+    it('Wrong OTP', async () => {
+        const secretWord = Math.random().toString();
+        const result = await AuthorizationTestnet.CreateOTP("Metamask ETH", "hello@idriss.xyz", "0x11E9F9344A9720d2B2B5F0753225bb805161139B", secretWord)
+        assert(result instanceof CreateOTPResponseTestnet);
+        assert(result.triesLeft == 3);
+        assert(result.nextStep == "validateOTP");
+        assert(result.address == "0x11E9F9344A9720d2B2B5F0753225bb805161139B");
+        //assert(result.twitterId=="0");
+        assert(/^[0-9a-fA-F]{64}$/.test(result.hash));
+        let error = null;
+        try {
+            await AuthorizationTestnet.ValidateOTP("0", result.sessionKey, secretWord)
+        } catch (e) {
+            error = e;
+        }
+        assert(error instanceof WrongOTPExceptionTestnet)
+    }).timeout(10000);
+    it('Payment error', async () => {
+        const secretWord = Math.random().toString();
+        const result = await AuthorizationTestnet.CreateOTP("Metamask ETH", "hello@idriss.xyz", "0x11E9F9344A9720d2B2B5F0753225bb805161139B", secretWord)
+        assert(result instanceof CreateOTPResponseTestnet);
+        let error = null;
+        try {
+            await AuthorizationTestnet.CheckPayment("MATIC", result.sessionKey)
         } catch (e) {
             error = e;
         }

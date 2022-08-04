@@ -1,3 +1,4 @@
 import {IdrissCrypto} from "./idrissCrypto"
 import {Authorization, CreateOTPResponse, WrongOTPException} from "./authorization"
-export {IdrissCrypto, Authorization, CreateOTPResponse, WrongOTPException};
+import {AuthorizationTestnet, CreateOTPResponseTestnet, WrongOTPExceptionTestnet} from "./authorizationTestnet"
+export {IdrissCrypto, Authorization, CreateOTPResponse, WrongOTPException, AuthorizationTestnet, CreateOTPResponseTestnet, WrongOTPExceptionTestnet};
