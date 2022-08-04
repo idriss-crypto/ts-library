@@ -32,13 +32,7 @@ npm install idriss-crypto
 And in code:
 
 ```javascript
-//for nodejs
 import {IdrissCrypto} from "idriss-crypto";
-//or when using commonJS
-const {IdrissCrypto} = require("idriss-crypto");
-
-//for browser
-import {IdrissCrypto} from "idriss-crypto/lib/browser";
 
 const idriss = new IdrissCrypto();
 const resultEmail = await idriss.resolve("hello@idriss.xyz");
@@ -47,10 +41,10 @@ console.log(resultEmail);
 
 And the output of this is:
 
-```javascript
+```json
 {
-    'Coinbase BTC': 'bc1qsvz5jumwew8haj4czxpzxujqz8z6xq4nxxh7vh',
-    'Metamask ETH': '0x11E9F9344A9720d2B2B5F0753225bb805161139B'
+    "Coinbase BTC": "bc1qsvz5jumwew8haj4czxpzxujqz8z6xq4nxxh7vh",
+    "Metamask ETH": "0x11E9F9344A9720d2B2B5F0753225bb805161139B"
 }
 ```
 
@@ -61,14 +55,14 @@ The same is possible with Twitter usernames:
     console.log(resultTwitter);
 ```
 Resolves to: 
-```javascript
+```json
 {
-    'Metamask ETH': '0x5ABca791C22E7f99237fCC04639E094Ffa0cCce9',
-    'Coinbase ETH': '0x995945Fb74e0f8e345b3f35472c3e07202Eb38Ac',
-    'Argent ETH': '0x4B994A4b85378906B3FE9C5292C749f79c9aD661',
-    'Tally ETH': '0xa1ce10d433bb841cefd82a43f10b6b597538fa1d',
-    'Trust ETH': '0xE297b1E893e7F8849413D8ee7407DB343979A449',
-    'Rainbow ETH': '0xe10A2331Ac5498e7544579167755d6a756786a9F'
+    "Metamask ETH": "0x5ABca791C22E7f99237fCC04639E094Ffa0cCce9",
+    "Coinbase ETH": "0x995945Fb74e0f8e345b3f35472c3e07202Eb38Ac",
+    "Argent ETH": "0x4B994A4b85378906B3FE9C5292C749f79c9aD661",
+    "Tally ETH": "0xa1ce10d433bb841cefd82a43f10b6b597538fa1d",
+    "Trust ETH": "0xE297b1E893e7F8849413D8ee7407DB343979A449",
+    "Rainbow ETH": "0xe10A2331Ac5498e7544579167755d6a756786a9F"
 }
 ```
 
@@ -86,6 +80,54 @@ Resolves to:
     'Phantom SOL': '6GmzRK2qLhBPK2WwYM14EGnxh95jBTsJGXMgFyM3VeVk'
 }
 ```
+# How to load library
+## Webpage with webpack
+```bash
+npm install idriss-crypto
+#or
+yarn add idriss-crypto
+```
+
+And in code:
+
+```javascript
+import {IdrissCrypto, Authorization} from "idriss-crypto/browser";
+```
+## Webpage without webpack
+If using ES6 modules, you can import library
+```js
+import {IdrissCrypto, Authorization} from "https://unpkg.com/idriss-crypto/lib/bundle/modules.js"
+```
+
+If not, you can simply load js file in html
+
+```html
+<script src="https://unpkg.com/idriss-crypto/lib/bundle/global.js"></script>
+```
+then the objects are available as global variables under IdrissCrypto, for example
+```js
+let idriss = new IdrissCrypto.IdrissCrypto();
+IdrissCrypto.Authorization.CreateOTP();
+```
+## node.js
+From cli:
+```bash
+npm install idriss-crypto
+#or
+yarn add idriss-crypto
+```
+
+And in code:
+
+```javascript
+//for nodejs using ES6 modules
+import {IdrissCrypto, Authorization} from "idriss-crypto";
+
+//for nodejs using commonJS
+const {IdrissCrypto, Authorization} = require("idriss-crypto");
+```
+
+Library is designed both for es6 and cjs.
 # Functions
 ## 1. Resolving IDriss Names
 
@@ -95,7 +137,7 @@ Resolves to:
 
 An example of implementation in the user interface:
 
-<p align="center">
+<p style="text-align: center">
 <img alt="UI Implementation Example" src="img/resolving_idriss.png"/>
 </p>
 
