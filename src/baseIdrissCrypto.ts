@@ -15,6 +15,7 @@ import {AssetType} from "./types/assetType";
 import {ConnectionOptions} from "./types/connectionOptions";
 import {BigNumber, BigNumberish} from "ethers";
 import {SendToHashTransactionReceipt} from "./types/sendToHashTransactionReceipt";
+import {TransactionOptions} from "./types/transactionOptions";
 
 export abstract class BaseIdrissCrypto {
     protected web3Promise:Promise<Web3>;
@@ -94,7 +95,8 @@ export abstract class BaseIdrissCrypto {
     public async transferToIDriss(
         beneficiary: string,
         walletType: Required<ResolveOptions>,
-        asset: AssetLiability
+        asset: AssetLiability,
+        transactionOptions: TransactionOptions = {}
     ):Promise<SendToHashTransactionReceipt> {
         if (walletType.network !== 'evm') {
             throw new Error('Only transfers on Polygon are supported at the moment')
@@ -107,9 +109,9 @@ export abstract class BaseIdrissCrypto {
         if (resolvedIDriss
             && resolvedIDriss[walletType.walletTag!]
             && resolvedIDriss[walletType.walletTag!].length > 0) {
-            result = {transactionReceipt: await this.sendAsset(resolvedIDriss[walletType.walletTag!], asset)}
+            result = {transactionReceipt: await this.sendAsset(resolvedIDriss[walletType.walletTag!], asset, transactionOptions)}
         } else {
-            result = await this.callWeb3SendToAnyone(hash, asset)
+            result = await this.callWeb3SendToAnyone(hash, asset, transactionOptions)
         }
 
         return result
@@ -130,7 +132,8 @@ export abstract class BaseIdrissCrypto {
         beneficiary: string,
         claimPassword: string,
         walletType: Required<ResolveOptions>,
-        asset: AssetLiability
+        asset: AssetLiability,
+        transactionOptions: TransactionOptions = {}
     ):Promise<TransactionReceipt> {
         if (walletType.network !== 'evm') {
             throw new Error('Only transfers on Polygon are supported at the moment')
@@ -138,10 +141,10 @@ export abstract class BaseIdrissCrypto {
 
         const hash = await this.getUserHash(walletType, beneficiary);
 
-        return await this.callWeb3ClaimPayment(hash, claimPassword, asset)
+        return await this.callWeb3ClaimPayment(hash, claimPassword, asset, transactionOptions)
     }
 
-    protected async sendAsset(beneficiaryAddress: string, asset: AssetLiability): Promise<TransactionReceipt> {
+    protected async sendAsset(beneficiaryAddress: string, asset: AssetLiability, transactionOptions: TransactionOptions): Promise<TransactionReceipt> {
         const connectedAccount = await this.getConnectedAccount()
         let transactionReceipt: TransactionReceipt
 
@@ -149,6 +152,7 @@ export abstract class BaseIdrissCrypto {
             case AssetType.Native:
                 transactionReceipt = await (await this.web3Promise).eth.sendTransaction({
                     from: connectedAccount,
+                    ...transactionOptions,
                     to: beneficiaryAddress,
                     value: asset.amount.toString()
                 });
@@ -160,7 +164,8 @@ export abstract class BaseIdrissCrypto {
                         return contract.methods
                             .transfer(beneficiaryAddress, asset.amount)
                             .send({
-                                from: connectedAccount
+                                from: connectedAccount,
+                                ...transactionOptions,
                             })
                     })
                 break;
@@ -171,7 +176,8 @@ export abstract class BaseIdrissCrypto {
                         return contract.methods
                             .safeTransferFrom(connectedAccount, beneficiaryAddress, asset.assetId)
                             .send({
-                                from: connectedAccount
+                                from: connectedAccount,
+                                ...transactionOptions,
                             })
                     })
                 break;
@@ -237,7 +243,7 @@ export abstract class BaseIdrissCrypto {
             );
     }
 
-    private async callWeb3SendToAnyone(hash: string, asset: AssetLiability):Promise<SendToHashTransactionReceipt> {
+    private async callWeb3SendToAnyone(hash: string, asset: AssetLiability, transactionOptions:TransactionOptions):Promise<SendToHashTransactionReceipt> {
         const maticPrice = await this.getDollarPriceInWei()
         const maticToSend = asset.type === AssetType.Native ? asset.amount : maticPrice
         const signer = await this.getConnectedAccount()
@@ -263,6 +269,7 @@ export abstract class BaseIdrissCrypto {
                 asset.assetContractAddress ?? this.ZERO_ADDRESS, asset.assetId ?? 0)
             .send({
                 from: signer,
+                ...transactionOptions,
                 value: maticToSend.toString()
             })
 
@@ -272,7 +279,12 @@ export abstract class BaseIdrissCrypto {
         }
     }
 
-    private async callWeb3ClaimPayment(hash: string, claimPass: string, asset: AssetLiability):Promise<TransactionReceipt> {
+    private async callWeb3ClaimPayment(
+        hash: string,
+        claimPass: string,
+        asset: AssetLiability,
+        transactionOptions: TransactionOptions = {}
+        ):Promise<TransactionReceipt> {
         const signer = await this.getConnectedAccount()
         const sendToHashContract = await this.idrissSendToAnyoneContractPromise
 
@@ -285,8 +297,9 @@ export abstract class BaseIdrissCrypto {
             .claim(hash, claimPass, asset.type.valueOf(), asset.assetContractAddress ?? this.ZERO_ADDRESS)
             .send({
                 from: signer,
+                ...transactionOptions,
                 //TODO: check on this, should work automatically
-                nonce: await (await this.web3Promise).eth.getTransactionCount(signer)
+                nonce: await (await this.web3Promise).eth.getTransactionCount(transactionOptions.from ?? signer)
             })
     }
 
