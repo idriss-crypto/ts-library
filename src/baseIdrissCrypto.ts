@@ -1,18 +1,52 @@
 import {TwitterNameResolver} from "./twitterNameResolver";
-import {ResolveOptions} from "./resolveOptions";
 import Web3 from "web3";
+import {AbiItem} from "web3-utils";
+import {TransactionReceipt} from "web3-core";
+
+import {ResolveOptions} from "./types/resolveOptions";
+import {AssetLiability} from "./types/assetLiability";
+import IDrissRegistryAbi from "./abi/idrissRegistry.json";
+import IDrissReverseMappingAbi from "./abi/idrissReverseMapping.json";
+import IDrissSendToAnyoneAbi from "./abi/idrissSendToAnyone.json";
+import PriceOracleAbi from "./abi/priceOracleV3Aggregator.json";
+import IERC20Abi from "./abi/ierc20.json";
+import IERC721Abi from "./abi/ierc721.json";
+import {AssetType} from "./types/assetType";
+import {ConnectionOptions} from "./types/connectionOptions";
+import {BigNumber, BigNumberish} from "ethers";
+import {SendToHashTransactionReceipt} from "./types/sendToHashTransactionReceipt";
+import {TransactionOptions} from "./types/transactionOptions";
 
 export abstract class BaseIdrissCrypto {
-    private web3Promise: Promise<Web3>;
+    protected web3Promise:Promise<Web3>;
+    private idrissRegistryContractPromise;
+    private idrissReverseMappingContractPromise;
+    private idrissSendToAnyoneContractPromise;
+    private priceOracleContractPromise;
     private twitterNameResolver: TwitterNameResolver;
-    private contractPromise;
-    private contractReversePromise;
+    protected ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+    protected IDRISS_REGISTRY_CONTRACT_ADDRESS = '0x2EcCb53ca2d4ef91A79213FDDF3f8c2332c2a814';
+    protected IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS = '0x561f1b5145897A52A6E94E4dDD4a29Ea5dFF6f64';
+    protected PRICE_ORACLE_CONTRACT_ADDRESS = '0xAB594600376Ec9fD91F8e885dADF0CE036862dE0';
+    //TODO: change contract addresses
+    protected IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS = '0xCHANGEME';
 
-    constructor(web3: Web3 | Promise<Web3>) {
+    constructor(web3: Web3|Promise<Web3>, connectionOptions: ConnectionOptions) {
+        this.IDRISS_REGISTRY_CONTRACT_ADDRESS = (typeof connectionOptions.idrissRegistryContractAddress !== 'undefined') ?
+            connectionOptions.idrissRegistryContractAddress : this.IDRISS_REGISTRY_CONTRACT_ADDRESS
+        this.IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS = (typeof connectionOptions.reverseIDrissMappingContractAddress !== 'undefined') ?
+            connectionOptions.reverseIDrissMappingContractAddress : this.IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS
+        this.PRICE_ORACLE_CONTRACT_ADDRESS = (typeof connectionOptions.priceOracleContractAddress !== 'undefined') ?
+            connectionOptions.priceOracleContractAddress : this.PRICE_ORACLE_CONTRACT_ADDRESS
+        this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS = (typeof connectionOptions.sendToAnyoneContractAddress !== 'undefined') ?
+            connectionOptions.sendToAnyoneContractAddress : this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS
+
         this.web3Promise = Promise.resolve(web3)
         this.twitterNameResolver = new TwitterNameResolver()
-        this.contractPromise = this.generateContract();
-        this.contractReversePromise = this.generateContractReverse();
+        this.idrissRegistryContractPromise = this.generateIDrissRegistryContract();
+        this.idrissReverseMappingContractPromise = this.generateIDrissReverseMappingContract();
+        this.idrissSendToAnyoneContractPromise = this.generateIDrissSendToAnyoneContract();
+        this.priceOracleContractPromise = this.generatePriceOracleContract();
     }
 
     public static matchInput(input: string): "phone" | "mail" | "twitter" | null {
@@ -26,24 +60,7 @@ export abstract class BaseIdrissCrypto {
     }
 
     public async resolve(input: string, options: ResolveOptions = {}): Promise<{ [index: string]: string }> {
-
-        let twitterID;
-        let identifierT;
-        let identifier = input;
-        identifier = this.lowerFirst(identifier).replace(" ", "");
-        const inputType = BaseIdrissCrypto.matchInput(input);
-        if (inputType == "phone") {
-            identifier = this.convertPhone(identifier)
-        } else if (inputType === null) {
-            throw new Error("Not a valid input. Input must start with valid phone number, email or @twitter handle.")
-        }
-        if (inputType == "twitter") {
-            identifierT = identifier;
-            identifier = await this.twitterNameResolver.getTwitterID(identifier);
-            if (identifier == "Not found")
-                throw new Error("Twitter handle not found.")
-        }
-
+        let identifier = await this.transformIdentifier(input);
         let foundMatchesPromises: { [key: string]: Promise<string> } = {}
         for (let [network, coins] of Object.entries(BaseIdrissCrypto.getWalletTags())) {
             if (options.network && network != options.network) continue;
@@ -51,7 +68,7 @@ export abstract class BaseIdrissCrypto {
                 if (options.coin && coin != options.coin) continue;
                 for (let [tag, tag_key] of Object.entries(tags)) {
                     if (tag_key) {
-                        foundMatchesPromises[tag] = this.digestMessage(identifier + tag_key).then(digested => this.callWeb3(digested));
+                        foundMatchesPromises[tag] = this.digestMessage(identifier + tag_key).then(digested => this.callWeb3GetIDriss(digested));
                         foundMatchesPromises[tag]
                         foundMatchesPromises[tag].catch(() => {
                         })
@@ -75,51 +92,255 @@ export abstract class BaseIdrissCrypto {
         return foundMatches
     }
 
-    private async callWeb3(encrypted: string) {
-        return await (await this.contractPromise).methods.getIDriss(encrypted).call();
+    public async transferToIDriss(
+        beneficiary: string,
+        walletType: Required<ResolveOptions>,
+        asset: AssetLiability,
+        transactionOptions: TransactionOptions = {}
+    ):Promise<SendToHashTransactionReceipt> {
+        if (walletType.network !== 'evm') {
+            throw new Error('Only transfers on Polygon are supported at the moment')
+        }
+
+        const hash = await this.getUserHash(walletType, beneficiary);
+        const resolvedIDriss = await this.resolve(beneficiary)
+        let result: SendToHashTransactionReceipt
+
+        if (resolvedIDriss
+            && resolvedIDriss[walletType.walletTag!]
+            && resolvedIDriss[walletType.walletTag!].length > 0) {
+            result = {transactionReceipt: await this.sendAsset(resolvedIDriss[walletType.walletTag!], asset, transactionOptions)}
+        } else {
+            result = await this.callWeb3SendToAnyone(hash, asset, transactionOptions)
+        }
+
+        return result
     }
 
-    private async callWeb3Reverse(address: string): Promise<string> {
-        return await (await this.contractReversePromise).methods.reverseIDriss(address).call();
+    private async getUserHash(walletType: Required<ResolveOptions>, beneficiary: string) {
+        const cleanedTag = this.getWalletTag(walletType);
+        const transformedBeneficiary = await this.transformIdentifier(beneficiary)
+        return await this.digestMessage(transformedBeneficiary + cleanedTag);
+    }
+
+    private getWalletTag(walletType: Required<ResolveOptions>) {
+        const walletTags = BaseIdrissCrypto.getWalletTags()
+        return walletTags[walletType.network!][walletType.coin!][walletType.walletTag!.trim()];
+    }
+
+    public async claim(
+        beneficiary: string,
+        claimPassword: string,
+        walletType: Required<ResolveOptions>,
+        asset: AssetLiability,
+        transactionOptions: TransactionOptions = {}
+    ):Promise<TransactionReceipt> {
+        if (walletType.network !== 'evm') {
+            throw new Error('Only transfers on Polygon are supported at the moment')
+        }
+
+        const hash = await this.getUserHash(walletType, beneficiary);
+
+        return await this.callWeb3ClaimPayment(hash, claimPassword, asset, transactionOptions)
+    }
+
+    protected async sendAsset(beneficiaryAddress: string, asset: AssetLiability, transactionOptions: TransactionOptions): Promise<TransactionReceipt> {
+        const connectedAccount = await this.getConnectedAccount()
+        let transactionReceipt: TransactionReceipt
+
+        switch (asset.type) {
+            case AssetType.Native:
+                transactionReceipt = await (await this.web3Promise).eth.sendTransaction({
+                    from: connectedAccount,
+                    ...transactionOptions,
+                    to: beneficiaryAddress,
+                    value: asset.amount.toString()
+                });
+                break;
+
+            case AssetType.ERC20:
+                transactionReceipt = await this.generateERC20Contract(asset.assetContractAddress!)
+                    .then(contract => {
+                        return contract.methods
+                            .transfer(beneficiaryAddress, asset.amount)
+                            .send({
+                                from: connectedAccount,
+                                ...transactionOptions,
+                            })
+                    })
+                break;
+
+            case AssetType.ERC721:
+                transactionReceipt = await this.generateERC721Contract(asset.assetContractAddress!)
+                    .then(contract => {
+                        return contract.methods
+                            .safeTransferFrom(connectedAccount, beneficiaryAddress, asset.assetId)
+                            .send({
+                                from: connectedAccount,
+                                ...transactionOptions,
+                            })
+                    })
+                break;
+
+            default:
+                throw new Error("Unsupported asset type.");
+        }
+
+        return transactionReceipt
     }
 
 
-    private async generateContract() {
+    protected async transformIdentifier(input: string): Promise<string> {
+        let identifier = this.lowerFirst(input).replace(" ", "");
+        const inputType = BaseIdrissCrypto.matchInput(input);
+
+        if (inputType === null) {
+            throw new Error("Not a valid input. Input must start with valid phone number, email or @twitter handle.")
+        } else if (inputType == "phone") {
+            identifier = this.convertPhone(identifier)
+        } else if (inputType == "twitter") {
+            identifier = await this.twitterNameResolver.getTwitterID(identifier);
+            if (identifier == "Not found")
+                throw new Error("Twitter handle not found.")
+        }
+
+        return identifier
+    }
+
+    private async callWeb3GetIDriss(encrypted: string) {
+        return await (await this.idrissRegistryContractPromise).methods.getIDriss(encrypted).call();
+    }
+
+    private async callWeb3ReverseIDriss(address: string): Promise<string> {
+        return await (await this.idrissReverseMappingContractPromise).methods.reverseIDriss(address).call();
+    }
+
+    private async generateIDrissRegistryContract() {
         return new (await this.web3Promise).eth.Contract(
-            [
-                {
-                    "inputs": [
-                        {
-                            "internalType": "string",
-                            "name": "hashPub",
-                            "type": "string"
-                        }
-                    ],
-                    "name": "getIDriss",
-                    "outputs": [
-                        {
-                            "internalType": "string",
-                            "name": "",
-                            "type": "string"
-                        }
-                    ],
-                    "stateMutability": "view",
-                    "type": "function"
-                }
-            ]
-            , '0x2EcCb53ca2d4ef91A79213FDDF3f8c2332c2a814');
+                IDrissRegistryAbi as AbiItem[],
+                this.IDRISS_REGISTRY_CONTRACT_ADDRESS
+            );
     }
 
-    private async generateContractReverse() {
-        return new (await this.web3Promise).eth.Contract([{
-                "inputs": [{"internalType": "address", "name": "", "type": "address"}],
-                "name": "reverseIDriss",
-                "outputs": [{"internalType": "string", "name": "", "type": "string"}],
-                "stateMutability": "view",
-                "type": "function"
-            }],
-            "0x561f1b5145897A52A6E94E4dDD4a29Ea5dFF6f64"
-        );
+    private async generateIDrissReverseMappingContract() {
+        return new (await this.web3Promise).eth.Contract(
+                IDrissReverseMappingAbi as AbiItem[],
+                this.IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS
+            );
+    }
+
+    private async generateERC20Contract(contractAddress: string) {
+        return new (await this.web3Promise).eth.Contract(
+                IERC20Abi as AbiItem[],
+                contractAddress
+            );
+    }
+
+    private async generateERC721Contract(contractAddress: string) {
+        return new (await this.web3Promise).eth.Contract(
+                IERC721Abi as AbiItem[],
+                contractAddress
+            );
+    }
+
+    private async callWeb3SendToAnyone(hash: string, asset: AssetLiability, transactionOptions:TransactionOptions):Promise<SendToHashTransactionReceipt> {
+        const maticPrice = await this.getDollarPriceInWei()
+        const maticToSend = asset.type === AssetType.Native ? asset.amount : maticPrice
+        const signer = await this.getConnectedAccount()
+        let transactionReceipt: TransactionReceipt
+        const sendToHashContract = await this.idrissSendToAnyoneContractPromise
+
+        if (asset.type === AssetType.ERC20) {
+            transactionReceipt = await this.authorizeERC20ForSendToAnyoneContract(signer, asset)
+        } else if (asset.type === AssetType.ERC721) {
+            transactionReceipt = await this.authorizeERC721ForSendToAnyoneContract(signer, asset)
+        }
+
+        // @ts-ignore
+        if (transactionReceipt && !transactionReceipt.status) {
+            throw new Error("Setting asset allowance for SendToAnyone contract failed. Please check your token/NFT balance.")
+        }
+
+        const claimPassword = await this.generateClaimPassword()
+        const hashWithPassword = await sendToHashContract.methods.hashIDrissWithPassword(hash, claimPassword).call()
+
+        transactionReceipt = await sendToHashContract.methods
+            .sendToAnyone(hashWithPassword, asset.amount, asset.type.valueOf(),
+                asset.assetContractAddress ?? this.ZERO_ADDRESS, asset.assetId ?? 0)
+            .send({
+                from: signer,
+                ...transactionOptions,
+                value: maticToSend.toString()
+            })
+
+        return {
+            transactionReceipt,
+            claimPassword
+        }
+    }
+
+    private async callWeb3ClaimPayment(
+        hash: string,
+        claimPass: string,
+        asset: AssetLiability,
+        transactionOptions: TransactionOptions = {}
+        ):Promise<TransactionReceipt> {
+        const signer = await this.getConnectedAccount()
+        const sendToHashContract = await this.idrissSendToAnyoneContractPromise
+
+        if (asset.type !== AssetType.Native && (!asset.assetContractAddress || asset.assetContractAddress.length === 0)) {
+            throw Error("Invalid asset contract address sent for claiming")
+        }
+
+
+        return await sendToHashContract.methods
+            .claim(hash, claimPass, asset.type.valueOf(), asset.assetContractAddress ?? this.ZERO_ADDRESS)
+            .send({
+                from: signer,
+                ...transactionOptions,
+                //TODO: check on this, should work automatically
+                nonce: await (await this.web3Promise).eth.getTransactionCount(transactionOptions.from ?? signer)
+            })
+    }
+
+    protected async generateClaimPassword(): Promise<string> {
+        return (await this.web3Promise).utils.randomHex(16).slice(2)
+    }
+
+    private async authorizeERC20ForSendToAnyoneContract (signer: string, asset: AssetLiability): Promise<TransactionReceipt> {
+        return await this.generateERC20Contract(asset.assetContractAddress!)
+            .then(contract => {
+                return contract.methods
+                    .approve(this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS, asset.amount.toString())
+                    .send({
+                        from: signer
+                    })
+            })
+    }
+
+    private async authorizeERC721ForSendToAnyoneContract (signer: string, asset: AssetLiability): Promise<TransactionReceipt> {
+        return await this.generateERC721Contract(asset.assetContractAddress!)
+            .then(contract => {
+                return contract.methods
+                    .approve(this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS, asset.assetId)
+                    .send ({
+                        from: signer
+                    })
+            })
+    }
+
+    private async generateIDrissSendToAnyoneContract() {
+        return new (await this.web3Promise).eth.Contract(
+                IDrissSendToAnyoneAbi as AbiItem[],
+                this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS
+            );
+    }
+
+    private async generatePriceOracleContract() {
+        return new (await this.web3Promise).eth.Contract(
+                PriceOracleAbi as AbiItem[],
+                this.PRICE_ORACLE_CONTRACT_ADDRESS
+            );
     }
 
     protected static getWalletTags(): { [key: string]: { [key: string]: { [key: string]: string } } } {
@@ -192,20 +413,32 @@ export abstract class BaseIdrissCrypto {
         };
     }
 
+    public async getDollarPriceInWei(): Promise<BigNumberish> {
+        const contract = (await this.priceOracleContractPromise)
+        const currentPriceData = await contract.methods.latestRoundData().call();
+        const priceDecimals = await contract.methods.decimals().call();
 
-    private lowerFirst(input: string): string {
+        // because the Oracle provides only MATIC price, we calculate the opposite: dollar price in MATIC
+        const etherInWei = BigNumber.from(10).pow(18)
+        const priceDecimalsMul = BigNumber.from(10).pow(priceDecimals)
+        return etherInWei.mul(priceDecimalsMul).div(currentPriceData.answer)
+    }
+
+    protected lowerFirst(input: string): string {
         return input.charAt(0).toLowerCase() + input.slice(1);
     }
 
-    private convertPhone(input: string): string {
+    protected convertPhone(input: string): string {
         // allow for letters because secret word can follow phone number
         return "+" + input.replace(/[^\da-zA-Z]/, "")
     }
 
     protected abstract digestMessage(message: string): Promise<string>
 
+    protected abstract getConnectedAccount(): Promise<string>
+
     public async reverseResolve(address: string) {
-        let result = await this.callWeb3Reverse(address);
+        let result = await this.callWeb3ReverseIDriss(address);
         if (+result) {
             return ('@' + await this.twitterNameResolver.reverseTwitterID(result)).toLowerCase();
         } else {
