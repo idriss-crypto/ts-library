@@ -44,4 +44,5 @@ export class IdrissCrypto extends BaseIdrissCrypto {
 
 import {Authorization, CreateOTPResponse, WrongOTPException} from "./authorization"
 import {AuthorizationTestnet, CreateOTPResponseTestnet, WrongOTPExceptionTestnet} from "./authorizationTestnet"
+import { ConnectionOptions } from "./types/connectionOptions";
 export {Authorization, CreateOTPResponse, WrongOTPException, AuthorizationTestnet, CreateOTPResponseTestnet, WrongOTPExceptionTestnet};
