@@ -371,9 +371,9 @@ describe('Payments', () => {
 
             const resultToken = await idrissCryptoLib.transferToIDriss(testMail, testWalletType, assetToken,
                 {
-                    gasPrice:9999,
+                    gasPrice:8288999,
                 })
-            assert.equal(resultToken.transactionReceipt.effectiveGasPrice, 9999)
+            assert.equal(resultToken.transactionReceipt.effectiveGasPrice, 8288999)
 
             await idrissContract.functions.addIDriss(testHash, signer5Address)
 
