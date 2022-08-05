@@ -243,6 +243,15 @@ export abstract class BaseIdrissCrypto {
             );
     }
 
+    public async getHashForIdentifier(identifier: string, walletType: Required<ResolveOptions>, claimPassword: string): Promise<string> {
+        const hash = await this.getUserHash(walletType, claimPassword)
+        return this.generateHashWithPassword(hash, claimPassword)
+    }
+
+    private async generateHashWithPassword (hash: string, claimPassword: string): Promise<string> {
+        return (await this.idrissSendToAnyoneContractPromise).methods.hashIDrissWithPassword(hash, claimPassword).call()
+    }
+
     private async callWeb3SendToAnyone(hash: string, asset: AssetLiability, transactionOptions:TransactionOptions):Promise<SendToHashTransactionReceipt> {
         const maticPrice = await this.getDollarPriceInWei()
         const maticToSend = asset.type === AssetType.Native ? asset.amount : maticPrice
@@ -262,7 +271,7 @@ export abstract class BaseIdrissCrypto {
         }
 
         const claimPassword = await this.generateClaimPassword()
-        const hashWithPassword = await sendToHashContract.methods.hashIDrissWithPassword(hash, claimPassword).call()
+        const hashWithPassword = await this.generateHashWithPassword(hash, claimPassword)
 
         transactionReceipt = await sendToHashContract.methods
             .sendToAnyone(hashWithPassword, asset.amount, asset.type.valueOf(),
