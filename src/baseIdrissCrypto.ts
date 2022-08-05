@@ -244,7 +244,7 @@ export abstract class BaseIdrissCrypto {
     }
 
     public async getHashForIdentifier(identifier: string, walletType: Required<ResolveOptions>, claimPassword: string): Promise<string> {
-        const hash = await this.getUserHash(walletType, claimPassword)
+        const hash = await this.getUserHash(walletType, identifier)
         return this.generateHashWithPassword(hash, claimPassword)
     }
 
