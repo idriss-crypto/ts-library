@@ -117,7 +117,7 @@ export abstract class BaseIdrissCrypto {
         return result
     }
 
-    private async getUserHash(walletType: Required<ResolveOptions>, beneficiary: string) {
+    public async getUserHash(walletType: Required<ResolveOptions>, beneficiary: string) {
         const cleanedTag = this.getWalletTag(walletType);
         const transformedBeneficiary = await this.transformIdentifier(beneficiary)
         return await this.digestMessage(transformedBeneficiary + cleanedTag);
