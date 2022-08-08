@@ -270,7 +270,7 @@ You can also call the smart contact directly:
 async function loadContractSendToAnyone(web3) {
     return await new web3.eth.Contract(
         [{ "inputs": [ { "internalType": "string", "name": "_IDrissHash", "type": "string" }, { "internalType": "uint256", "name": "_amount", "type": "uint256" }, { "internalType": "enum AssetType", "name": "_assetType", "type": "uint8" }, { "internalType": "address", "name": "_assetContractAddress", "type": "address" }, { "internalType": "uint256", "name": "_assetId", "type": "uint256" }], "name": "sendToAnyone", "outputs": [], "stateMutability": "payable", "type": "function"}],
-        "0xTODOchangeme"
+        "0xB1f313dbA7c470fF351e19625dcDCC442d3243C4"
     );
 }
 
