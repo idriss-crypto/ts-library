@@ -96,6 +96,7 @@ export abstract class BaseIdrissCrypto {
         beneficiary: string,
         walletType: Required<ResolveOptions>,
         asset: AssetLiability,
+        message: string,
         transactionOptions: TransactionOptions = {}
     ):Promise<SendToHashTransactionReceipt> {
         if (walletType.network !== 'evm') {
@@ -111,7 +112,7 @@ export abstract class BaseIdrissCrypto {
             && resolvedIDriss[walletType.walletTag!].length > 0) {
             result = {transactionReceipt: await this.sendAsset(resolvedIDriss[walletType.walletTag!], asset, transactionOptions)}
         } else {
-            result = await this.callWeb3SendToAnyone(hash, asset, transactionOptions)
+            result = await this.callWeb3SendToAnyone(hash, asset, message, transactionOptions)
         }
 
         return result
@@ -252,7 +253,8 @@ export abstract class BaseIdrissCrypto {
         return (await this.idrissSendToAnyoneContractPromise).methods.hashIDrissWithPassword(hash, claimPassword).call()
     }
 
-    private async callWeb3SendToAnyone(hash: string, asset: AssetLiability, transactionOptions:TransactionOptions):Promise<SendToHashTransactionReceipt> {
+    private async callWeb3SendToAnyone(hash: string, asset: AssetLiability, message: string, transactionOptions:TransactionOptions):Promise<SendToHashTransactionReceipt> {
+        //TODO: change value calculation in the library
         const maticPrice = await this.getDollarPriceInWei()
         const maticToSend = asset.type === AssetType.Native ? asset.amount : maticPrice
         const signer = await this.getConnectedAccount()
@@ -275,7 +277,7 @@ export abstract class BaseIdrissCrypto {
 
         transactionReceipt = await sendToHashContract.methods
             .sendToAnyone(hashWithPassword, asset.amount, asset.type.valueOf(),
-                asset.assetContractAddress ?? this.ZERO_ADDRESS, asset.assetId ?? 0)
+                asset.assetContractAddress ?? this.ZERO_ADDRESS, asset.assetId ?? 0, message ?? '')
             .send({
                 from: signer,
                 ...transactionOptions,
