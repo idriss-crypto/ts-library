@@ -29,7 +29,7 @@ export abstract class BaseIdrissCrypto {
     protected IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS = '0x561f1b5145897A52A6E94E4dDD4a29Ea5dFF6f64';
     protected PRICE_ORACLE_CONTRACT_ADDRESS = '0xAB594600376Ec9fD91F8e885dADF0CE036862dE0';
     //TODO: change contract addresses
-    protected IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS = '0xCHANGEME';
+    protected IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS = '0xB1f313dbA7c470fF351e19625dcDCC442d3243C4';
 
     constructor(web3: Web3|Promise<Web3>, connectionOptions: ConnectionOptions) {
         this.IDRISS_REGISTRY_CONTRACT_ADDRESS = (typeof connectionOptions.idrissRegistryContractAddress !== 'undefined') ?
