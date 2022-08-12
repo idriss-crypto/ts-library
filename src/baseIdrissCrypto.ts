@@ -29,7 +29,7 @@ export abstract class BaseIdrissCrypto {
     protected IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS = '0x561f1b5145897A52A6E94E4dDD4a29Ea5dFF6f64';
     protected PRICE_ORACLE_CONTRACT_ADDRESS = '0xAB594600376Ec9fD91F8e885dADF0CE036862dE0';
     //TODO: change contract addresses
-    protected IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS = '0xCHANGEME';
+    protected IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS = '0xB1f313dbA7c470fF351e19625dcDCC442d3243C4';
 
     constructor(web3: Web3|Promise<Web3>, connectionOptions: ConnectionOptions) {
         this.IDRISS_REGISTRY_CONTRACT_ADDRESS = (typeof connectionOptions.idrissRegistryContractAddress !== 'undefined') ?
@@ -117,7 +117,7 @@ export abstract class BaseIdrissCrypto {
         return result
     }
 
-    private async getUserHash(walletType: Required<ResolveOptions>, beneficiary: string) {
+    public async getUserHash(walletType: Required<ResolveOptions>, beneficiary: string) {
         const cleanedTag = this.getWalletTag(walletType);
         const transformedBeneficiary = await this.transformIdentifier(beneficiary)
         return await this.digestMessage(transformedBeneficiary + cleanedTag);
@@ -243,6 +243,15 @@ export abstract class BaseIdrissCrypto {
             );
     }
 
+    public async getHashForIdentifier(identifier: string, walletType: Required<ResolveOptions>, claimPassword: string): Promise<string> {
+        const hash = await this.getUserHash(walletType, identifier)
+        return this.generateHashWithPassword(hash, claimPassword)
+    }
+
+    private async generateHashWithPassword (hash: string, claimPassword: string): Promise<string> {
+        return (await this.idrissSendToAnyoneContractPromise).methods.hashIDrissWithPassword(hash, claimPassword).call()
+    }
+
     private async callWeb3SendToAnyone(hash: string, asset: AssetLiability, transactionOptions:TransactionOptions):Promise<SendToHashTransactionReceipt> {
         const maticPrice = await this.getDollarPriceInWei()
         const maticToSend = asset.type === AssetType.Native ? asset.amount : maticPrice
@@ -262,7 +271,7 @@ export abstract class BaseIdrissCrypto {
         }
 
         const claimPassword = await this.generateClaimPassword()
-        const hashWithPassword = await sendToHashContract.methods.hashIDrissWithPassword(hash, claimPassword).call()
+        const hashWithPassword = await this.generateHashWithPassword(hash, claimPassword)
 
         transactionReceipt = await sendToHashContract.methods
             .sendToAnyone(hashWithPassword, asset.amount, asset.type.valueOf(),

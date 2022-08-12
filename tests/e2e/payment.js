@@ -399,4 +399,16 @@ describe('Payments', () => {
             // assert.equal(transaction.value, amountToSend.toString())
         })
     })
+
+    describe('Misc', () => {
+        it('returns the same hash for getHashForIdentifier() when called multiple times', async () => {
+            const testMail = 'nonexisting2@idriss.xyz'
+            const testPassword = 'dfgRH568gDFGHfyk59e567DFGHHNn'
+            const baseHash = await idrissCryptoLib.getHashForIdentifier(testMail, testWalletType, testPassword)
+
+            for (let i = 0; i < 10; i++) {
+                assert.equal(await idrissCryptoLib.getHashForIdentifier(testMail, testWalletType, testPassword), baseHash)
+            }
+        })
+    })
 });
