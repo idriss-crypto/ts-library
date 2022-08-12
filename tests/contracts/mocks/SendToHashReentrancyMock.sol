@@ -54,7 +54,7 @@ contract SendToHashReentrancyMock {
         reentrancyCounter++;
 
         if (reentrancyCounter < 5) {
-            contractToAttack.sendToAnyone{value: 3 * 10**18}(hashToPerformAttackOn, 5, _assetType, address(this), 1);  
+            contractToAttack.sendToAnyone{value: 3 * 10**18}(hashToPerformAttackOn, 5, _assetType, address(this), 1, "");  
         }
     }
 

@@ -45,13 +45,13 @@ contract SendToHash is ISendToHash, Ownable, ReentrancyGuard, IERC721Receiver, I
     uint256 public paymentFeesBalance;
 
     event AssetTransferred(bytes32 indexed toHash, address indexed from,
-        address indexed assetContractAddress, uint256 amount);
+        address indexed assetContractAddress, uint256 amount, AssetType assetType, string message);
     event AssetMoved(bytes32 indexed fromHash, bytes32 indexed toHash,
-        address indexed from, address assetContractAddress);
+        address indexed from, address assetContractAddress, AssetType assetType);
     event AssetClaimed(bytes32 indexed toHash, address indexed beneficiary,
-        address indexed assetContractAddress, uint256 amount);
+        address indexed assetContractAddress, uint256 amount, AssetType assetType);
     event AssetTransferReverted(bytes32 indexed toHash, address indexed from,
-        address indexed assetContractAddress, uint256 amount);
+        address indexed assetContractAddress, uint256 amount, AssetType assetType);
 
     constructor( address _IDrissAddr, address _maticUsdAggregator) {
         _checkNonZeroAddress(_IDrissAddr, "IDriss address cannot be 0");
@@ -73,11 +73,14 @@ contract SendToHash is ISendToHash, Ownable, ReentrancyGuard, IERC721Receiver, I
         uint256 _amount,
         AssetType _assetType,
         address _assetContractAddress,
-        uint256 _assetId
+        uint256 _assetId,
+        string memory _message
     ) external override nonReentrant() payable {
         address adjustedAssetAddress = _adjustAddress(_assetContractAddress, _assetType);
         (uint256 fee, uint256 paymentValue) = _splitPayment(msg.value);
-        if (_assetType != AssetType.Coin) { paymentValue = _amount; }
+        if (_assetType != AssetType.Coin) { fee = msg.value; }
+        if (_assetType == AssetType.Token) { paymentValue = _amount; }
+        if (_assetType == AssetType.NFT) { paymentValue = 1; }
 
         setStateForSendToAnyone(_IDrissHash, paymentValue, fee, _assetType, _assetContractAddress, _assetId);
 
@@ -89,7 +92,7 @@ contract SendToHash is ISendToHash, Ownable, ReentrancyGuard, IERC721Receiver, I
             _sendNFTAsset(assetIds, msg.sender, address(this), _assetContractAddress);
         }
 
-        emit AssetTransferred(_IDrissHash, msg.sender, adjustedAssetAddress, paymentValue);
+        emit AssetTransferred(_IDrissHash, msg.sender, adjustedAssetAddress, paymentValue, _assetType, _message);
     }
 
     /**
@@ -201,7 +204,7 @@ contract SendToHash is ISendToHash, Ownable, ReentrancyGuard, IERC721Receiver, I
             _sendTokenAsset(amountToClaim, ownerIDrissAddr, _assetContractAddress);
         }
 
-        emit AssetClaimed(hashWithPassword, ownerIDrissAddr, adjustedAssetAddress, amountToClaim);
+        emit AssetClaimed(hashWithPassword, ownerIDrissAddr, adjustedAssetAddress, amountToClaim, _assetType);
     }
 
     /**
@@ -236,7 +239,7 @@ contract SendToHash is ISendToHash, Ownable, ReentrancyGuard, IERC721Receiver, I
             _sendNFTAsset(assetIds, address(this), msg.sender, _assetContractAddress);
         } 
 
-        emit AssetTransferReverted(_IDrissHash, msg.sender, adjustedAssetAddress, amountToRevert);
+        emit AssetTransferReverted(_IDrissHash, msg.sender, adjustedAssetAddress, amountToRevert, _assetType);
     }
 
     /**
@@ -298,7 +301,7 @@ contract SendToHash is ISendToHash, Ownable, ReentrancyGuard, IERC721Receiver, I
             setStateForSendToAnyone(_ToIDrissHash, _amount, 0, _assetType, _assetContractAddress, 0);
         }
 
-        emit AssetMoved(_FromIDrissHash, _ToIDrissHash, msg.sender, adjustedAssetAddress);
+        emit AssetMoved(_FromIDrissHash, _ToIDrissHash, msg.sender, adjustedAssetAddress, _assetType);
     }
 
     /**
