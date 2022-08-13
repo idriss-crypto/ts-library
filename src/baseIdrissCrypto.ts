@@ -262,9 +262,9 @@ export abstract class BaseIdrissCrypto {
         const sendToHashContract = await this.idrissSendToAnyoneContractPromise
 
         if (asset.type === AssetType.ERC20) {
-            transactionReceipt = await this.authorizeERC20ForSendToAnyoneContract(signer, asset)
+            transactionReceipt = await this.authorizeERC20ForSendToAnyoneContract(signer, asset, transactionOptions)
         } else if (asset.type === AssetType.ERC721) {
-            transactionReceipt = await this.authorizeERC721ForSendToAnyoneContract(signer, asset)
+            transactionReceipt = await this.authorizeERC721ForSendToAnyoneContract(signer, asset, transactionOptions)
         }
 
         // @ts-ignore
@@ -318,24 +318,32 @@ export abstract class BaseIdrissCrypto {
         return (await this.web3Promise).utils.randomHex(16).slice(2)
     }
 
-    private async authorizeERC20ForSendToAnyoneContract (signer: string, asset: AssetLiability): Promise<TransactionReceipt> {
+    private async authorizeERC20ForSendToAnyoneContract (signer: string, asset: AssetLiability, transactionOptions: TransactionOptions = {}): Promise<TransactionReceipt> {
         return await this.generateERC20Contract(asset.assetContractAddress!)
             .then(contract => {
+                allowance = contract.methods.allowance(signer, this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS).call()
+                if (allowance >= asset.amount) return null
+                let { gas, ...modifiedTransactionOptions } = transactionOptions;
                 return contract.methods
                     .approve(this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS, asset.amount.toString())
                     .send({
-                        from: signer
+                        from: signer,
+                        ...modifiedTransactionOptions
                     })
             })
     }
 
-    private async authorizeERC721ForSendToAnyoneContract (signer: string, asset: AssetLiability): Promise<TransactionReceipt> {
+    private async authorizeERC721ForSendToAnyoneContract (signer: string, asset: AssetLiability, transactionOptions: TransactionOptions = {}): Promise<TransactionReceipt> {
         return await this.generateERC721Contract(asset.assetContractAddress!)
             .then(contract => {
+                approved = contract.methods.getApproved(asset.assetId).call()
+                if (approved == idriss.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS) return null
+                let { gas, ...modifiedTransactionOptions } = transactionOptions;
                 return contract.methods
                     .approve(this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS, asset.assetId)
                     .send ({
-                        from: signer
+                        from: signer,
+                        ...modifiedTransactionOptions
                     })
             })
     }
