@@ -254,9 +254,9 @@ export abstract class BaseIdrissCrypto {
     }
 
     private async callWeb3SendToAnyone(hash: string, asset: AssetLiability, message: string, transactionOptions:TransactionOptions):Promise<SendToHashTransactionReceipt> {
-        //TODO: change value calculation in the library
+        //TODO: change value calculation in the library & possibly change ethers BigNumber to web3js BN
         const maticPrice = await this.getDollarPriceInWei()
-        const maticToSend = asset.type === AssetType.Native ? asset.amount : maticPrice
+        const maticToSend = asset.type === AssetType.Native ? BigNumber.from(asset.amount).add(maticPrice) : maticPrice
         const signer = await this.getConnectedAccount()
         let transactionReceipt: TransactionReceipt
         const sendToHashContract = await this.idrissSendToAnyoneContractPromise

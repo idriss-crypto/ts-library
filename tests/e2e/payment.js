@@ -113,6 +113,69 @@ describe('Payments', () => {
             const result = await idrissCryptoLib.getDollarPriceInWei()
             assert(result > 0)
         })
+
+        it('properly calculates msg.value for native coin transfers', async () => {
+            const dollarPrice = await idrissCryptoLib.getDollarPriceInWei()
+            const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
+            const testMail = 'nonexisting@idriss.xyz'
+            const testHash = await digestMessage(testMail + walletTagHash)
+
+            const contractBalanceBefore = await web3.eth.getBalance(sendToHashContract.address)
+            const senderBalanceBefore = await web3.eth.getBalance(ownerAddress)
+
+            const result = await idrissCryptoLib.transferToIDriss(testMail, testWalletType, {
+                amount: 1000,
+                type: AssetType.Native,
+            }, "dk")
+
+            const hashWithPassword = (await sendToHashContract.functions
+                .hashIDrissWithPassword(testHash, result.claimPassword))[0]
+            const userBalanceAfter = (await sendToHashContract.functions.balanceOf(hashWithPassword, 0, idrissCryptoLib.ZERO_ADDRESS))[0]
+
+            const contractBalanceAfter = await web3.eth.getBalance(sendToHashContract.address)
+            const senderBalanceAfter = await web3.eth.getBalance(ownerAddress)
+
+            const transactionCost = BigNumber.from(result.transactionReceipt.gasUsed).mul(result.transactionReceipt.effectiveGasPrice)
+
+            assert(result.transactionReceipt.status)
+            assert.equal(BigNumber.from(contractBalanceAfter).sub(BigNumber.from(contractBalanceBefore)).toString(), BigNumber.from(dollarPrice).add(1000).toString())
+            assert.equal(BigNumber.from(userBalanceAfter).toString(), 1000)
+            assert.equal(BigNumber.from(senderBalanceAfter).add(transactionCost).add(1000).add(dollarPrice).toString(), senderBalanceBefore)
+        })
+
+        it('properly calculates msg.value for ERC20 token transfers', async () => {
+            const dollarPrice = await idrissCryptoLib.getDollarPriceInWei()
+            const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
+            const testMail = 'nonexisting@idriss.xyz'
+            const testHash = await digestMessage(testMail + walletTagHash)
+            const amountToSend = 50
+
+            const contractBalanceBefore = await web3.eth.getBalance(sendToHashContract.address)
+
+            const result = await idrissCryptoLib.transferToIDriss(testMail, testWalletType, {
+                amount: amountToSend,
+                type: AssetType.ERC20,
+                assetContractAddress: mockTokenContract.address,
+            }, "")
+            const hashWithPassword = (await sendToHashContract.functions
+                .hashIDrissWithPassword(testHash, result.claimPassword))[0]
+            const userBalanceAfter = (await sendToHashContract.functions.balanceOf(hashWithPassword, 1, mockTokenContract.address))[0]
+
+            const contractBalanceAfter = await web3.eth.getBalance(sendToHashContract.address)
+
+            assert(result.transactionReceipt.status)
+            assert.equal(BigNumber.from(contractBalanceAfter).sub(BigNumber.from(contractBalanceBefore)).toString(), BigNumber.from(dollarPrice).toString())
+            assert.equal(BigNumber.from(userBalanceAfter).toString(), amountToSend)
+        })
+
+        it('properly calculates msg.value when fee changes', async () => {
+            const dollarPrice = await idrissCryptoLib.getDollarPriceInWei()
+
+            const result = await idrissCryptoLib.transferToIDriss('hello@idriss.xyz', testWalletType, {
+                amount: 1000,
+                type: AssetType.Native,
+            }, "dk")
+        })
     });
 
     describe('Send to existing hash', () => {
@@ -170,7 +233,8 @@ describe('Payments', () => {
             const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
             const testMail = 'nonexisting@idriss.xyz'
             const testHash = await digestMessage(testMail + walletTagHash)
-            const amountToSend = BigNumber.from(dollarPrice).add('159755594')
+            const amountToSend = '159755594'
+            const userFee = BigNumber.from(dollarPrice).add(amountToSend)
 
             const contractBalanceBefore = await web3.eth.getBalance(sendToHashContract.address)
 
@@ -188,9 +252,8 @@ describe('Payments', () => {
 
             assert(result.transactionReceipt.status)
             assert.equal(result.claimPassword.length, 32)
-            assert.equal(transaction.value, amountToSend.toString())
-            assert.equal(contractBalanceBefore, 0)
-            assert.equal(contractBalanceAfter, amountToSend)
+            assert.equal(transaction.value, userFee.toString())
+            assert.equal(BigNumber.from(contractBalanceAfter).sub(contractBalanceBefore), userFee.toString())
             assert.equal(userBalanceAfter.toString(), '159755594')
         })
 
@@ -217,8 +280,7 @@ describe('Payments', () => {
             assert(result.transactionReceipt.status)
             assert.equal(result.claimPassword.length, 32)
             assert.equal(userBalanceAfter.toString(), amountToSend)
-            assert.equal(contractBalanceBefore, 0)
-            assert.equal(contractBalanceAfter.toString(), amountToSend)
+            assert.equal(BigNumber.from(contractBalanceAfter.toString()).sub(contractBalanceBefore.toString()), amountToSend)
         })
 
         it('is able to send ERC721 to nonexisting IDriss', async () => {
@@ -307,7 +369,7 @@ describe('Payments', () => {
             const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
             const testMail = 'nonexisting2@idriss.xyz'
             const testHash = await digestMessage(testMail + walletTagHash)
-            const amountToSend = BigNumber.from(dollarPrice).add('159755594')
+            const amountToSend = '159755594'
             const asset = {
                 amount: amountToSend,
                 type: AssetType.Native,
@@ -347,7 +409,7 @@ describe('Payments', () => {
 
             assert(result.transactionReceipt.status)
             assert(claimNativeResult.status)
-            assert.equal(transaction.value, amountToSend.toString())
+            assert.equal(transaction.value, dollarPrice.add(amountToSend))
             assert.equal(userBalanceAfter.toString(), '0')
             //TODO: change connected account to test different user claiming assets
             // assert.equal(BigNumber.from(userMaticBalanceAfter).sub(userMaticBalanceBefore).toString(), '159755594')
