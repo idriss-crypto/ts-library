@@ -319,11 +319,11 @@ export abstract class BaseIdrissCrypto {
 
     private async authorizeERC20ForSendToAnyoneContract (signer: string, asset: AssetLiability, transactionOptions: TransactionOptions = {}): Promise<TransactionReceipt> {
         return await this.generateERC20Contract(asset.assetContractAddress!)
-            .then(contract => {
-                allowance = contract.methods.allowance(signer, this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS).call()
+            .then(async contract => {
+                let allowance = await contract.methods.allowance(signer, this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS).call()
                 if (allowance >= asset.amount) return null
                 let { gas, ...modifiedTransactionOptions } = transactionOptions;
-                return contract.methods
+                return await contract.methods
                     .approve(this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS, asset.amount.toString())
                     .send({
                         from: signer,
@@ -334,11 +334,11 @@ export abstract class BaseIdrissCrypto {
 
     private async authorizeERC721ForSendToAnyoneContract (signer: string, asset: AssetLiability, transactionOptions: TransactionOptions = {}): Promise<TransactionReceipt> {
         return await this.generateERC721Contract(asset.assetContractAddress!)
-            .then(contract => {
-                approved = contract.methods.getApproved(asset.assetId).call()
-                if (approved == idriss.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS) return null
+            .then(async contract => {
+                let approved = await contract.methods.getApproved(asset.assetId).call()
+                if (approved == this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS) return null
                 let { gas, ...modifiedTransactionOptions } = transactionOptions;
-                return contract.methods
+                return await contract.methods
                     .approve(this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS, asset.assetId)
                     .send ({
                         from: signer,
