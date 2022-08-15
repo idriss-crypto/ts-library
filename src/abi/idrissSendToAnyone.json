@@ -41,12 +41,6 @@
             "internalType": "uint256",
             "name": "amount",
             "type": "uint256"
-         },
-         {
-            "indexed": false,
-            "internalType": "enum AssetType",
-            "name": "assetType",
-            "type": "uint8"
          }
       ],
       "name": "AssetClaimed",
@@ -78,12 +72,6 @@
             "internalType": "address",
             "name": "assetContractAddress",
             "type": "address"
-         },
-         {
-            "indexed": false,
-            "internalType": "enum AssetType",
-            "name": "assetType",
-            "type": "uint8"
          }
       ],
       "name": "AssetMoved",
@@ -115,12 +103,6 @@
             "internalType": "uint256",
             "name": "amount",
             "type": "uint256"
-         },
-         {
-            "indexed": false,
-            "internalType": "enum AssetType",
-            "name": "assetType",
-            "type": "uint8"
          }
       ],
       "name": "AssetTransferReverted",
@@ -152,18 +134,6 @@
             "internalType": "uint256",
             "name": "amount",
             "type": "uint256"
-         },
-         {
-            "indexed": false,
-            "internalType": "enum AssetType",
-            "name": "assetType",
-            "type": "uint8"
-         },
-         {
-            "indexed": false,
-            "internalType": "string",
-            "name": "message",
-            "type": "string"
          }
       ],
       "name": "AssetTransferred",
@@ -534,11 +504,6 @@
             "internalType": "uint256",
             "name": "_assetId",
             "type": "uint256"
-         },
-         {
-            "internalType": "string",
-            "name": "_message",
-            "type": "string"
          }
       ],
       "name": "sendToAnyone",
