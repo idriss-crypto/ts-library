@@ -369,6 +369,30 @@
    {
       "inputs": [
          {
+            "internalType": "uint256",
+            "name": "_value",
+            "type": "uint256"
+         },
+         {
+            "internalType": "enum AssetType",
+            "name": "_assetType",
+            "type": "uint8"
+         }
+      ],
+      "name": "getPaymentFee",
+      "outputs": [
+         {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+         }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+   },
+   {
+      "inputs": [
+         {
             "internalType": "string",
             "name": "_IDrissHash",
             "type": "string"

@@ -142,7 +142,7 @@ contract SendToHash is ISendToHash, Ownable, ReentrancyGuard, IERC721Receiver, I
      * @param _assetType - asset type, required as ERC20 & ERC721 only take minimal fee
      * @return fee - processing fee, few percent of slippage is allowed
      */
-    function getPaymentFee(uint256 _value, AssetType _assetType) public view returns (uint256) {
+    function getPaymentFee(uint256 _value, AssetType _assetType) public view override returns (uint256) {
         uint256 minimumPaymentFee = _getMinimumFee();
         if (_assetType == AssetType.Token || _assetType == AssetType.NFT) {
             return minimumPaymentFee;

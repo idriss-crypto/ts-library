@@ -43,4 +43,9 @@ interface ISendToHash {
         string memory  _IDrissHash,
         string memory _claimPassword
     ) external pure returns (bytes32);
+
+    function getPaymentFee(
+        uint256 _value,
+        AssetType _assetType
+    ) external view returns (uint256);
 }

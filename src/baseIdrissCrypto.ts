@@ -28,7 +28,6 @@ export abstract class BaseIdrissCrypto {
     protected IDRISS_REGISTRY_CONTRACT_ADDRESS = '0x2EcCb53ca2d4ef91A79213FDDF3f8c2332c2a814';
     protected IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS = '0x561f1b5145897A52A6E94E4dDD4a29Ea5dFF6f64';
     protected PRICE_ORACLE_CONTRACT_ADDRESS = '0xAB594600376Ec9fD91F8e885dADF0CE036862dE0';
-    //TODO: change contract addresses
     protected IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS = '0xB1f313dbA7c470fF351e19625dcDCC442d3243C4';
 
     constructor(web3: Web3|Promise<Web3>, connectionOptions: ConnectionOptions) {
@@ -254,9 +253,8 @@ export abstract class BaseIdrissCrypto {
     }
 
     private async callWeb3SendToAnyone(hash: string, asset: AssetLiability, message: string, transactionOptions:TransactionOptions):Promise<SendToHashTransactionReceipt> {
-        //TODO: change value calculation in the library & possibly change ethers BigNumber to web3js BN
-        const maticPrice = await this.getDollarPriceInWei()
-        const maticToSend = asset.type === AssetType.Native ? BigNumber.from(asset.amount).add(maticPrice) : maticPrice
+        const paymentFee = await this.calculatePaymentFee(asset.amount, asset.type)
+        const maticToSend = asset.type === AssetType.Native ? BigNumber.from(asset.amount).add(paymentFee) : paymentFee
         const signer = await this.getConnectedAccount()
         let transactionReceipt: TransactionReceipt
         const sendToHashContract = await this.idrissSendToAnyoneContractPromise
@@ -288,6 +286,11 @@ export abstract class BaseIdrissCrypto {
             transactionReceipt,
             claimPassword
         }
+    }
+
+    public async calculatePaymentFee(paymentAmount: BigNumberish, assetType: AssetType) {
+        const sendToHashContract = await this.idrissSendToAnyoneContractPromise
+        return await sendToHashContract.methods.getPaymentFee(paymentAmount, assetType).call()
     }
 
     private async callWeb3ClaimPayment(

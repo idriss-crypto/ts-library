@@ -362,6 +362,19 @@ describe('Payments', () => {
         });
     });
 
+    describe('Calculate fee', () => {
+        it('returns proper payment fee', async () => {
+            const dollarPrice = await idrissCryptoLib.getDollarPriceInWei()
+            assert.equal(await idrissCryptoLib.calculatePaymentFee(0, AssetType.ERC20), dollarPrice)
+            assert.equal(await idrissCryptoLib.calculatePaymentFee(0, AssetType.ERC721), dollarPrice)
+            assert.equal(await idrissCryptoLib.calculatePaymentFee(dollarPrice.mul(10), AssetType.ERC20), dollarPrice)
+            assert.equal(await idrissCryptoLib.calculatePaymentFee(dollarPrice.mul(18), AssetType.ERC721), dollarPrice)
+            assert.equal(await idrissCryptoLib.calculatePaymentFee(dollarPrice, AssetType.Native), dollarPrice)
+            assert.equal(await idrissCryptoLib.calculatePaymentFee(dollarPrice.mul(25), AssetType.Native), dollarPrice)
+            assert.equal(await idrissCryptoLib.calculatePaymentFee(dollarPrice.mul(2500), AssetType.Native), dollarPrice.mul(25))
+        });
+    })
+
     //TODO: improve tests
     describe('Claim payment', () => {
         it('is able to claim payment', async () => {
@@ -396,6 +409,8 @@ describe('Payments', () => {
             await idrissContract.functions.addIDriss(testHash, ownerAddress)
 
             const transaction = await web3.eth.getTransaction(result.transactionReceipt.transactionHash);
+            const transactionToken = await web3.eth.getTransaction(resultToken.transactionReceipt.transactionHash);
+            const transactionNFT = await web3.eth.getTransaction(resultNFT.transactionReceipt.transactionHash);
             const hashWithPassword = (await sendToHashContract.functions
                 .hashIDrissWithPassword(testHash, result.claimPassword))[0]
 
@@ -408,7 +423,14 @@ describe('Payments', () => {
             const contractBalanceAfter = await web3.eth.getBalance(sendToHashContract.address);
 
             assert(result.transactionReceipt.status)
+            assert(resultToken.transactionReceipt.status)
+            assert(resultNFT.transactionReceipt.status)
+            assert.equal(transaction.value, dollarPrice.add(amountToSend))
+            assert.equal(transactionToken.value, dollarPrice)
+            assert.equal(transactionNFT.value, dollarPrice)
             assert(claimNativeResult.status)
+            assert(claimTokenResult.status)
+            assert(claimNFTResult.status)
             assert.equal(transaction.value, dollarPrice.add(amountToSend))
             assert.equal(userBalanceAfter.toString(), '0')
             //TODO: change connected account to test different user claiming assets
