@@ -1,4 +1,5 @@
 .idea
+**/.deps
 node_modules/
 lib/
 cache/

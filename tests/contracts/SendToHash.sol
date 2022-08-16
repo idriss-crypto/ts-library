@@ -77,7 +77,9 @@ contract SendToHash is ISendToHash, Ownable, ReentrancyGuard, IERC721Receiver, I
     ) external override nonReentrant() payable {
         address adjustedAssetAddress = _adjustAddress(_assetContractAddress, _assetType);
         (uint256 fee, uint256 paymentValue) = _splitPayment(msg.value);
-        if (_assetType != AssetType.Coin) { paymentValue = _amount; }
+        if (_assetType != AssetType.Coin) { fee = msg.value; }
+        if (_assetType == AssetType.Token) { paymentValue = _amount; }
+        if (_assetType == AssetType.NFT) { paymentValue = 1; }
 
         setStateForSendToAnyone(_IDrissHash, paymentValue, fee, _assetType, _assetContractAddress, _assetId);
 
@@ -135,7 +137,7 @@ contract SendToHash is ISendToHash, Ownable, ReentrancyGuard, IERC721Receiver, I
 
     /**
      * @notice Calculates value of a fee from sent msg.value
-     * @param _value - payment value, taken from msg.value 
+     * @param _value - payment value, taken from msg.value
      * @return fee - processing fee, few percent of slippage is allowed
      * @return value - payment value after substracting fee
      */
@@ -178,7 +180,7 @@ contract SendToHash is ISendToHash, Ownable, ReentrancyGuard, IERC721Receiver, I
 
         _checkNonZeroValue(amountToClaim, "Nothing to claim.");
         require(ownerIDrissAddr == msg.sender, "Only owner can claim payments.");
- 
+
         beneficiaryAsset.amount = 0;
 
         for (uint256 i = 0; i < payers.length; i++) {
@@ -234,7 +236,7 @@ contract SendToHash is ISendToHash, Ownable, ReentrancyGuard, IERC721Receiver, I
             _sendTokenAsset(amountToRevert, msg.sender, _assetContractAddress);
         } else if (_assetType == AssetType.NFT) {
             _sendNFTAsset(assetIds, address(this), msg.sender, _assetContractAddress);
-        } 
+        }
 
         emit AssetTransferReverted(_IDrissHash, msg.sender, adjustedAssetAddress, amountToRevert);
     }

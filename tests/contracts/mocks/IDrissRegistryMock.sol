@@ -13,7 +13,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  */
 contract MockToken is ERC20 {
     constructor() ERC20("MockToken", "MCKT"){
-        _mint(msg.sender,1000*10**18);
+        _mint(msg.sender,1000000000*10**18);
     }
 }
 /**
@@ -61,6 +61,10 @@ contract IDriss {
 
     function addIDriss(string memory _hash, string memory _address) external {
             IDrissMap[_hash] = _address;
+    }
+
+    function removeIDriss(string memory _hash) external {
+            delete IDrissMap[_hash];
     }
 }
 
