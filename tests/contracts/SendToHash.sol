@@ -137,15 +137,38 @@ contract SendToHash is ISendToHash, Ownable, ReentrancyGuard, IERC721Receiver, I
     }
 
     /**
+     * @notice Calculates payment fee 
+     * @param _value - payment value
+     * @param _assetType - asset type, required as ERC20 & ERC721 only take minimal fee
+     * @return fee - processing fee, few percent of slippage is allowed
+     */
+    function getPaymentFee(uint256 _value, AssetType _assetType) public view returns (uint256) {
+        uint256 minimumPaymentFee = _getMinimumFee();
+        if (_assetType == AssetType.Token || _assetType == AssetType.NFT) {
+            return minimumPaymentFee;
+        }
+
+        uint256 percentageFee = _getPercentageFee(_value);
+        if (percentageFee > minimumPaymentFee) return percentageFee; else return minimumPaymentFee;
+    }
+
+    function _getMinimumFee() internal view returns (uint256) {
+        return (_dollarToWei() * MINIMAL_PAYMENT_FEE) / MINIMAL_PAYMENT_FEE_DENOMINATOR;
+    }
+
+    function _getPercentageFee(uint256 _value) internal view returns (uint256) {
+        return (_value * PAYMENT_FEE_PERCENTAGE) / PAYMENT_FEE_PERCENTAGE_DENOMINATOR;
+    }
+
+    /**
      * @notice Calculates value of a fee from sent msg.value
      * @param _value - payment value, taken from msg.value 
      * @return fee - processing fee, few percent of slippage is allowed
      * @return value - payment value after substracting fee
      */
     function _splitPayment(uint256 _value) internal view returns (uint256 fee, uint256 value) {
-        uint256 dollarPriceInWei = _dollarToWei();
-        uint256 minimalPaymentFee = (dollarPriceInWei * MINIMAL_PAYMENT_FEE) / MINIMAL_PAYMENT_FEE_DENOMINATOR;
-        uint256 feeFromValue = (_value * PAYMENT_FEE_PERCENTAGE) / PAYMENT_FEE_PERCENTAGE_DENOMINATOR;
+        uint256 minimalPaymentFee = _getMinimumFee();
+        uint256 feeFromValue = _getPercentageFee(_value);
 
         if (feeFromValue > minimalPaymentFee) {
             fee = feeFromValue;
