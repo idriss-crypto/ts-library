@@ -8,7 +8,7 @@ pragma solidity ^0.8.7;
  * custom:experimental used only as a mock for tests
  */
 contract MaticPriceAggregatorV3Mock {
-   int256 price = 36662934;
+   int256 price = 95000000;
   function decimals() public pure returns (uint8) {
      return 8;
   }
