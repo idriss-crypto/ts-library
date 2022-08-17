@@ -217,30 +217,30 @@ export abstract class BaseIdrissCrypto {
 
     private async generateIDrissRegistryContract() {
         return new (await this.web3Promise).eth.Contract(
-                IDrissRegistryAbi as AbiItem[],
-                this.IDRISS_REGISTRY_CONTRACT_ADDRESS
-            );
+            IDrissRegistryAbi as AbiItem[],
+            this.IDRISS_REGISTRY_CONTRACT_ADDRESS
+        );
     }
 
     private async generateIDrissReverseMappingContract() {
         return new (await this.web3Promise).eth.Contract(
-                IDrissReverseMappingAbi as AbiItem[],
-                this.IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS
-            );
+            IDrissReverseMappingAbi as AbiItem[],
+            this.IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS
+        );
     }
 
     private async generateERC20Contract(contractAddress: string) {
         return new (await this.web3Promise).eth.Contract(
-                IERC20Abi as AbiItem[],
-                contractAddress
-            );
+            IERC20Abi as AbiItem[],
+            contractAddress
+        );
     }
 
     private async generateERC721Contract(contractAddress: string) {
         return new (await this.web3Promise).eth.Contract(
-                IERC721Abi as AbiItem[],
-                contractAddress
-            );
+            IERC721Abi as AbiItem[],
+            contractAddress
+        );
     }
 
     public async getHashForIdentifier(identifier: string, walletType: Required<ResolveOptions>, claimPassword: string): Promise<string> {
@@ -257,16 +257,17 @@ export abstract class BaseIdrissCrypto {
         const maticToSend = asset.type === AssetType.Native ? BigNumber.from(asset.amount).add(paymentFee) : paymentFee
         const signer = await this.getConnectedAccount()
         let transactionReceipt: TransactionReceipt
+        let approvalTransactionReceipt: TransactionReceipt | boolean
         const sendToHashContract = await this.idrissSendToAnyoneContractPromise
 
         if (asset.type === AssetType.ERC20) {
-            transactionReceipt = await this.authorizeERC20ForSendToAnyoneContract(signer, asset, transactionOptions)
+            approvalTransactionReceipt = await this.authorizeERC20ForSendToAnyoneContract(signer, asset, transactionOptions)
         } else if (asset.type === AssetType.ERC721) {
-            transactionReceipt = await this.authorizeERC721ForSendToAnyoneContract(signer, asset, transactionOptions)
+            approvalTransactionReceipt = await this.authorizeERC721ForSendToAnyoneContract(signer, asset, transactionOptions)
         }
 
         // @ts-ignore
-        if (transactionReceipt && !transactionReceipt.status) {
+        if (approvalTransactionReceipt !== true && approvalTransactionReceipt && !approvalTransactionReceipt.status) {
             throw new Error("Setting asset allowance for SendToAnyone contract failed. Please check your token/NFT balance.")
         }
 
@@ -298,7 +299,7 @@ export abstract class BaseIdrissCrypto {
         claimPass: string,
         asset: AssetLiability,
         transactionOptions: TransactionOptions = {}
-        ):Promise<TransactionReceipt> {
+    ):Promise<TransactionReceipt> {
         const signer = await this.getConnectedAccount()
         const sendToHashContract = await this.idrissSendToAnyoneContractPromise
 
@@ -321,42 +322,48 @@ export abstract class BaseIdrissCrypto {
         return (await this.web3Promise).utils.randomHex(16).slice(2)
     }
 
-    private async authorizeERC20ForSendToAnyoneContract (signer: string, asset: AssetLiability, transactionOptions: TransactionOptions = {}): Promise<TransactionReceipt> {
-        return await this.generateERC20Contract(asset.assetContractAddress!)
-            .then(contract => {
-                return contract.methods
-                    .approve(this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS, asset.amount.toString())
-                    .send({
-                        from: signer,
-                        ...transactionOptions
-                    })
-            })
+    private async authorizeERC20ForSendToAnyoneContract (signer: string, asset: AssetLiability, transactionOptions: TransactionOptions = {}): Promise<TransactionReceipt | boolean> {
+        const contract = await this.generateERC20Contract(asset.assetContractAddress!)
+        const allowance = await contract.methods.allowance(signer, this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS).call()
+
+        if (BigNumber.from(allowance).lte(asset.amount)) {
+            return contract.methods
+                .approve(this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS, BigNumber.from(asset.amount).sub(allowance).toString())
+                .send({
+                    from: signer,
+                    ...transactionOptions
+                })
+        }
+        return true
     }
 
-    private async authorizeERC721ForSendToAnyoneContract (signer: string, asset: AssetLiability, transactionOptions: TransactionOptions): Promise<TransactionReceipt> {
-        return await this.generateERC721Contract(asset.assetContractAddress!)
-            .then(contract => {
-                return contract.methods
-                    .approve(this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS, asset.assetId)
-                    .send ({
-                        from: signer,
-                        ...transactionOptions
-                    })
-            })
+    private async authorizeERC721ForSendToAnyoneContract (signer: string, asset: AssetLiability, transactionOptions: TransactionOptions): Promise<TransactionReceipt | boolean> {
+        const contract = await this.generateERC721Contract(asset.assetContractAddress!)
+        const approvedAccount = await contract.methods.getApproved(asset.assetId).call()
+
+        if (approvedAccount !== this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS) {
+            return contract.methods
+                .approve(this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS, asset.assetId)
+                .send ({
+                    from: signer,
+                    ...transactionOptions
+                })
+        }
+        return true
     }
 
     private async generateIDrissSendToAnyoneContract() {
         return new (await this.web3Promise).eth.Contract(
-                IDrissSendToAnyoneAbi as AbiItem[],
-                this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS
-            );
+            IDrissSendToAnyoneAbi as AbiItem[],
+            this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS
+        );
     }
 
     private async generatePriceOracleContract() {
         return new (await this.web3Promise).eth.Contract(
-                PriceOracleAbi as AbiItem[],
-                this.PRICE_ORACLE_CONTRACT_ADDRESS
-            );
+            PriceOracleAbi as AbiItem[],
+            this.PRICE_ORACLE_CONTRACT_ADDRESS
+        );
     }
 
     protected static getWalletTags(): { [key: string]: { [key: string]: { [key: string]: string } } } {
