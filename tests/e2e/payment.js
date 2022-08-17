@@ -453,7 +453,7 @@ describe('Payments', () => {
             const contractBalanceBefore = await web3.eth.getBalance(sendToHashContract.address)
             const userMaticBalanceBefore = await web3.eth.getBalance(signer5Address)
 
-            const resultToken = await idrissCryptoLib.transferToIDriss(testMail, testWalletType, assetToken,
+            const resultToken = await idrissCryptoLib.transferToIDriss(testMail, testWalletType, assetToken, "",
                 {
                     gasPrice:10288999,
                 })
