@@ -341,7 +341,7 @@ export abstract class BaseIdrissCrypto {
         const contract = await this.generateERC721Contract(asset.assetContractAddress!)
         const approvedAccount = await contract.methods.getApproved(asset.assetId).call()
 
-        if (approvedAccount !== this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS) {
+        if (`${approvedAccount}`.toLowerCase() !== `${this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS}`.toLowerCase()) {
             return contract.methods
                 .approve(this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS, asset.assetId)
                 .send ({
