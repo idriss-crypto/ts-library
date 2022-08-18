@@ -283,6 +283,23 @@ describe('Payments', () => {
             assert.equal(BigNumber.from(contractBalanceAfter.toString()).sub(contractBalanceBefore.toString()), amountToSend)
         })
 
+        //please note that you have to perform this test manually by debugging
+        // it('is doesn\'t check for allowance for second time', async () => {
+        //     const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
+        //     const testMail = 'nonexisting@idriss.xyz'
+        //     const testHash = digestMessage(testMail + walletTagHash)
+        //     const amountToSend = 1
+        //
+        //     await mockNFTContract.approve(sendToHashContract.address, 1)
+        //
+        //     await idrissCryptoLib.transferToIDriss(testMail, testWalletType, {
+        //         amount: amountToSend,
+        //         type: AssetType.ERC721,
+        //         assetContractAddress: mockNFTContract.address,
+        //         assetId: 1
+        //     })
+        // });
+
         it('is able to send ERC721 to nonexisting IDriss', async () => {
             const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
             const testMail = 'nonexisting@idriss.xyz'
