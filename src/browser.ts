@@ -11,8 +11,8 @@ export class IdrissCrypto extends BaseIdrissCrypto {
                 // then check if ethereum is injected to the browser
                 // otherwise use read-only HttpProvider
                 connectionOptions.web3Provider
-                ?? this.getInjectedEthereum()
                 ?? new Web3.providers.HttpProvider(polygonEndpoint)
+                ?? this.getInjectedEthereum()
         )), connectionOptions);
     }
 
