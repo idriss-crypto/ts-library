@@ -1,15 +1,12 @@
 import {BaseIdrissCrypto} from "./baseIdrissCrypto";
 import { ConnectionOptions } from "./types/connectionOptions";
-var crypto = require('crypto');
+let crypto = require('crypto');
 
 export class IdrissCrypto extends BaseIdrissCrypto {
     constructor(polygonEndpoint: string = "https://polygon-rpc.com/", connectionOptions: ConnectionOptions = {}) {
         const Web3Promise = import("web3");
-        super(Web3Promise
-            .then(x=>x.default)
-            .then(Web3=>new Web3(
-                connectionOptions.web3Provider ?? new Web3.providers.HttpProvider(polygonEndpoint)
-        )), connectionOptions);
+        super(BaseIdrissCrypto.generateWeb3(Web3Promise, polygonEndpoint, connectionOptions.web3Provider),
+            BaseIdrissCrypto.generateWeb3(Web3Promise, polygonEndpoint), connectionOptions);
         }
 
     protected async digestMessage(message: string):Promise<string> {
