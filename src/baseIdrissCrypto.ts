@@ -1,7 +1,7 @@
 import {TwitterNameResolver} from "./twitterNameResolver";
 import Web3 from "web3";
 import {AbiItem} from "web3-utils";
-import {TransactionReceipt} from "web3-core";
+import {TransactionReceipt, provider} from "web3-core";
 
 import {ResolveOptions} from "./types/resolveOptions";
 import {AssetLiability} from "./types/assetLiability";
@@ -19,6 +19,7 @@ import {TransactionOptions} from "./types/transactionOptions";
 
 export abstract class BaseIdrissCrypto {
     protected web3Promise:Promise<Web3>;
+    protected registryWeb3Promise: Promise<Web3>;
     private idrissRegistryContractPromise;
     private idrissReverseMappingContractPromise;
     private idrissSendToAnyoneContractPromise;
@@ -30,7 +31,9 @@ export abstract class BaseIdrissCrypto {
     protected PRICE_ORACLE_CONTRACT_ADDRESS = '0xAB594600376Ec9fD91F8e885dADF0CE036862dE0';
     protected IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS = '0x8f291AEad22C8D2C7b03d8897E4196f85bE0F7DA';
 
-    constructor(web3: Web3|Promise<Web3>, connectionOptions: ConnectionOptions) {
+    // we split web3 from web3 for registry, as registry is only accessible on Polygon,
+    // and library is about to support multiple chains
+    constructor(web3: Web3|Promise<Web3>, registryWeb3: Web3|Promise<Web3>, connectionOptions: ConnectionOptions) {
         this.IDRISS_REGISTRY_CONTRACT_ADDRESS = (typeof connectionOptions.idrissRegistryContractAddress !== 'undefined') ?
             connectionOptions.idrissRegistryContractAddress : this.IDRISS_REGISTRY_CONTRACT_ADDRESS
         this.IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS = (typeof connectionOptions.reverseIDrissMappingContractAddress !== 'undefined') ?
@@ -41,6 +44,7 @@ export abstract class BaseIdrissCrypto {
             connectionOptions.sendToAnyoneContractAddress : this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS
 
         this.web3Promise = Promise.resolve(web3)
+        this.registryWeb3Promise = Promise.resolve(registryWeb3)
         this.twitterNameResolver = new TwitterNameResolver()
         this.idrissRegistryContractPromise = this.generateIDrissRegistryContract();
         this.idrissReverseMappingContractPromise = this.generateIDrissReverseMappingContract();
@@ -216,7 +220,7 @@ export abstract class BaseIdrissCrypto {
     }
 
     private async generateIDrissRegistryContract() {
-        return new (await this.web3Promise).eth.Contract(
+        return new (await this.registryWeb3Promise).eth.Contract(
             IDrissRegistryAbi as AbiItem[],
             this.IDRISS_REGISTRY_CONTRACT_ADDRESS
         );
@@ -459,6 +463,14 @@ export abstract class BaseIdrissCrypto {
     protected abstract digestMessage(message: string): Promise<string>
 
     protected abstract getConnectedAccount(): Promise<string>
+
+    protected static generateWeb3(web3: Promise<any>, url: string, provider?: provider) {
+        return web3
+            .then(x=>x.default)
+            .then(Web3=>new Web3(
+                provider ?? new Web3.providers.HttpProvider(url)
+            ))
+    }
 
     public async reverseResolve(address: string) {
         let result = await this.callWeb3ReverseIDriss(address);

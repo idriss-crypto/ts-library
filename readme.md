@@ -286,11 +286,17 @@ reverse = await sendToAnyoneContract.methods
     });
 ```
 
-## 3. Registering IDriss Names Inside Your Project
+## 4. Registering IDriss Names Inside Your Project
 
-<span style="color:red">Awaits an update.</span>
 
 ### Onboard users to IDriss directly from your app's interface.
+
+##### All methods found below are available on testnet as well. For development purposes, simply append "Testnet" to the method call. 
+* CreateOTP -> CreateOTPTestnet
+* ValidateOTP -> ValidateOTPTestnet
+* CheckPayment -> CheckPaymentTestnet
+
+###### Visit [our docs](https://docs.idriss.xyz/guides/technical-deep-dive/smart-contracts) to check the mainnet and testnet payment contracts to call during the onboarding flow.
 
 *Class Authorization*
 
@@ -301,12 +307,14 @@ An example of implementation in the user interface:
 </p>
  
 
-The workflow should follow this procedure:
+The workflow using plain API calls should follow this procedure:
 
 <p align="center">
 <img alt="Registration Workflow" src="img/signupWorkflow.png"/>
 </p>
 
+
+And using this library:
 
 #### CreateOTP
 
@@ -328,6 +336,12 @@ returns:
  class CreateOTPResponse {
     public sessionKey: string;
     public triesLeft: number;
+    public address: string;
+    public hash: string;
+    public message: string;
+    public nextStep: string;
+    public twitterId: string;
+    public twitterMsg: string;
 }
 ```
 
@@ -336,8 +350,8 @@ example:
 ```typescript
 import {Authorization} from "idriss-crypto";
 
-const result = await Authorization.CreateOTP("Metamask ETH", "hello@idriss.xyz", "0x11E9F9344A9720d2B2B5F0753225bb805161139B")
-console.log(result.sessionKey)
+const resCreateOTP = await Authorization.CreateOTP("Metamask ETH", "hello@idriss.xyz", "0x11E9F9344A9720d2B2B5F0753225bb805161139B")
+console.log(resCreateOTP.sessionKey)
 ```
 
 
@@ -361,7 +375,7 @@ tags must match address type, error thrown otherwise.
 static async ValidateOTP(OTP:string, sessionKey:string):Promise<ValidateOTPResponse>
 ```
 
-Validates if OTP is correct. If OTP is wrong, WrongOTPException is thrown. If correct, link will be saved on the blockchain and txn_hash is returned. Once the transaction went through, link can be found with resolver.
+Validates if OTP is correct. If OTP is wrong, WrongOTPException is thrown. 
 
 Params:
 * OTP (string) - 6-digit number
@@ -372,7 +386,12 @@ Returns:
 ```typescript
 export class ValidateOTPResponse {
     public message: string;
-    public txnHash: string;
+    public session_key: string;
+    public priceMATIC: number;
+    public priceETH: number;
+    public priceBNB: number;
+    public receiptID: string
+    public gas: number;
 }
 ```
 
@@ -383,7 +402,7 @@ Example:
 import {Authorization, WrongOTPException} from "idriss-crypto";
 
 try {
-    await Authorization.ValidateOTP("123456", "QNmxmWdWVZ3pm1rHEN7G");
+    resValidateOTP = await Authorization.ValidateOTP("123456", "QNmxmWdWVZ3pm1rHEN7G");
     console.log("Validated succesfully");
 } catch (ex) {
     if (ex instanceof WrongOTPException) {
@@ -395,6 +414,68 @@ try {
 ```
 Error is thrown if session is not valid anymore (more than 3 wrong OTPs), wrong OTP is provided, the transaction failed or the session key is unknown.
 
+
+If correct, 0 value payment ```priceMatic = 0``` must be performed using ```receiptID```:
+
+```typescript
+paymentContract = await loadPaymentMATIC(web3);
+
+receipt_hash = await paymentContract.methods.hashReceipt(String(resValidateOTP.receiptID), selectedAccount).call();
+
+payment = await paymentContract.methods.payNative(receipt_hash, resCreateOTP.hash, "IDriss").send({
+                from: selectedAccount,
+                value: 0,
+                gasPrice: resValidateOTP.gas
+            });
+```
+where ```loadPaymentContract()``` loads the [payment contract](https://docs.idriss.xyz/guides/technical-deep-dive/smart-contracts).
+
+#### CheckPayment
+
+```typescript
+static async CheckPayment(token: string, sessionKey: string): Promise<CheckPaymentResponse>
+```
+
+Validates if payment is valid. If payment is done incorrectly, error is returned. 
+If payment can be validated, IDriss will be saved on the blockchain 
+and txnHash of corresponding link is returned. 
+Once the transaction went through, IDriss can be found with the resolver (1).
+
+Params:
+* OTP (string) - 6-digit number
+* sessionKey (string) - session key provided in first call 
+
+Returns:
+
+```typescript
+export class ValidateOTPResponse {
+    public message: string;
+    public txnHash: string;
+    public sessionKey: string;
+    public referralLink: string;
+}
+```
+The referral link can be used to acquire IDriss points and can be viewed on our [dashboard](https://www.idriss.xyz/dashboard). More information [here](https://docs.idriss.xyz/guides/for-users/rewards-system).
+
+Example:
+
+```typescript
+
+import {Authorization, WrongOTPException} from "idriss-crypto";
+
+try {
+    await Authorization.ValidateOTP("123456", "QNmxmWdWVZ3pm1rHEN7G");
+    console.log("Validated succesfully");
+} catch  {
+    console.log("Error");
+}
+```
+
+
+#### Important Consideration
+* The address paying for the free sign up (``` selectedAccount ```) will be defined as the owner address of a given IDriss. We strongly advise that the payment transaction is confirmed by a wallet owned and operated by the user only. Only the owner address will be able to make any changes (including deletions) to an IDriss.
+* If ``` selectedAccount ``` is empty, a faucet will deposit some funds (MATIC on Polygon) to pay for the gas fee of this 0 value transaction. This is part of the ``` validateOTP ``` call and funds will be deposited to the address provided in ``` createOTP ``` (the resolving address).
+
 ## Testing
 In order to run tests, please execute following commands:
 ```
@@ -402,3 +483,10 @@ yarn compileWeb3
 yarn hardhat node
 yarn testE2e
 ```
+
+## Working Examples
+
+
+* For functionalities (1) and (2), check our [browser extension](https://github.com/idriss-crypto/browser-extensions).
+* [IDriss Send](https://github.com/deliriusz/send-to-anyone-page) is an example for a working integration of (3).
+* Check the [claim page](https://github.com/idrisssystem/claim) of IDriss Send for a working example of functionalities (1) and (4).
