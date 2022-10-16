@@ -1,7 +1,7 @@
 import {TwitterNameResolver} from "./twitterNameResolver";
 import Web3 from "web3";
 import {AbiItem} from "web3-utils";
-import {TransactionReceipt, provider} from "web3-core";
+import {provider, TransactionReceipt} from "web3-core";
 
 import {ResolveOptions} from "./types/resolveOptions";
 import {AssetLiability} from "./types/assetLiability";
@@ -11,6 +11,7 @@ import IDrissSendToAnyoneAbi from "./abi/idrissSendToAnyone.json";
 import PriceOracleAbi from "./abi/priceOracleV3Aggregator.json";
 import IERC20Abi from "./abi/ierc20.json";
 import IERC721Abi from "./abi/ierc721.json";
+import IERC1155Abi from "./abi/ierc1155.json";
 import {AssetType} from "./types/assetType";
 import {ConnectionOptions} from "./types/connectionOptions";
 import {BigNumber, BigNumberish} from "ethers";
@@ -186,6 +187,18 @@ export abstract class BaseIdrissCrypto {
                     })
                 break;
 
+            case AssetType.ERC1155:
+                transactionReceipt = await this.generateERC1155Contract(asset.assetContractAddress!)
+                    .then(contract => {
+                        return contract.methods
+                            .safeTransferFrom(connectedAccount, beneficiaryAddress, asset.assetId, asset.amount, "0x")
+                            .send({
+                                from: connectedAccount,
+                                ...transactionOptions,
+                            })
+                    })
+                break;
+
             default:
                 throw new Error("Unsupported asset type.");
         }
@@ -247,6 +260,13 @@ export abstract class BaseIdrissCrypto {
         );
     }
 
+    private async generateERC1155Contract(contractAddress: string) {
+        return new (await this.web3Promise).eth.Contract(
+            IERC1155Abi as AbiItem[],
+            contractAddress
+        );
+    }
+
     public async getHashForIdentifier(identifier: string, walletType: Required<ResolveOptions>, claimPassword: string): Promise<string> {
         const hash = await this.getUserHash(walletType, identifier)
         return this.generateHashWithPassword(hash, claimPassword)
@@ -268,11 +288,13 @@ export abstract class BaseIdrissCrypto {
             approvalTransactionReceipt = await this.authorizeERC20ForSendToAnyoneContract(signer, asset, transactionOptions)
         } else if (asset.type === AssetType.ERC721) {
             approvalTransactionReceipt = await this.authorizeERC721ForSendToAnyoneContract(signer, asset, transactionOptions)
+        } else if (asset.type === AssetType.ERC1155) {
+            approvalTransactionReceipt = await this.setAuthorizationForERC1155InSendToAnyoneContract(signer, asset, true, transactionOptions)
         }
 
         // @ts-ignore
         if (approvalTransactionReceipt !== true && approvalTransactionReceipt && !approvalTransactionReceipt.status) {
-            throw new Error("Setting asset allowance for SendToAnyone contract failed. Please check your token/NFT balance.")
+            throw new Error("Setting asset allowance for SendToAnyone contract failed. Please check your asset balance.")
         }
 
         const claimPassword = await this.generateClaimPassword()
@@ -348,6 +370,22 @@ export abstract class BaseIdrissCrypto {
         if (`${approvedAccount}`.toLowerCase() !== `${this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS}`.toLowerCase()) {
             return contract.methods
                 .approve(this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS, asset.assetId)
+                .send ({
+                    from: signer,
+                    ...transactionOptions
+                })
+        }
+        return true
+    }
+
+    private async setAuthorizationForERC1155InSendToAnyoneContract (signer: string, asset: AssetLiability, authToSet: boolean, transactionOptions: TransactionOptions): Promise<TransactionReceipt | boolean> {
+        const contract = await this.generateERC1155Contract(asset.assetContractAddress!)
+        const isApproved = await contract.methods.isApprovedForAll(signer, this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS).call()
+
+        if (isApproved !== authToSet) {
+            return contract.methods
+                // unfortunately ERC1155 standard does not allow granular permissions, and only option is to approve all user tokens
+                .setApprovalForAll(this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS, true)
                 .send ({
                     from: signer,
                     ...transactionOptions

@@ -6,11 +6,12 @@ const HDWalletProvider = require("@truffle/hdwallet-provider");
 const { IdrissCrypto } = require("../../lib");
 const { AssetType } = require("../../lib/types/assetType");
 
-const IDrissArtifact = require('../artifacts/tests/contracts/mocks/IDrissRegistryMock.sol/IDriss.json')
-const MaticPriceAggregatorV3MockArtifact = require('../artifacts/tests/contracts/mocks/MaticPriceAggregatorV3Mock.sol/MaticPriceAggregatorV3Mock.json')
-const MockNFTArtifact = require('../artifacts/tests/contracts/mocks/IDrissRegistryMock.sol/MockNFT.json')
-const MockTokenArtifact = require('../artifacts/tests/contracts/mocks/IDrissRegistryMock.sol/MockToken.json')
-const SendToHashArtifact = require('../artifacts/tests/contracts/SendToHash.sol/SendToHash.json')
+const IDrissArtifact = require('../artifacts/tests/contracts/src/contracts/mocks/IDrissRegistryMock.sol/IDriss.json')
+const MaticPriceAggregatorV3MockArtifact = require('../artifacts/tests/contracts/src/contracts/mocks/MaticPriceAggregatorV3Mock.sol/MaticPriceAggregatorV3Mock.json')
+const MockERC1155Artifact = require('../artifacts/tests/contracts/src/contracts/mocks/IDrissRegistryMock.sol/MockERC1155.json')
+const MockNFTArtifact = require('../artifacts/tests/contracts/src/contracts/mocks/IDrissRegistryMock.sol/MockNFT.json')
+const MockTokenArtifact = require('../artifacts/tests/contracts/src/contracts/mocks/IDrissRegistryMock.sol/MockToken.json')
+const SendToHashArtifact = require('../artifacts/tests/contracts/src/contracts/SendToHash.sol/SendToHash.json')
 const {BigNumber} = require("ethers");
 
 describe('Payments', () => {
@@ -23,6 +24,8 @@ describe('Payments', () => {
     let mockToken2Contract
     let mockNFTContract
     let mockNFT2Contract
+    let mockERC1155Contract
+    let mockERC1155_2Contract
     let mockPriceOracleContract
     let ownerAddress
     let signer1Address
@@ -69,6 +72,8 @@ describe('Payments', () => {
         ])
 
         sendToHashContract = await hre.ethers.getContractFactoryFromArtifact(SendToHashArtifact).then(contract => contract.deploy(idrissContract.address, mockPriceOracleContract.address))
+        mockERC1155Contract = await hre.ethers.getContractFactoryFromArtifact(MockERC1155Artifact).then(contract => contract.deploy())
+        mockERC1155_2Contract = await hre.ethers.getContractFactoryFromArtifact(MockERC1155Artifact).then(contract => contract.deploy())
         mockNFTContract = await hre.ethers.getContractFactoryFromArtifact(MockNFTArtifact).then(contract => contract.deploy())
         mockNFT2Contract = await hre.ethers.getContractFactoryFromArtifact(MockNFTArtifact).then(contract => contract.deploy())
         mockTokenContract = await hre.ethers.getContractFactoryFromArtifact(MockTokenArtifact).then(contract => contract.deploy())
@@ -76,6 +81,8 @@ describe('Payments', () => {
 
         await Promise.all([
             sendToHashContract.deployed(),
+            mockERC1155Contract.deployed(),
+            mockERC1155_2Contract.deployed(),
             mockNFTContract.deployed(),
             mockNFT2Contract.deployed(),
             mockTokenContract.deployed(),
@@ -100,6 +107,13 @@ describe('Payments', () => {
         await idrissContract.functions.addIDriss(signer2Hash, signer2Address)
         await idrissContract.functions.addIDriss(signer3Hash, signer3Address)
         await idrissContract.functions.addIDriss(signer4Hash, signer4Address)
+        await mockERC1155.functions.mint(ownerAddress, 0,  1).catch(_ => {})
+        await mockERC1155.functions.mint(ownerAddress, 1,  1).catch(_ => {})
+        await mockERC1155.functions.mint(ownerAddress, 2,  10).catch(_ => {})
+        await mockERC1155.functions.mint(ownerAddress, 3,  90).catch(_ => {})
+        await mockERC1155.functions.mint(ownerAddress, 4,  500).catch(_ => {})
+        await mockERC1155_2.functions.mint(ownerAddress, 0,  1).catch(_ => {})
+        await mockERC1155_2.functions.mint(ownerAddress, 1,  1_000_000).catch(_ => {})
         await mockNFTContract.functions.safeMint(ownerAddress, 0).catch(e => {console.log(e)})
         await mockNFTContract.functions.safeMint(ownerAddress, 1).catch(e => {console.log(e)})
         await mockNFTContract.functions.safeMint(ownerAddress, 2).catch(e => {console.log(e)})
@@ -168,6 +182,7 @@ describe('Payments', () => {
             assert.equal(BigNumber.from(userBalanceAfter).toString(), amountToSend)
         })
 
+        //TODO: implement
         it('properly calculates msg.value when fee changes', async () => {
             const dollarPrice = await idrissCryptoLib.getDollarPriceInWei()
 
@@ -220,6 +235,24 @@ describe('Payments', () => {
             })
 
             const ownerAfter = await mockNFTContract.functions.ownerOf(testNFTid)
+
+            assert(result.transactionReceipt.status)
+            assert.equal(ownerBefore, ownerAddress)
+            assert.equal(ownerAfter, signer1Address)
+        })
+
+        it('is able to send ERC1155 to existing IDriss', async () => {
+            const testERC1155id = 0
+            const ownerBefore = await mockERC1155Contract.functions.ownerOf(testERC1155id)
+
+            const result = await idrissCryptoLib.transferToIDriss('hello@idriss.xyz', testWalletType, {
+                amount: 1,
+                type: AssetType.ERC721,
+                assetContractAddress: mockERC1155Contract.address,
+                assetId: 0
+            })
+
+            const ownerAfter = await mockERC1155Contract.functions.ownerOf(testERC1155id)
 
             assert(result.transactionReceipt.status)
             assert.equal(ownerBefore, ownerAddress)
@@ -328,6 +361,34 @@ describe('Payments', () => {
             assert.equal(contractBalanceAfter.toString(), 1)
         });
 
+        it('is able to send ERC1155 to nonexisting IDriss', async () => {
+            const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
+            const testMail = 'nonexisting@idriss.xyz'
+            const testHash = digestMessage(testMail + walletTagHash)
+            const amountToSend = 1
+
+            const contractBalanceBefore = await mockERC1155Contract.functions.balanceOf(sendToHashContract.address)
+
+            const result = await idrissCryptoLib.transferToIDriss(testMail, testWalletType, {
+                amount: amountToSend,
+                type: AssetType.ERC1155,
+                assetContractAddress: mockERC1155Contract.address,
+                assetId: 1
+            })
+
+            const hashWithPassword = (await sendToHashContract.functions
+                .hashIDrissWithPassword(testHash, result.claimPassword))[0]
+
+            const userBalanceAfter = await sendToHashContract.functions.balanceOf(hashWithPassword, 2, mockERC1155Contract.address)
+            const contractBalanceAfter = await mockERC1155Contract.functions.balanceOf(sendToHashContract.address)
+
+            assert(result.transactionReceipt.status)
+            assert.equal(result.claimPassword.length, 32)
+            assert.equal(userBalanceAfter.toString(), 1)
+            assert.equal(contractBalanceBefore, 0)
+            assert.equal(contractBalanceAfter.toString(), 1)
+        });
+
         it('it throws an error if it is unable to set allowance for an ERC20 token', async () => {
             const testMail = 'nonexisting@idriss.xyz'
             let error
@@ -352,6 +413,23 @@ describe('Payments', () => {
                     amount: 1,
                     type: AssetType.ERC721,
                     assetContractAddress: mockNFT2Contract.address,
+                    assetId: 1
+                })
+            } catch (e) {
+                error = e
+            }
+
+            assert(error instanceof Error)
+        });
+
+        it('it throws an error if it is unable to set allowance for an ERC1155 token', async () => {
+            const testMail = 'nonexisting@idriss.xyz'
+            let error
+            try {
+                await idrissCryptoLib.transferToIDriss(testMail, testWalletType, {
+                    amount: 1,
+                    type: AssetType.ERC1155,
+                    assetContractAddress: mockERC11552Contract.address,
                     assetId: 1
                 })
             } catch (e) {
@@ -404,6 +482,12 @@ describe('Payments', () => {
                 amount: amountToSend,
                 type: AssetType.Native,
             };
+            const assetERC1155 = {
+                amount: 1,
+                type: AssetType.ERC1155,
+                assetContractAddress: mockERC1155Contract.address,
+                assetId: 3
+            };
             const assetNFT = {
                 amount: 1,
                 type: AssetType.ERC721,
@@ -422,18 +506,21 @@ describe('Payments', () => {
             const result = await idrissCryptoLib.transferToIDriss(testMail, testWalletType, asset)
             const resultToken = await idrissCryptoLib.transferToIDriss(testMail, testWalletType, assetToken)
             const resultNFT = await idrissCryptoLib.transferToIDriss(testMail, testWalletType, assetNFT)
+            const resultERC1155 = await idrissCryptoLib.transferToIDriss(testMail, testWalletType, assetERC1155)
 
             await idrissContract.functions.addIDriss(testHash, ownerAddress)
 
             const transaction = await web3.eth.getTransaction(result.transactionReceipt.transactionHash);
             const transactionToken = await web3.eth.getTransaction(resultToken.transactionReceipt.transactionHash);
             const transactionNFT = await web3.eth.getTransaction(resultNFT.transactionReceipt.transactionHash);
+            const transactionERC1155 = await web3.eth.getTransaction(resultERC1155.transactionReceipt.transactionHash);
             const hashWithPassword = (await sendToHashContract.functions
                 .hashIDrissWithPassword(testHash, result.claimPassword))[0]
 
             const claimNativeResult = await idrissCryptoLib.claim(testMail, result.claimPassword, testWalletType, asset)
             const claimTokenResult = await idrissCryptoLib.claim(testMail, resultToken.claimPassword, testWalletType, assetToken)
             const claimNFTResult = await idrissCryptoLib.claim(testMail, resultNFT.claimPassword, testWalletType, assetNFT)
+            const claimERC1155Result = await idrissCryptoLib.claim(testMail, resultERC1155.claimPassword, testWalletType, assetERC1155)
 
             const userBalanceAfter = await sendToHashContract.functions.balanceOf(hashWithPassword, 0, idrissCryptoLib.ZERO_ADDRESS);
             const userMaticBalanceAfter = await web3.eth.getBalance(ownerAddress);
@@ -442,12 +529,15 @@ describe('Payments', () => {
             assert(result.transactionReceipt.status)
             assert(resultToken.transactionReceipt.status)
             assert(resultNFT.transactionReceipt.status)
+            assert(resultERC1155.transactionReceipt.status)
             assert.equal(transaction.value, dollarPrice.add(amountToSend))
             assert.equal(transactionToken.value, dollarPrice)
             assert.equal(transactionNFT.value, dollarPrice)
+            assert.equal(transactionERC1155.value, dollarPrice)
             assert(claimNativeResult.status)
             assert(claimTokenResult.status)
             assert(claimNFTResult.status)
+            assert(claimERC1155Result.status)
             assert.equal(transaction.value, dollarPrice.add(amountToSend))
             assert.equal(userBalanceAfter.toString(), '0')
             //TODO: change connected account to test different user claiming assets
