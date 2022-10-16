@@ -14,7 +14,7 @@ module.exports = {
   solidity: "0.8.7",
   paths: {
     artifacts: 'tests/artifacts',
-    sources: 'tests/contracts',
+    sources: 'tests/contracts/src/contracts',
     tests: 'tests/e2e'
   },
   mocha: {

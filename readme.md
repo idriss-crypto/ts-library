@@ -23,6 +23,11 @@ The key benefits of integrating IDriss are:
 
 **IDriss name - email, phone number or Twitter username*
 
+## Cloning this lib
+```
+git clone --recurse-submodules https://github.com/idriss-crypto/contracts.git
+```
+
 ## Sample Usage
 From cli:
 ```bash
