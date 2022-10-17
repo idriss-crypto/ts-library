@@ -14,7 +14,7 @@ const MockTokenArtifact = require('../artifacts/tests/contracts/src/contracts/mo
 const SendToHashArtifact = require('../artifacts/tests/contracts/src/contracts/SendToHash.sol/SendToHash.json')
 const {BigNumber} = require("ethers");
 
-describe('Payments', () => {
+describe('Payments', async () => {
     let url
     let sendToHashContract
     let testProvider
@@ -214,7 +214,6 @@ describe('Payments', () => {
                 amount: testAmount,
                 type: AssetType.Native,
             }, "dk", {
-                gasPrice: 10,
                 nonce: (await web3.eth.getTransactionCount(ownerAddress))
             })
 
