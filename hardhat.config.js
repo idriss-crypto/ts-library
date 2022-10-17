@@ -7,7 +7,7 @@ const testAccounts = {
       path: "m/44'/60'/0'/0",
       initialIndex: 0,
       count: 20,
-      passphrase: "",
+      passphrase: ""
 }
 
 /** @type import('hardhat/config').HardhatUserConfig */
@@ -32,17 +32,20 @@ module.exports = {
   defaultNetwork: "hardhat_node",
   networks: {
     hardhat: {
+      loggingEnabled: true,
       chainId: 1337,
       accounts: testAccounts,
       allowUnlimitedContractSize: true
     },
     ganache: {
+      loggingEnabled: true,
       chainId: 1337, //event though config says it's 5777
       url: "http://127.0.0.1:7545",
       accounts: testAccounts,
       allowUnlimitedContractSize: true
     },
     hardhat_node: {
+      loggingEnabled: true,
       chainId: 1337,
       url: "http://127.0.0.1:8545",
       accounts: testAccounts,

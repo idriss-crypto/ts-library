@@ -187,23 +187,20 @@ describe('Payments', () => {
             let balanceBefore = await web3.eth.getBalance(ownerAddress)
 
             let testMail = 'nonexisting2@idriss.xyz'
-            let allowedGasPriceSlippage = 5_000_000
             let testAmount = web3.utils.toWei('2', 'ether')
 
             let result = await idrissCryptoLib.transferToIDriss(testMail, testWalletType, {
                 amount: testAmount,
                 type: AssetType.Native,
-            }, "dk", {
-                gasPrice: 10
-            })
+            }, "dk")
 
             let balanceAfter = await web3.eth.getBalance(ownerAddress)
+            let transaction = await web3.eth.getTransaction(result.transactionReceipt.transactionHash)
 
             assert(BigNumber.from(balanceBefore).sub(
                     dollarPrice
-                        .add(result.transactionReceipt.gasUsed)
+                        .add(result.transactionReceipt.gasUsed * transaction.gasPrice)
                         .add(testAmount)
-                        .add(allowedGasPriceSlippage)
                 ).lte(BigNumber.from(balanceAfter)))
 
             const newMaticPrice = '250000000' // 2.5 MATIC
@@ -221,13 +218,13 @@ describe('Payments', () => {
                 nonce: (await web3.eth.getTransactionCount(ownerAddress))
             })
 
+            transaction = await web3.eth.getTransaction(result.transactionReceipt.transactionHash)
             balanceAfter = await web3.eth.getBalance(ownerAddress)
 
             assert(BigNumber.from(balanceBefore).sub(
                 dollarPrice
-                    .add(result.transactionReceipt.gasUsed)
+                    .add(result.transactionReceipt.gasUsed * transaction.gasPrice)
                     .add(testAmount)
-                    .add(allowedGasPriceSlippage)
             ).lte(BigNumber.from(balanceAfter)))
         })
     });
