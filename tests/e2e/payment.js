@@ -12,11 +12,13 @@ const MockERC1155Artifact = require('../artifacts/tests/contracts/src/contracts/
 const MockNFTArtifact = require('../artifacts/tests/contracts/src/contracts/mocks/IDrissRegistryMock.sol/MockNFT.json')
 const MockTokenArtifact = require('../artifacts/tests/contracts/src/contracts/mocks/IDrissRegistryMock.sol/MockToken.json')
 const SendToHashArtifact = require('../artifacts/tests/contracts/src/contracts/SendToHash.sol/SendToHash.json')
+const TippingArtifact = require('../artifacts/tests/contracts/src/contracts/Tipping.sol/Tipping.json')
 const {BigNumber} = require("ethers");
 
 describe('Payments', async () => {
     let url
     let sendToHashContract
+    let tippingContract
     let testProvider
     let idrissContract
     let idrissCryptoLib
@@ -72,6 +74,7 @@ describe('Payments', async () => {
         ])
 
         sendToHashContract = await hre.ethers.getContractFactoryFromArtifact(SendToHashArtifact).then(contract => contract.deploy(idrissContract.address, mockPriceOracleContract.address))
+        tippingContract = await hre.ethers.getContractFactoryFromArtifact(TippingArtifact).then(contract => contract.deploy(mockPriceOracleContract.address))
         mockERC1155Contract = await hre.ethers.getContractFactoryFromArtifact(MockERC1155Artifact).then(contract => contract.deploy())
         mockERC1155_2Contract = await hre.ethers.getContractFactoryFromArtifact(MockERC1155Artifact).then(contract => contract.deploy())
         mockNFTContract = await hre.ethers.getContractFactoryFromArtifact(MockNFTArtifact).then(contract => contract.deploy())
@@ -80,6 +83,7 @@ describe('Payments', async () => {
         mockToken2Contract = await hre.ethers.getContractFactoryFromArtifact(MockTokenArtifact).then(contract => contract.deploy())
 
         await Promise.all([
+            tippingContract.deployed(),
             sendToHashContract.deployed(),
             mockERC1155Contract.deployed(),
             mockERC1155_2Contract.deployed(),
@@ -99,6 +103,7 @@ describe('Payments', async () => {
         idrissCryptoLib = new IdrissCrypto(url, {
             web3Provider: testProvider,
             sendToAnyoneContractAddress: sendToHashContract.address,
+            tippingContractAddress: tippingContract.address,
             idrissRegistryContractAddress: idrissContract.address,
             priceOracleContractAddress: mockPriceOracleContract.address,
         });
@@ -239,7 +244,7 @@ describe('Payments', async () => {
 
             const balanceAfter = await web3.eth.getBalance(signer1Address)
 
-            assert(result.transactionReceipt.status)
+            assert(result.status)
             assert.equal(BigNumber.from(balanceAfter).sub(BigNumber.from(balanceBefore)), 1000)
         })
 
@@ -254,8 +259,8 @@ describe('Payments', async () => {
 
             const balanceAfter = await mockTokenContract.functions.balanceOf(signer2Address)
 
-            assert(result.transactionReceipt.status)
-            assert.equal(balanceAfter - balanceBefore, 1000)
+            assert(result.status)
+            assert.equal(balanceAfter - balanceBefore, 990) //1% fee
         })
 
         it('is able to send ERC721 to existing IDriss', async () => {
@@ -271,7 +276,7 @@ describe('Payments', async () => {
 
             const ownerAfter = await mockNFTContract.functions.ownerOf(testNFTid)
 
-            assert(result.transactionReceipt.status)
+            assert(result.status)
             assert.equal(ownerBefore, ownerAddress)
             assert.equal(ownerAfter, signer1Address)
         })
@@ -291,7 +296,7 @@ describe('Payments', async () => {
             const ownerBalanceAfter = await mockERC1155Contract.functions.balanceOf(ownerAddress, testERC1155id)
             const signer1BalanceAfter = await mockERC1155Contract.functions.balanceOf(signer1Address, testERC1155id)
 
-            assert(result.transactionReceipt.status)
+            assert(result.status)
             assert.equal(ownerBalanceBefore, 1)
             assert.equal(ownerBalanceAfter, 0)
             assert.equal(signer1BalanceBefore, 0)
@@ -499,13 +504,13 @@ describe('Payments', async () => {
     describe('Calculate fee', () => {
         it('returns proper payment fee', async () => {
             const dollarPrice = await idrissCryptoLib.getDollarPriceInWei()
-            assert.equal(await idrissCryptoLib.calculatePaymentFee(0, AssetType.ERC20), dollarPrice)
-            assert.equal(await idrissCryptoLib.calculatePaymentFee(0, AssetType.ERC721), dollarPrice)
-            assert.equal(await idrissCryptoLib.calculatePaymentFee(dollarPrice.mul(10), AssetType.ERC20), dollarPrice)
-            assert.equal(await idrissCryptoLib.calculatePaymentFee(dollarPrice.mul(18), AssetType.ERC721), dollarPrice)
-            assert.equal(await idrissCryptoLib.calculatePaymentFee(dollarPrice, AssetType.Native), dollarPrice)
-            assert.equal(await idrissCryptoLib.calculatePaymentFee(dollarPrice.mul(25), AssetType.Native), dollarPrice)
-            assert.equal(await idrissCryptoLib.calculatePaymentFee(dollarPrice.mul(2500), AssetType.Native), dollarPrice.mul(25))
+            assert.equal(await idrissCryptoLib.calculateSendToAnyonePaymentFee(0, AssetType.ERC20), dollarPrice)
+            assert.equal(await idrissCryptoLib.calculateSendToAnyonePaymentFee(0, AssetType.ERC721), dollarPrice)
+            assert.equal(await idrissCryptoLib.calculateSendToAnyonePaymentFee(dollarPrice.mul(10), AssetType.ERC20), dollarPrice)
+            assert.equal(await idrissCryptoLib.calculateSendToAnyonePaymentFee(dollarPrice.mul(18), AssetType.ERC721), dollarPrice)
+            assert.equal(await idrissCryptoLib.calculateSendToAnyonePaymentFee(dollarPrice, AssetType.Native), dollarPrice)
+            assert.equal(await idrissCryptoLib.calculateSendToAnyonePaymentFee(dollarPrice.mul(25), AssetType.Native), dollarPrice)
+            assert.equal(await idrissCryptoLib.calculateSendToAnyonePaymentFee(dollarPrice.mul(2500), AssetType.Native), dollarPrice.mul(25))
         });
     })
 
