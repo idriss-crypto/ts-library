@@ -8,6 +8,7 @@ export type ConnectionOptions = {
    web3Provider?: provider,
    // overriding contract addresses is added as a helper for testing purposes. It should not be changed in other cases
    sendToAnyoneContractAddress?: string,
+   tippingContractAddress?: string,
    idrissRegistryContractAddress?: string,
    reverseIDrissMappingContractAddress?: string,
    priceOracleContractAddress?: string,
