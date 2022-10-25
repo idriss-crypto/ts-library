@@ -11,10 +11,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Checkout submodules
-          - run: |
-                git submodule update --init --recursive
-                git submodule update --remote --merge
-      - run: git submodule update --remote --merge -f
+        run: |
+          git submodule update --init --recursive
+          git submodule update --remote --merge
       - name: Use Node.js
         uses: actions/setup-node@v1
         with:
