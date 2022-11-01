@@ -109,7 +109,6 @@ export abstract class BaseIdrissCrypto {
     ):Promise<MultiSendToHashTransactionReceipt | TransactionReceipt> {
         let result: MultiSendToHashTransactionReceipt | TransactionReceipt
 
-        const tippingContractAllowances = new Map<string, AssetLiability>()
         const sendToAnyoneContractAllowances = new Map<string, AssetLiability>()
 
         const registeredUsersSendParams = []
@@ -122,11 +121,10 @@ export abstract class BaseIdrissCrypto {
             if (resolvedIDriss
                 && resolvedIDriss[sendParam.walletType.walletTag!]
                 && resolvedIDriss[sendParam.walletType.walletTag!].length > 0) {
-                sendParam.beneficiary = resolvedIDriss[sendParam.walletType.walletTag!]
-                this.addAssetForAllowanceToMap(tippingContractAllowances, sendParam.asset)
+                sendParam.hash = resolvedIDriss[sendParam.walletType.walletTag!]
                 registeredUsersSendParams.push(sendParam)
             } else {
-                sendParam.beneficiary = hash
+                sendParam.hash = hash
                 this.addAssetForAllowanceToMap(sendToAnyoneContractAllowances, sendParam.asset)
                 newUsersSendParams.push(sendParam)
             }
@@ -134,15 +132,13 @@ export abstract class BaseIdrissCrypto {
 
         const signer = await this.getConnectedAccount()
 
-        //TODO: NFT calculation
         await this.approveAssets([
-               ...Array.from(sendToAnyoneContractAllowances.values()),
-               ...Array.from(tippingContractAllowances.values())
-           ], signer, this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS, transactionOptions);
+            ...Array.from(sendToAnyoneContractAllowances.values())
+        ], signer, this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS, transactionOptions);
 
         for (let registeredUser of registeredUsersSendParams) {
             result = await this.callWeb3Tipping(
-               registeredUser.beneficiary, registeredUser.asset, registeredUser.message, transactionOptions)
+               registeredUser.hash!, registeredUser.asset, registeredUser.message ?? '', transactionOptions)
         }
 
         if (newUsersSendParams.length > 0) {
@@ -162,13 +158,19 @@ export abstract class BaseIdrissCrypto {
 
     private addAssetForAllowanceToMap(assetsMap: Map<string, AssetLiability>, asset: AssetLiability) {
         if (asset.type !== AssetType.Native) {
-            if (asset.assetContractAddress ?? '' === '') {
+            if (!asset.assetContractAddress || asset.assetContractAddress === '') {
                 throw new Error("Asset address cannot be undefined")
             }
 
+            // because for ERC721 we have to approve each id separately
+            const assetMapKey = asset.type === AssetType.ERC721
+               ? `${asset.assetContractAddress}-${asset.assetId}`
+               : `${asset.assetContractAddress}`
+
             const savedAsset: AssetLiability = assetsMap
-                  .get(asset.assetContractAddress ?? '')
+                  .get(assetMapKey)
                    ?? {...asset, amount: 0}
+
             savedAsset.amount = BigNumber.from(savedAsset.amount).add(asset.amount)
             assetsMap.set(asset.assetContractAddress!, savedAsset)
         }
@@ -350,15 +352,23 @@ export abstract class BaseIdrissCrypto {
 
         for (let param of params) {
             const paymentFee = await this.calculateSendToAnyonePaymentFee(param.asset.amount, param.asset.type)
-            const properPaymentFee = param.asset.type === AssetType.Native ? BigNumber.from(param.asset.amount).add(paymentFee) : paymentFee
+            let properParamAmountToSend
 
-            maticToSend.add(properPaymentFee)
+            if (param.asset.type === AssetType.Native) {
+                properParamAmountToSend = BigNumber.from(param.asset.amount).add(paymentFee)
+                // for native currency we pass item value in amount
+                param.asset.amount = properParamAmountToSend
+            } else {
+                properParamAmountToSend = paymentFee
+            }
+
+            maticToSend = maticToSend.add(properParamAmountToSend)
 
             const claimPassword = await this.generateClaimPassword()
-            const hashWithPassword = await this.generateHashWithPassword(param.beneficiary, claimPassword)
-            encodedCalldata.push(this.encodeSendToAnyoneToHex(hashWithPassword, param))
+            const hashWithPassword = await this.generateHashWithPassword(param.hash!, claimPassword)
+            encodedCalldata.push(await this.encodeSendToAnyoneToHex(hashWithPassword, param))
 
-            beneficiaryClaims.push({beneficiary: param.beneficiary, claimPassword: claimPassword})
+            beneficiaryClaims.push({beneficiary: param.hash!, claimPassword: claimPassword})
         }
 
         transactionReceipt = await sendToHashContract.methods
