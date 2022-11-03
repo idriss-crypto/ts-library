@@ -172,7 +172,7 @@ export abstract class BaseIdrissCrypto {
                    ?? {...asset, amount: 0}
 
             savedAsset.amount = BigNumber.from(savedAsset.amount).add(asset.amount)
-            assetsMap.set(asset.assetContractAddress!, savedAsset)
+            assetsMap.set(assetMapKey, savedAsset)
         }
     }
 
