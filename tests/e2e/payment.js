@@ -123,6 +123,9 @@ describe('Payments', async () => {
         await mockNFTContract.functions.safeMint(ownerAddress, 1).catch(e => {console.log(e)})
         await mockNFTContract.functions.safeMint(ownerAddress, 2).catch(e => {console.log(e)})
         await mockNFTContract.functions.safeMint(ownerAddress, 3).catch(e => {console.log(e)})
+        await mockNFTContract.functions.safeMint(ownerAddress, 10).catch(e => {console.log(e)})
+        await mockNFTContract.functions.safeMint(ownerAddress, 11).catch(e => {console.log(e)})
+        await mockNFTContract.functions.safeMint(ownerAddress, 12).catch(e => {console.log(e)})
         await mockToken2Contract.functions.transfer(signer4Address, (await mockToken2Contract.functions.totalSupply()).toString())
         await mockNFT2Contract.functions.safeMint(signer4Address, 1).catch(e => {console.log(e)})
     });
@@ -248,6 +251,39 @@ describe('Payments', async () => {
             assert.equal(BigNumber.from(balanceAfter).sub(BigNumber.from(balanceBefore)), 1000)
         })
 
+        it('is able to multisend coins to existing IDriss', async () => {
+            const balanceBefore = await web3.eth.getBalance(signer1Address)
+
+            // const result = await idrissCryptoLib.transferToIDriss('hello@idriss.xyz', testWalletType, {
+            //     amount: 1000,
+            //     type: AssetType.Native,
+            // })
+
+            const result = await idrissCryptoLib.multitransferToIDriss([
+                {
+                    beneficiary: 'hello@idriss.xyz',
+                    walletType: testWalletType,
+                    asset: {
+                        amount: 1000,
+                        type: AssetType.Native,
+                    }
+                },
+                {
+                    beneficiary: 'hello@idriss.xyz',
+                    walletType: testWalletType,
+                    asset: {
+                        amount: 350,
+                        type: AssetType.Native,
+                    }
+                }
+            ])
+
+            const balanceAfter = await web3.eth.getBalance(signer1Address)
+
+            assert(result.status)
+            assert.equal(BigNumber.from(balanceAfter).sub(BigNumber.from(balanceBefore)), 1350)
+        })
+
         it('is able to send ERC20 to existing IDriss', async () => {
             const balanceBefore = await mockTokenContract.functions.balanceOf(signer2Address)
 
@@ -261,6 +297,42 @@ describe('Payments', async () => {
 
             assert(result.status)
             assert.equal(balanceAfter - balanceBefore, 990) //1% fee
+        })
+
+        //TODO: check getting the same IDriss from the registry twice
+        it('is able to multisend ERC20 to existing IDriss', async () => {
+            const balanceBefore = await mockTokenContract.functions.balanceOf(signer1Address)
+            const balanceBefore2 = await mockTokenContract.functions.balanceOf(signer2Address)
+
+            const result = await idrissCryptoLib.multitransferToIDriss([
+                {
+                    beneficiary: 'hello@idriss.xyz',
+                    walletType: testWalletType,
+                    asset: {
+                        amount: 500,
+                        type: AssetType.ERC20,
+                        assetContractAddress: mockTokenContract.address
+                    }
+                },
+                {
+                    beneficiary: '+16506655942',
+                    walletType: {...testWalletType, walletTag: "Coinbase ETH"},
+                    asset: {
+                        amount: 1000,
+                        type: AssetType.ERC20,
+                        assetContractAddress: mockTokenContract.address
+                    }
+                }
+            ])
+
+            const balanceAfter = await mockTokenContract.functions.balanceOf(signer1Address)
+            const balanceAfter2 = await mockTokenContract.functions.balanceOf(signer2Address)
+
+            assert(result.status)
+
+            assert(result.status)
+            assert.equal(balanceAfter - balanceBefore, 495) //1% fee
+            assert.equal(balanceAfter2 - balanceBefore2, 990) //1% fee
         })
 
         it('is able to send ERC721 to existing IDriss', async () => {
@@ -279,6 +351,45 @@ describe('Payments', async () => {
             assert(result.status)
             assert.equal(ownerBefore, ownerAddress)
             assert.equal(ownerAfter, signer1Address)
+        })
+
+        it('is able to multisend ERC721 to existing IDriss', async () => {
+            const testNFTid = 1
+            const testNFTid2 = 2
+            const ownerBefore = await mockNFTContract.functions.ownerOf(testNFTid)
+            const ownerBefore2 = await mockNFTContract.functions.ownerOf(testNFTid2)
+
+            const result = await idrissCryptoLib.multitransferToIDriss([
+                {
+                    beneficiary: 'hello@idriss.xyz',
+                    walletType: testWalletType,
+                    asset: {
+                        amount: 1,
+                        type: AssetType.ERC721,
+                        assetContractAddress: mockNFTContract.address,
+                        assetId: 1
+                    }
+                },
+                {
+                    beneficiary: '+16506655942',
+                    walletType: {...testWalletType, walletTag: "Coinbase ETH"},
+                    asset: {
+                        amount: 1,
+                        type: AssetType.ERC721,
+                        assetContractAddress: mockNFTContract.address,
+                        assetId: 2
+                    }
+                }
+            ])
+
+            const ownerAfter = await mockNFTContract.functions.ownerOf(testNFTid)
+            const ownerAfter2 = await mockNFTContract.functions.ownerOf(testNFTid2)
+
+            assert(result.status)
+            assert.equal(ownerBefore, ownerAddress)
+            assert.equal(ownerAfter, signer1Address)
+            assert.equal(ownerBefore2, ownerAddress)
+            assert.equal(ownerAfter2, signer2Address)
         })
 
         it('is able to send ERC1155 to existing IDriss', async () => {
@@ -301,6 +412,53 @@ describe('Payments', async () => {
             assert.equal(ownerBalanceAfter, 0)
             assert.equal(signer1BalanceBefore, 0)
             assert.equal(signer1BalanceAfter, 1)
+        })
+
+        it('is able to multisend ERC1155 to existing IDriss', async () => {
+            const testERC1155id = 1
+            const testERC1155id2 = 2
+            const ownerBalanceBefore = await mockERC1155Contract.functions.balanceOf(ownerAddress, testERC1155id)
+            const signer1BalanceBefore = await mockERC1155Contract.functions.balanceOf(signer1Address, testERC1155id)
+            const ownerBalanceBefore2 = await mockERC1155Contract.functions.balanceOf(ownerAddress, testERC1155id2)
+            const signer2BalanceBefore = await mockERC1155Contract.functions.balanceOf(signer2Address, testERC1155id2)
+
+            const result = await idrissCryptoLib.multitransferToIDriss([
+                {
+                    beneficiary: 'hello@idriss.xyz',
+                    walletType: testWalletType,
+                    asset: {
+                        amount: 1,
+                        type: AssetType.ERC1155,
+                        assetContractAddress: mockERC1155Contract.address,
+                        assetId: testERC1155id
+                    }
+                },
+                {
+                    beneficiary: '+16506655942',
+                    walletType: {...testWalletType, walletTag: "Coinbase ETH"},
+                    asset: {
+                        amount: 5,
+                        type: AssetType.ERC1155,
+                        assetContractAddress: mockERC1155Contract.address,
+                        assetId: testERC1155id2
+                    }
+                }
+            ])
+
+            const ownerBalanceAfter = await mockERC1155Contract.functions.balanceOf(ownerAddress, testERC1155id)
+            const signer1BalanceAfter = await mockERC1155Contract.functions.balanceOf(signer1Address, testERC1155id)
+            const ownerBalanceAfter2 = await mockERC1155Contract.functions.balanceOf(ownerAddress, testERC1155id2)
+            const signer2BalanceAfter = await mockERC1155Contract.functions.balanceOf(signer2Address, testERC1155id2)
+
+            assert(result.status)
+            assert.equal(ownerBalanceBefore, 1)
+            assert.equal(ownerBalanceBefore2, 10)
+            assert.equal(ownerBalanceAfter, 0)
+            assert.equal(ownerBalanceAfter2, 5)
+            assert.equal(signer1BalanceBefore, 0)
+            assert.equal(signer1BalanceAfter, 1)
+            assert.equal(signer2BalanceBefore, 0)
+            assert.equal(signer2BalanceAfter, 5)
         })
     });
 
@@ -331,7 +489,59 @@ describe('Payments', async () => {
             assert.equal(result.claimPassword.length, 32)
             assert.equal(transaction.value, userFee.toString())
             assert.equal(BigNumber.from(contractBalanceAfter).sub(contractBalanceBefore), userFee.toString())
-            assert.equal(userBalanceAfter.toString(), '159755594')
+            assert.equal(userBalanceAfter.toString(), amountToSend)
+        })
+
+        it('is able to multisend coins to nonexisting IDriss', async () => {
+            const dollarPrice = await idrissCryptoLib.getDollarPriceInWei()
+            const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
+            const testMail = 'nonexisting@idriss.xyz'
+            const testMail2 = 'nonexisting2@idriss.xyz'
+            const testHash = await digestMessage(testMail + walletTagHash)
+            const testHash2 = await digestMessage(testMail2 + walletTagHash)
+            const amountToSend = '159755594'
+            const amountToSend2 = '5490000'
+            const userFee = BigNumber.from(dollarPrice).mul(2).add(amountToSend).add(amountToSend2)
+
+            const contractBalanceBefore = await web3.eth.getBalance(sendToHashContract.address)
+
+            const result = await idrissCryptoLib.multitransferToIDriss([
+                {
+                    beneficiary: testMail,
+                    walletType: testWalletType,
+                    asset: {
+                        amount: amountToSend,
+                        type: AssetType.Native,
+                    }
+                },
+                {
+                    beneficiary: testMail2,
+                    walletType: testWalletType,
+                    asset: {
+                        amount: amountToSend2,
+                        type: AssetType.Native,
+                    }
+                },
+            ])
+
+            const transaction = await web3.eth.getTransaction(result.transactionReceipt.transactionHash)
+            const hashWithPassword = (await sendToHashContract.functions
+                .hashIDrissWithPassword(testHash, result.data[0].claimPassword))[0]
+            const hashWithPassword2 = (await sendToHashContract.functions
+                .hashIDrissWithPassword(testHash2, result.data[1].claimPassword))[0]
+
+            const userBalanceAfter = await sendToHashContract.functions.balanceOf(hashWithPassword, AssetType.Native, idrissCryptoLib.ZERO_ADDRESS, 0)
+            const userBalanceAfter2 = await sendToHashContract.functions.balanceOf(hashWithPassword2, AssetType.Native, idrissCryptoLib.ZERO_ADDRESS, 0)
+            const contractBalanceAfter = await web3.eth.getBalance(sendToHashContract.address)
+
+            assert(result.transactionReceipt.status)
+            assert.equal(result.data.length, 2)
+            assert.equal(result.data[0].claimPassword.length, 32)
+            assert.equal(result.data[1].claimPassword.length, 32)
+            assert.equal(transaction.value, userFee.toString())
+            assert.equal(BigNumber.from(contractBalanceAfter).sub(contractBalanceBefore), userFee.toString())
+            assert.equal(userBalanceAfter.toString(), amountToSend)
+            assert.equal(userBalanceAfter2.toString(), amountToSend2)
         })
 
         it('is able to send ERC20 to nonexisting IDriss', async () => {
@@ -360,11 +570,64 @@ describe('Payments', async () => {
             assert.equal(BigNumber.from(contractBalanceAfter.toString()).sub(contractBalanceBefore.toString()), amountToSend)
         })
 
+        it('is able to multisend ERC20 to nonexisting IDriss', async () => {
+            const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
+            const testMail = 'nonexisting@idriss.xyz'
+            const testMail2 = 'nonexisting2@idriss.xyz'
+            const testHash = await digestMessage(testMail + walletTagHash)
+            const testHash2 = await digestMessage(testMail2 + walletTagHash)
+            const amountToSend = 50
+            const amountToSend2 = 1900
+
+            const contractBalanceBefore = await mockTokenContract.functions.balanceOf(sendToHashContract.address)
+
+            const result = await idrissCryptoLib.multitransferToIDriss([
+                {
+                    beneficiary: testMail,
+                    walletType: testWalletType,
+                    asset: {
+                        amount: amountToSend,
+                        type: AssetType.ERC20,
+                        assetContractAddress: mockTokenContract.address,
+                    }
+                },
+                {
+                    beneficiary: testMail2,
+                    walletType: testWalletType,
+                    asset: {
+                        amount: amountToSend2,
+                        type: AssetType.ERC20,
+                        assetContractAddress: mockTokenContract.address,
+                    }
+                },
+            ])
+
+            const hashWithPassword = (await sendToHashContract.functions
+                .hashIDrissWithPassword(testHash, result.data[0].claimPassword))[0]
+            const hashWithPassword2 = (await sendToHashContract.functions
+                .hashIDrissWithPassword(testHash2, result.data[1].claimPassword))[0]
+
+            const userBalanceAfter = await sendToHashContract.functions.balanceOf(hashWithPassword, AssetType.ERC20, mockTokenContract.address, 0)
+            const userBalanceAfter2 = await sendToHashContract.functions.balanceOf(hashWithPassword2, AssetType.ERC20, mockTokenContract.address, 0)
+            const contractBalanceAfter = await mockTokenContract.functions.balanceOf(sendToHashContract.address)
+
+            assert(result.transactionReceipt.status)
+            assert.equal(result.data.length, 2)
+            assert.equal(result.data[0].claimPassword.length, 32)
+            assert.equal(result.data[1].claimPassword.length, 32)
+            assert.equal(userBalanceAfter.toString(), amountToSend)
+            assert.equal(userBalanceAfter2.toString(), amountToSend2)
+            assert.equal(
+                BigNumber.from(contractBalanceAfter.toString()).sub(contractBalanceBefore.toString()),
+                BigNumber.from(amountToSend).add(amountToSend2).toString()
+            )
+        })
+
         //please note that you have to perform this test manually by debugging
         // it('is doesn\'t check for allowance for second time', async () => {
         //     const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
         //     const testMail = 'nonexisting@idriss.xyz'
-        //     const testHash = digestMessage(testMail + walletTagHash)
+        //     const testHash = await digestMessage(testMail + walletTagHash)
         //     const amountToSend = 1
         //
         //     await mockNFTContract.approve(sendToHashContract.address, 1)
@@ -380,7 +643,7 @@ describe('Payments', async () => {
         it('is able to send ERC721 to nonexisting IDriss', async () => {
             const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
             const testMail = 'nonexisting@idriss.xyz'
-            const testHash = digestMessage(testMail + walletTagHash)
+            const testHash = await digestMessage(testMail + walletTagHash)
             const amountToSend = 1
 
             const contractBalanceBefore = await mockNFTContract.functions.balanceOf(sendToHashContract.address)
@@ -389,13 +652,13 @@ describe('Payments', async () => {
                 amount: amountToSend,
                 type: AssetType.ERC721,
                 assetContractAddress: mockNFTContract.address,
-                assetId: 1
+                assetId: 10
             })
 
             const hashWithPassword = (await sendToHashContract.functions
                 .hashIDrissWithPassword(testHash, result.claimPassword))[0]
 
-            const userBalanceAfter = await sendToHashContract.functions.balanceOf(hashWithPassword, AssetType.ERC721, mockNFTContract.address, 0)
+            const userBalanceAfter = await sendToHashContract.functions.balanceOf(hashWithPassword, AssetType.ERC721, mockNFTContract.address, 10)
             const contractBalanceAfter = await mockNFTContract.functions.balanceOf(sendToHashContract.address)
 
             assert(result.transactionReceipt.status)
@@ -405,32 +668,136 @@ describe('Payments', async () => {
             assert.equal(contractBalanceAfter.toString(), 1)
         });
 
-        it('is able to send ERC1155 to nonexisting IDriss', async () => {
+        it('is able to multisend ERC721 to nonexisting IDriss', async () => {
             const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
             const testMail = 'nonexisting@idriss.xyz'
-            const testHash = digestMessage(testMail + walletTagHash)
+            const testMail2 = 'nonexisting2@idriss.xyz'
+            const testHash = await digestMessage(testMail + walletTagHash)
+            const testHash2 = await digestMessage(testMail2 + walletTagHash)
+            const amountToSend = 1
+
+            const contractBalanceBefore = await mockNFTContract.functions.balanceOf(sendToHashContract.address)
+
+            const result = await idrissCryptoLib.multitransferToIDriss([
+                {
+                    beneficiary: testMail,
+                    walletType: testWalletType,
+                    asset: {
+                        amount: amountToSend,
+                        type: AssetType.ERC721,
+                        assetContractAddress: mockNFTContract.address,
+                        assetId: 11
+                    }
+                },
+                {
+                    beneficiary: testMail2,
+                    walletType: testWalletType,
+                    asset: {
+                        amount: amountToSend,
+                        type: AssetType.ERC721,
+                        assetContractAddress: mockNFTContract.address,
+                        assetId: 12
+                    }
+                },
+            ])
+
+            const hashWithPassword = (await sendToHashContract.functions
+                .hashIDrissWithPassword(testHash, result.data[0].claimPassword))[0]
+            const hashWithPassword2 = (await sendToHashContract.functions
+                .hashIDrissWithPassword(testHash2, result.data[1].claimPassword))[0]
+
+            const userBalanceAfter = await sendToHashContract.functions.balanceOf(hashWithPassword, AssetType.ERC721, mockNFTContract.address, 11)
+            const userBalanceAfter2 = await sendToHashContract.functions.balanceOf(hashWithPassword2, AssetType.ERC721, mockNFTContract.address, 12)
+            const contractBalanceAfter = await mockNFTContract.functions.balanceOf(sendToHashContract.address)
+
+            assert(result.transactionReceipt.status)
+            assert.equal(result.data.length, 2)
+            assert.equal(result.data[0].claimPassword.length, 32)
+            assert.equal(result.data[1].claimPassword.length, 32)
+            assert.equal(userBalanceAfter.toString(), 1)
+            assert.equal(userBalanceAfter2.toString(), 1)
+            assert.equal(contractBalanceAfter[0].sub(contractBalanceBefore[0]).toString(), 2)
+        });
+
+        it('is able to multisend ERC1155 to nonexisting IDriss', async () => {
+            const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
+            const testMail = 'nonexisting@idriss.xyz'
+            const testMail2 = 'nonexisting2@idriss.xyz'
+            const testHash = await digestMessage(testMail + walletTagHash)
+            const testHash2 = await digestMessage(testMail2 + walletTagHash)
             const amountToSend = 1
 
             const contractBalanceBefore = await mockERC1155Contract.functions.balanceOf(sendToHashContract.address, 0)
+
+            const result = await idrissCryptoLib.multitransferToIDriss([
+                {
+                    beneficiary: testMail,
+                    walletType: testWalletType,
+                    asset: {
+                        amount: amountToSend,
+                        type: AssetType.ERC1155,
+                        assetContractAddress: mockERC1155Contract.address,
+                        assetId: 2
+                    }
+                },
+                {
+                    beneficiary: testMail2,
+                    walletType: testWalletType,
+                    asset: {
+                        amount: amountToSend,
+                        type: AssetType.ERC1155,
+                        assetContractAddress: mockERC1155Contract.address,
+                        assetId: 3
+                    }
+                },
+            ])
+
+            const hashWithPassword = (await sendToHashContract.functions
+                .hashIDrissWithPassword(testHash, result.data[0].claimPassword))[0]
+            const hashWithPassword2 = (await sendToHashContract.functions
+                .hashIDrissWithPassword(testHash2, result.data[1].claimPassword))[0]
+
+            const userBalanceAfter = await sendToHashContract.functions.balanceOf(hashWithPassword, AssetType.ERC1155, mockERC1155Contract.address, 2)
+            const userBalanceAfter2 = await sendToHashContract.functions.balanceOf(hashWithPassword2, AssetType.ERC1155, mockERC1155Contract.address, 3)
+            const contractBalanceAfter = await mockERC1155Contract.functions.balanceOf(sendToHashContract.address, 2)
+            const contractBalanceAfter2 = await mockERC1155Contract.functions.balanceOf(sendToHashContract.address, 3)
+
+            assert(result.transactionReceipt.status)
+            assert.equal(result.data.length, 2)
+            assert.equal(result.data[0].claimPassword.length, 32)
+            assert.equal(result.data[1].claimPassword.length, 32)
+            assert.equal(userBalanceAfter.toString(), 1)
+            assert.equal(userBalanceAfter2.toString(), 1)
+            assert.equal(contractBalanceBefore, 0)
+            assert.equal(contractBalanceAfter.toString(), 1)
+            assert.equal(contractBalanceAfter2.toString(), 1)
+        });
+
+        it('is able to send ERC1155 to nonexisting IDriss', async () => {
+            const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
+            const testMail = 'nonexisting@idriss.xyz'
+            const testHash = await digestMessage(testMail + walletTagHash)
+            const amountToSend = 2
+
+            const contractBalanceBefore = await mockERC1155Contract.functions.balanceOf(sendToHashContract.address, 3)
 
             const result = await idrissCryptoLib.transferToIDriss(testMail, testWalletType, {
                 amount: amountToSend,
                 type: AssetType.ERC1155,
                 assetContractAddress: mockERC1155Contract.address,
-                assetId: 1
+                assetId: 3
             })
 
             const hashWithPassword = (await sendToHashContract.functions
                 .hashIDrissWithPassword(testHash, result.claimPassword))[0]
 
-            const userBalanceAfter = await sendToHashContract.functions.balanceOf(hashWithPassword, AssetType.ERC1155, mockERC1155Contract.address, 1)
-            const contractBalanceAfter = await mockERC1155Contract.functions.balanceOf(sendToHashContract.address, 1)
+            const userBalanceAfter = await sendToHashContract.functions.balanceOf(hashWithPassword, AssetType.ERC1155, mockERC1155Contract.address, 3)
+            const contractBalanceAfter = await mockERC1155Contract.functions.balanceOf(sendToHashContract.address, 3)
 
             assert(result.transactionReceipt.status)
             assert.equal(result.claimPassword.length, 32)
-            assert.equal(userBalanceAfter.toString(), 1)
-            assert.equal(contractBalanceBefore, 0)
-            assert.equal(contractBalanceAfter.toString(), 1)
+            assert.equal(userBalanceAfter.toString(), 2)
+            assert.equal(contractBalanceAfter[0].sub(contractBalanceBefore[0]).toString(), 2)
         });
 
         it('it throws an error if it is unable to set allowance for an ERC20 token', async () => {

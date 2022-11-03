@@ -16,8 +16,9 @@ import IERC1155Abi from "./abi/ierc1155.json";
 import {AssetType} from "./types/assetType";
 import {ConnectionOptions} from "./types/connectionOptions";
 import {BigNumber, BigNumberish} from "ethers";
-import {SendToHashTransactionReceipt} from "./types/sendToHashTransactionReceipt";
+import {MultiSendToHashTransactionReceipt, SendToHashTransactionReceipt} from "./types/sendToHashTransactionReceipt";
 import {TransactionOptions} from "./types/transactionOptions";
+import {SendToAnyoneParams} from "./types/sendToAnyoneParams";
 
 export abstract class BaseIdrissCrypto {
     protected web3Promise:Promise<Web3>;
@@ -32,8 +33,8 @@ export abstract class BaseIdrissCrypto {
     protected IDRISS_REGISTRY_CONTRACT_ADDRESS = '0x2EcCb53ca2d4ef91A79213FDDF3f8c2332c2a814';
     protected IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS = '0x561f1b5145897A52A6E94E4dDD4a29Ea5dFF6f64';
     protected PRICE_ORACLE_CONTRACT_ADDRESS = '0xAB594600376Ec9fD91F8e885dADF0CE036862dE0';
-    protected IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS = '0x8f291AEad22C8D2C7b03d8897E4196f85bE0F7DA';
-    protected IDRISS_TIPPING_CONTRACT_ADDRESS = '0x0000000000000000000000000000000000000000';
+    protected IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS = '0xf333EDE8D49dD100F02c946809C9F5D9867D10C0';
+    protected IDRISS_TIPPING_CONTRACT_ADDRESS = '0xb05dC103DEc7c482CB30A7AF83053E3ea0F08027';
 
     // we split web3 from web3 for registry, as registry is only accessible on Polygon,
     // and library is about to support multiple chains
@@ -100,6 +101,79 @@ export abstract class BaseIdrissCrypto {
         }
 
         return foundMatches
+    }
+
+    public async multitransferToIDriss(
+       sendParams: SendToAnyoneParams[],
+       transactionOptions: TransactionOptions = {}
+    ):Promise<MultiSendToHashTransactionReceipt | TransactionReceipt> {
+        let result: MultiSendToHashTransactionReceipt | TransactionReceipt
+
+        const sendToAnyoneContractAllowances = new Map<string, AssetLiability>()
+
+        const registeredUsersSendParams = []
+        const newUsersSendParams = []
+
+        for (let sendParam of sendParams) {
+            const hash = await this.getUserHash(sendParam.walletType, sendParam.beneficiary);
+            const resolvedIDriss = await this.resolve(sendParam.beneficiary)
+
+            if (resolvedIDriss
+                && resolvedIDriss[sendParam.walletType.walletTag!]
+                && resolvedIDriss[sendParam.walletType.walletTag!].length > 0) {
+                sendParam.hash = resolvedIDriss[sendParam.walletType.walletTag!]
+                registeredUsersSendParams.push(sendParam)
+            } else {
+                sendParam.hash = hash
+                this.addAssetForAllowanceToMap(sendToAnyoneContractAllowances, sendParam.asset)
+                newUsersSendParams.push(sendParam)
+            }
+        }
+
+        const signer = await this.getConnectedAccount()
+
+        await this.approveAssets([
+            ...Array.from(sendToAnyoneContractAllowances.values())
+        ], signer, this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS, transactionOptions);
+
+        for (let registeredUser of registeredUsersSendParams) {
+            result = await this.callWeb3Tipping(
+               registeredUser.hash!, registeredUser.asset, registeredUser.message ?? '', transactionOptions)
+        }
+
+        if (newUsersSendParams.length > 0) {
+            result = await this.callWeb3multiSendToAnyone(newUsersSendParams, transactionOptions)
+        }
+
+        return result!
+    }
+
+    private async encodeSendToAnyoneToHex(hash: string, param: SendToAnyoneParams): Promise<string> {
+        const sendToHashContract = await this.idrissSendToAnyoneContractPromise
+        return sendToHashContract.methods
+           .sendToAnyone(hash, param.asset.amount, param.asset.type.valueOf(),
+              param.asset.assetContractAddress ?? this.ZERO_ADDRESS, param.asset.assetId ?? 0, param.message ?? '')
+           .encodeABI()
+    }
+
+    private addAssetForAllowanceToMap(assetsMap: Map<string, AssetLiability>, asset: AssetLiability) {
+        if (asset.type !== AssetType.Native) {
+            if (!asset.assetContractAddress || asset.assetContractAddress === '') {
+                throw new Error("Asset address cannot be undefined")
+            }
+
+            // because for ERC721 we have to approve each id separately
+            const assetMapKey = asset.type === AssetType.ERC721
+               ? `${asset.assetContractAddress}-${asset.assetId}`
+               : `${asset.assetContractAddress}`
+
+            const savedAsset: AssetLiability = assetsMap
+                  .get(assetMapKey)
+                   ?? {...asset, amount: 0}
+
+            savedAsset.amount = BigNumber.from(savedAsset.amount).add(asset.amount)
+            assetsMap.set(asset.assetContractAddress!, savedAsset)
+        }
     }
 
     public async transferToIDriss(
@@ -229,34 +303,10 @@ export abstract class BaseIdrissCrypto {
         const maticToSend = asset.type === AssetType.Native ? BigNumber.from(asset.amount).add(paymentFee) : paymentFee
         const signer = await this.getConnectedAccount()
         let transactionReceipt: TransactionReceipt
-        let approvalTransactionReceipt: TransactionReceipt | boolean
         const tippingContract = await this.tippingContractPromise
 
-        if (asset.type === AssetType.ERC20) {
-            approvalTransactionReceipt = await this.authorizeERC20ForContract(
-                signer,
-                this.IDRISS_TIPPING_CONTRACT_ADDRESS,
-                asset,
-                transactionOptions)
-        } else if (asset.type === AssetType.ERC721) {
-            approvalTransactionReceipt = await this.authorizeERC721ForContract(
-                signer,
-                this.IDRISS_TIPPING_CONTRACT_ADDRESS,
-                asset,
-                transactionOptions)
-        } else if (asset.type === AssetType.ERC1155) {
-            approvalTransactionReceipt = await this.setAuthorizationForERC1155Contract(
-                signer,
-                this.IDRISS_TIPPING_CONTRACT_ADDRESS,
-                asset,
-                true,
-                transactionOptions)
-        }
-
-        // @ts-ignore
-        if (approvalTransactionReceipt !== true && approvalTransactionReceipt && !approvalTransactionReceipt.status) {
-            throw new Error("Setting asset allowance for Tipping contract failed. Please check your asset balance.")
-        }
+        await this.approveAssets([asset], signer,
+           this.IDRISS_TIPPING_CONTRACT_ADDRESS, transactionOptions);
 
         const sendOptions = {
                 from: signer,
@@ -292,39 +342,59 @@ export abstract class BaseIdrissCrypto {
         return transactionReceipt
     }
 
+    private async callWeb3multiSendToAnyone(params: SendToAnyoneParams[], transactionOptions:TransactionOptions):Promise<MultiSendToHashTransactionReceipt> {
+        let maticToSend: BigNumberish = BigNumber.from(0)
+        const signer = await this.getConnectedAccount()
+        const sendToHashContract = await this.idrissSendToAnyoneContractPromise
+        const encodedCalldata = []
+        let transactionReceipt: TransactionReceipt
+        const beneficiaryClaims = []
+
+        for (let param of params) {
+            const paymentFee = await this.calculateSendToAnyonePaymentFee(param.asset.amount, param.asset.type)
+            let properParamAmountToSend
+
+            if (param.asset.type === AssetType.Native) {
+                properParamAmountToSend = BigNumber.from(param.asset.amount).add(paymentFee)
+                // for native currency we pass item value in amount
+                param.asset.amount = properParamAmountToSend
+            } else {
+                properParamAmountToSend = paymentFee
+            }
+
+            maticToSend = maticToSend.add(properParamAmountToSend)
+
+            const claimPassword = await this.generateClaimPassword()
+            const hashWithPassword = await this.generateHashWithPassword(param.hash!, claimPassword)
+            encodedCalldata.push(await this.encodeSendToAnyoneToHex(hashWithPassword, param))
+
+            beneficiaryClaims.push({beneficiary: param.hash!, claimPassword: claimPassword})
+        }
+
+        transactionReceipt = await sendToHashContract.methods
+           .batch(encodedCalldata)
+           .send({
+               from: signer,
+               ...transactionOptions,
+               value: maticToSend.toString()
+           })
+
+        return {
+            transactionReceipt,
+            // @ts-ignore
+            data: beneficiaryClaims
+        }
+    }
+
     private async callWeb3SendToAnyone(hash: string, asset: AssetLiability, message: string, transactionOptions:TransactionOptions):Promise<SendToHashTransactionReceipt> {
         const paymentFee = await this.calculateSendToAnyonePaymentFee(asset.amount, asset.type)
         const maticToSend = asset.type === AssetType.Native ? BigNumber.from(asset.amount).add(paymentFee) : paymentFee
         const signer = await this.getConnectedAccount()
         let transactionReceipt: TransactionReceipt
-        let approvalTransactionReceipt: TransactionReceipt | boolean
         const sendToHashContract = await this.idrissSendToAnyoneContractPromise
 
-        if (asset.type === AssetType.ERC20) {
-            approvalTransactionReceipt = await this.authorizeERC20ForContract(
-                signer,
-                this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS,
-                asset,
-                transactionOptions)
-        } else if (asset.type === AssetType.ERC721) {
-            approvalTransactionReceipt = await this.authorizeERC721ForContract(
-                signer,
-                this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS,
-                asset,
-                transactionOptions)
-        } else if (asset.type === AssetType.ERC1155) {
-            approvalTransactionReceipt = await this.setAuthorizationForERC1155Contract(
-                signer,
-                this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS,
-                asset,
-                true,
-                transactionOptions)
-        }
-
-        // @ts-ignore
-        if (approvalTransactionReceipt !== true && approvalTransactionReceipt && !approvalTransactionReceipt.status) {
-            throw new Error("Setting asset allowance for SendToAnyone contract failed. Please check your asset balance.")
-        }
+        await this.approveAssets([asset], signer,
+           this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS, transactionOptions);
 
         const claimPassword = await this.generateClaimPassword()
         const hashWithPassword = await this.generateHashWithPassword(hash, claimPassword)
@@ -342,6 +412,45 @@ export abstract class BaseIdrissCrypto {
             transactionReceipt,
             claimPassword
         }
+    }
+
+    private async approveAssets(
+       assets: AssetLiability[],
+       signer: string,
+       toContract: string,
+       transactionOptions: TransactionOptions
+    ) {
+        let approvalTransactionReceipt: TransactionReceipt | boolean = false
+
+        for (let asset of assets) {
+            if (asset.type === AssetType.ERC20) {
+                approvalTransactionReceipt = await this.authorizeERC20ForContract(
+                   signer,
+                   toContract,
+                   asset,
+                   transactionOptions)
+            } else if (asset.type === AssetType.ERC721) {
+                approvalTransactionReceipt = await this.authorizeERC721ForContract(
+                   signer,
+                   toContract,
+                   asset,
+                   transactionOptions)
+            } else if (asset.type === AssetType.ERC1155) {
+                approvalTransactionReceipt = await this.setAuthorizationForERC1155Contract(
+                   signer,
+                   toContract,
+                   asset,
+                   true,
+                   transactionOptions)
+            }
+
+            // @ts-ignore
+            if (approvalTransactionReceipt !== true && approvalTransactionReceipt && !approvalTransactionReceipt.status) {
+                throw new Error(`Setting asset allowance failed for address ${asset.assetContractAddress}. Please check your asset balance.`)
+            }
+        }
+
+        return approvalTransactionReceipt
     }
 
     public async calculateTippingPaymentFee(paymentAmount: BigNumberish, assetType: AssetType) {

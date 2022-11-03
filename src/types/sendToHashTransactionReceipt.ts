@@ -4,3 +4,11 @@ export type SendToHashTransactionReceipt = {
     transactionReceipt: TransactionReceipt,
     claimPassword?: string
 }
+
+export type MultiSendToHashTransactionReceipt = {
+    transactionReceipt: TransactionReceipt,
+    data: [ {
+        beneficiary?: string,
+        claimPassword?: string
+    }]
+}
