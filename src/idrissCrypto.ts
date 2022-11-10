@@ -2,6 +2,9 @@ import {BaseIdrissCrypto} from "./baseIdrissCrypto";
 import { ConnectionOptions } from "./types/connectionOptions";
 let crypto = require('crypto');
 
+/**
+ * This class is used for NodeJS
+ */
 export class IdrissCrypto extends BaseIdrissCrypto {
     constructor(polygonEndpoint: string = "https://polygon-rpc.com/", connectionOptions: ConnectionOptions = {}) {
         const Web3Promise = import("web3");

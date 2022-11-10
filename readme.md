@@ -18,8 +18,8 @@ The key benefits of integrating IDriss are:
 **The library has 4 main functions:**
 1. Resolving IDriss names
 2. Reverse Resolving IDriss names
-3. Sending MATIC/ERC20/ERC721 to existing and nonexistent IDriss users
-4. Registering IDriss names inside your app
+3. Registering IDriss names inside your app
+4. Sending MATIC/ERC20/ERC721 to existing and nonexistent IDriss users
 
 **IDriss name - email, phone number or Twitter username*
 
@@ -28,13 +28,8 @@ The key benefits of integrating IDriss are:
 git clone --recurse-submodules https://github.com/idriss-crypto/contracts.git
 ```
 
-## Sample Usage
-From cli:
-```bash
-npm install idriss-crypto
-```
+## Sample Usage and Quick Setup
 
-And in code:
 
 ```javascript
 import {IdrissCrypto} from "idriss-crypto";
@@ -44,7 +39,7 @@ const resultEmail = await idriss.resolve("hello@idriss.xyz");
 console.log(resultEmail);
 ```
 
-And the output of this is:
+Yields this sample output:
 
 ```json
 {
@@ -59,7 +54,7 @@ The same is possible with Twitter usernames:
     const resultTwitter = await idriss.resolve("@idriss_xyz");
     console.log(resultTwitter);
 ```
-Resolves to: 
+resolves to
 ```json
 {
     "Metamask ETH": "0x5ABca791C22E7f99237fCC04639E094Ffa0cCce9",
@@ -77,7 +72,7 @@ And phone numbers:
     const resultPhone = await idriss.resolve("+16506655942");
     console.log(resultPhone);
 ```
-Resolves to: 
+resolves to
 ```javascript
 {
     'Binance BTC': '1FdqxZsS6HVEs1NaQUdkoQWKYA9R9yfhdz',
@@ -85,7 +80,7 @@ Resolves to:
     'Phantom SOL': '6GmzRK2qLhBPK2WwYM14EGnxh95jBTsJGXMgFyM3VeVk'
 }
 ```
-# How to load library
+# How to load this library
 ## Webpage with webpack
 ```bash
 npm install idriss-crypto
@@ -99,12 +94,12 @@ And in code:
 import {IdrissCrypto, Authorization} from "idriss-crypto/browser";
 ```
 ## Webpage without webpack
-If using ES6 modules, you can import library
+If you prefer using ES6 modules, you can import the library with
 ```js
 import {IdrissCrypto, Authorization} from "https://unpkg.com/idriss-crypto/lib/bundle/modules.js"
 ```
 
-If not, you can simply load js file in html
+Alternatively, you can simply load it as a js file in your HTML environment using this <script> tag:
 
 ```html
 <script src="https://unpkg.com/idriss-crypto/lib/bundle/global.js"></script>
@@ -132,19 +127,14 @@ import {IdrissCrypto, Authorization} from "idriss-crypto";
 const {IdrissCrypto, Authorization} = require("idriss-crypto");
 ```
 
-Library is designed both for es6 and cjs.
-# Functions
+The library is designed both for es6 and cjs.
+
+# Functionalities
 ## 1. Resolving IDriss Names
 
 ### Resolve emails, phone numbers, and Twitter usernames to wallet addresses.
 
 *Class IdrissCrypto*
-
-An example of implementation in the user interface:
-
-<p style="text-align: center">
-<img alt="UI Implementation Example" src="img/resolving_idriss.png"/>
-</p>
 
 #### constructor
 ```typescript
@@ -156,38 +146,63 @@ type ResolveOptions = {
 constructor(polygonEndpoint: string = "https://polygon-rpc.com/")
 ```
 Params:
-* polygonEndpoint (string) - uri to connect with blockchain. Default is empty https://polygon-rpc.com/.
+* polygonEndpoint (string) - uri to connect with blockchain. If no endpoint is provided, the default is https://polygon-rpc.com/.
 
 #### resolve
+Use IDriss resolver:
 ```typescript
 public async resolve(input: string, options:ResolveOptions = {}): Promise<{ [index: string]: string }>
 ```
-Converts input string (e-mail address, phone number or Twitter handle) to wallets addresses. This method connects to IDriss API server and then to endpoint defined in constructor.
+And in code:
+```javascript
+const idriss = new IdrissCrypto();
+
+const resultEmail = await idriss.resolve("hello@idriss.xyz");
+
+console.log(resultEmail);
+```
+
+This yields this sample output:
+
+```json
+{
+    "Coinbase BTC": "bc1qsvz5jumwew8haj4czxpzxujqz8z6xq4nxxh7vh",
+    "Metamask ETH": "0x11E9F9344A9720d2B2B5F0753225bb805161139B"
+}
+```
+
+Converts input string (e-mail address, phone number or Twitter handle) to wallets addresses. This method connects to IDriss' API server (only if translation of Twitter usernames to Twitter IDs necessary) and then to the endpoint defined in the constructor.
 
 Params:
-* input (string) - e-mail address, phone number (starting with (+) country code) or Twitter handle (starting with "@") together with optional secret word
+* input (string) - e-mail address, phone number (starting with (+) country code) or Twitter handle (starting with "@") together with optional secret word (only for email and phone number)
 * options (ResolveOptions object) - optional parameters
     * coin (string) - for example "ETH"
         * currently supported coins: ETH, BNB, USDT, USDC, ELA, MATIC, BTC, SOL and one ERC20 wildcard
     * network (string) - for example "evm"
         * currently supported network types: evm (for evm compatible addresses across different networks), btc and sol
-    * currently, we support the following combinations:
+    * currently, this library is supporting the following combinations:
         * network: evm
             * coin: ETH, BNB, USDT, USDC, ELA, MATIC, ERC20
         * network: btc
             * coin: BTC, ELA
         * network: sol
             * coin: SOL
-* supported networks and coins will be updated on a regular basis. Any  wishes regarding supported combinations? Please join our [Discord](https://discord.gg/RJhJKamjw5) and let us know.
+* supported networks and coins will be updated on a regular basis and are based on community initiatives. Any  wishes regarding supported combinations? Please join our [Discord](https://discord.gg/RJhJKamjw5) and let us know.
 
 Returns:
-Promise, that resolves to dictionary (object), in which keys are names addresses, and values are these addresses (see example). In case nothing was found, promise will resolve to empty object. If unknown network or coin (or combination) was provided, error returns. Example: "message": "Network not found."
+Promise, that resolves to dictionary (object), in which keys are wallet tags, and values are these addresses (see example). In case nothing was found, promise will resolve to empty object. If unknown network or coin (or combination) was provided, error returns. Example: "message": "Network not found." If no option is provided, all possible combinations are resolved.
+
+An example implementation in the user interface of a wallet:
+
+<p style="text-align: center">
+<img alt="UI Implementation Example" src="img/resolving_idriss.png"/>
+</p>
 
 ## 2. Reverse Resolving IDriss Names
 
 ### Show emails, phone numbers, and Twitter usernames instead of wallet addresses.
 
-Use reverseResolve
+Use reverseResolve:
 
 ```typescript
 public async reverseResolve(input: string): Promise<string>
@@ -221,7 +236,7 @@ let reverseContract = await loadContractReverse(defaultWeb3);
 reverse = await reverseContract.methods.reverseIDriss(address).call();
 ```
 
-*Note: The code above provides resolution to Twitter IDs. The IDs still must be translated to usernames with Twitter API. Our library takes care of this translation.*
+*Note: Calling the contract directly provides resolution to Twitter IDs. The IDs still must be translated to usernames using Twitter's API. Our library takes care of this translation automatically.*
 
 An example of implementation in the user interface:
 
@@ -229,69 +244,8 @@ An example of implementation in the user interface:
 <img alt="UI Implementation Example" src="img/reverse_resolving.png"/>
 </p>
 
-## 3. Sending MATIC/ERC20/ERC721 to existing and nonexistent IDriss users on Polygon
 
-### Send MATIC/ERC20/ERC721 to send assets to both users that have IDriss registered, and to those who are yet to have one on Polygon chain
-In case that the user resolves to an address in IDriss registry, asset transfer is performed directly to the user.
-The asset is being send to SendToAnyone smart contract, so that the user can claim it after registering.
-Please note that if the smart contract is used, it additionally invokes approve function for the contract to be able to hold it in hte escrow.
-
-Use transferToIDriss
-
-```typescript
-public async transferToIDriss (
-    beneficiary: string,
-    walletType: Required<ResolveOptions>,
-    asset: AssetLiability
-): Promise<TransactionReceipt>
-```
-And in code:
-
-```typescript
-
-const obj = new IdrissCrypto()
-
-const transactionReceipt = await obj.transferToIDriss(
-    "hello@idriss.xyz",
-    {
-        network: "evm",
-        coin: "MATIC",
-        walletTag: "Metamask ETH"
-    },
-    {
-        type: AssetType.ERC20,
-        amount: 150,
-        assetContractAddress: "0x995945Fb74e0f8e345b3f35472c3e07202Eb38Ac"
-    })
-
-console.log(transactionReceipt)
-
-```
-This resolves to SendToHashTransactionReceipt object, which gives info about the transaction that was performed and if SendToHash smart contract was used, it returns claim password for the user
-
-You can also call the smart contact directly:
-
-```typescript
-async function loadContractSendToAnyone(web3) {
-    return await new web3.eth.Contract(
-        [{ "inputs": [ { "internalType": "string", "name": "_IDrissHash", "type": "string" }, { "internalType": "uint256", "name": "_amount", "type": "uint256" }, { "internalType": "enum AssetType", "name": "_assetType", "type": "uint8" }, { "internalType": "address", "name": "_assetContractAddress", "type": "address" }, { "internalType": "uint256", "name": "_assetId", "type": "uint256" }], "name": "sendToAnyone", "outputs": [], "stateMutability": "payable", "type": "function"}],
-        "0xB1f313dbA7c470fF351e19625dcDCC442d3243C4"
-    );
-}
-
-const hashWithPassword = await (await this.idrissSendToAnyoneContractPromise).methods
-    .hashIDrissWithPassword(IDrissHash, claimPassword).call()
-
-let sendToAnyoneContract = await loadContractSendToAnyone(defaultWeb3);
-reverse = await sendToAnyoneContract.methods
-    .sendToAnyone(hashWithPassword, 150, ASSET_TYPE_ERC20, '0x995945Fb74e0f8e345b3f35472c3e07202Eb38Ac', 0)
-    .send({
-        from: '0x5559C5Fb84e0f8e34bb3B35b72cAe0770AEb38Ac',
-        value: 1_000_000_000_000_000
-    });
-```
-
-## 4. Registering IDriss Names Inside Your Project
+## 3. Registering IDriss Names Inside Your Project
 
 
 ### Onboard users to IDriss directly from your app's interface.
@@ -423,7 +377,7 @@ Error is thrown if session is not valid anymore (more than 3 wrong OTPs), wrong 
 If correct, 0 value payment ```priceMatic = 0``` must be performed using ```receiptID```:
 
 ```typescript
-paymentContract = await loadPaymentMATIC(web3);
+paymentContract = await loadPaymentContract(web3);
 
 receipt_hash = await paymentContract.methods.hashReceipt(String(resValidateOTP.receiptID), selectedAccount).call();
 
@@ -441,10 +395,10 @@ where ```loadPaymentContract()``` loads the [payment contract](https://docs.idri
 static async CheckPayment(token: string, sessionKey: string): Promise<CheckPaymentResponse>
 ```
 
-Validates if payment is valid. If payment is done incorrectly, error is returned. 
-If payment can be validated, IDriss will be saved on the blockchain 
-and txnHash of corresponding link is returned. 
-Once the transaction went through, IDriss can be found with the resolver (1).
+Validates if the payment is valid. If the performed payment is done incorrectly, an error is returned. 
+If the payment can be validated, the corresponding IDriss will be saved on the registry
+and the txnHash of the registration is returned. 
+The newly signed-up IDriss can now be found with the resolver (1).
 
 Params:
 * OTP (string) - 6-digit number
@@ -460,7 +414,7 @@ export class ValidateOTPResponse {
     public referralLink: string;
 }
 ```
-The referral link can be used to acquire IDriss points and can be viewed on our [dashboard](https://www.idriss.xyz/dashboard). More information [here](https://docs.idriss.xyz/guides/for-users/rewards-system).
+The referral link can be used to acquire IDriss points and can be viewed on our [dashboard](https://www.idriss.xyz/dashboard). More information on this [here](https://docs.idriss.xyz/guides/for-users/rewards-system).
 
 Example:
 
@@ -478,8 +432,70 @@ try {
 
 
 #### Important Consideration
-* The address paying for the free sign up (``` selectedAccount ```) will be defined as the owner address of a given IDriss. We strongly advise that the payment transaction is confirmed by a wallet owned and operated by the user only. Only the owner address will be able to make any changes (including deletions) to an IDriss.
-* If ``` selectedAccount ``` is empty, a faucet will deposit some funds (MATIC on Polygon) to pay for the gas fee of this 0 value transaction. This is part of the ``` validateOTP ``` call and funds will be deposited to the address provided in ``` createOTP ``` (the resolving address).
+* The address paying for the free sign up (``` selectedAccount ```) will be defined as the owner address of a given IDriss. We strongly advise that the payment transaction is confirmed by a wallet owned and operated by the user in pocession of the respective email/phone/Twitter account only. Only the owner address will be able to make any changes (including deletions) to an IDriss.
+* If ``` selectedAccount ``` has no funds, a faucet will deposit some funds (MATIC on Polygon) to pay for the gas fee of this 0 value transaction. This is part of the ``` validateOTP ``` call and funds will be deposited to the address provided in ``` createOTP ``` (the resolving address).
+
+## 4. Sending MATIC/ERC20/ERC721 to existing and non-existent IDriss users on Polygon
+
+### Send MATIC/ERC20/ERC721 assets to users that have an IDriss registered, and to those who do not have one registered.
+In case that the user resolves to an address in the IDriss registry, assets are directly transferred to the user.
+In the other case, assets are being sent to our SendToAnyone smart contract, so that the user can claim it after registering.
+Please note that if the smart contract is used, it additionally invokes approve function for the contract to be able to hold it in the escrow.
+
+Use transferToIDriss
+
+```typescript
+public async transferToIDriss (
+    beneficiary: string,
+    walletType: Required<ResolveOptions>,
+    asset: AssetLiability
+): Promise<TransactionReceipt>
+```
+And in code:
+
+```typescript
+
+const idriss = new IdrissCrypto()
+
+const transactionReceipt = await idriss.transferToIDriss(
+    "hello@idriss.xyz",
+    {
+        network: "evm",
+        coin: "MATIC",
+        walletTag: "Metamask ETH"
+    },
+    {
+        type: AssetType.ERC20,
+        amount: 150,
+        assetContractAddress: "0x995945Fb74e0f8e345b3f35472c3e07202Eb38Ac"
+    })
+
+console.log(transactionReceipt)
+
+```
+This resolves to SendToHashTransactionReceipt object, which gives info about the transaction that was performed and if SendToHash smart contract was used, it returns claim password for the user
+
+You can also call the smart contact directly:
+
+```typescript
+async function loadContractSendToAnyone(web3) {
+    return await new web3.eth.Contract(
+        [{ "inputs": [ { "internalType": "string", "name": "_IDrissHash", "type": "string" }, { "internalType": "uint256", "name": "_amount", "type": "uint256" }, { "internalType": "enum AssetType", "name": "_assetType", "type": "uint8" }, { "internalType": "address", "name": "_assetContractAddress", "type": "address" }, { "internalType": "uint256", "name": "_assetId", "type": "uint256" }], "name": "sendToAnyone", "outputs": [], "stateMutability": "payable", "type": "function"}],
+        "0xB1f313dbA7c470fF351e19625dcDCC442d3243C4"
+    );
+}
+
+const hashWithPassword = await (await this.idrissSendToAnyoneContractPromise).methods
+    .hashIDrissWithPassword(IDrissHash, claimPassword).call()
+
+let sendToAnyoneContract = await loadContractSendToAnyone(defaultWeb3);
+reverse = await sendToAnyoneContract.methods
+    .sendToAnyone(hashWithPassword, 150, ASSET_TYPE_ERC20, '0x995945Fb74e0f8e345b3f35472c3e07202Eb38Ac', 0)
+    .send({
+        from: '0x5559C5Fb84e0f8e34bb3B35b72cAe0770AEb38Ac',
+        value: 1_000_000_000_000_000
+    });
+```
 
 ## Testing
 In order to run tests, please execute following commands:
