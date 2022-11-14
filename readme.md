@@ -6,24 +6,29 @@
 
 This is a node.js and webpack library for integrating [IDriss](https://www.idriss.xyz/) into your project.
 
-IDriss is a decentralized mapping of emails, phone numbers and Twitter usernames to cryptocurrency wallet addresses.
+IDriss builds tools making web3 more usable for everyone 🤝
 
-The key benefits of integrating IDriss are:
 
-- User-friendly wallet address format that can be easily shared verbally, or in writing for the purpose of sending or receiving crypto
-- Effective organization and quicker access to your multiple wallet addresses (you have them available under one, memorable IDriss)
-- Easier deposits into your wallet from crypto exchanges and other wallets
-- (Coming soon) Additional revenue stream for your project
+The key benefits of integrating are:
 
-**The library has 4 main functions:**
+- Enabling more social UX by letting use IDriss names in search bars
+- Enhancing the UI of your app by replacing wallet addresses with IDriss names
+- Verifying Twitter usernames, emails, or phone numbers of your users in a decentralized manner
+- Scaling your app beyond crypto-native users
+
+**The library lets you independently integrate 4 functions from two products:**
+
+IDriss Book - *decentralized mapping of emails, phone numbers and Twitter usernames to wallet addresses*
 1. Resolving IDriss names
 2. Reverse Resolving IDriss names
 3. Registering IDriss names inside your app
-4. Sending MATIC/ERC20/ERC721 to existing and nonexistent IDriss users
+
+IDriss Send - *mass web3 onboarding & asset distribution tool*
+4. Sending crypto & NFTs to any email, phone number or Twitter username
 
 **IDriss name - email, phone number or Twitter username*
 
-## Cloning this lib
+## Cloning This Lib
 ```
 git clone --recurse-submodules https://github.com/idriss-crypto/contracts.git
 ```
@@ -80,7 +85,7 @@ resolves to
     'Phantom SOL': '6GmzRK2qLhBPK2WwYM14EGnxh95jBTsJGXMgFyM3VeVk'
 }
 ```
-# How to load this library
+# How to Load This Library?
 ## Webpage with webpack
 ```bash
 npm install idriss-crypto
@@ -129,7 +134,7 @@ const {IdrissCrypto, Authorization} = require("idriss-crypto");
 
 The library is designed both for es6 and cjs.
 
-# Functionalities
+# Functions
 ## 1. Resolving IDriss Names
 
 ### Resolve emails, phone numbers, and Twitter usernames to wallet addresses.
@@ -435,9 +440,9 @@ try {
 * The address paying for the free sign up (``` selectedAccount ```) will be defined as the owner address of a given IDriss. We strongly advise that the payment transaction is confirmed by a wallet owned and operated by the user in pocession of the respective email/phone/Twitter account only. Only the owner address will be able to make any changes (including deletions) to an IDriss.
 * If ``` selectedAccount ``` has no funds, a faucet will deposit some funds (MATIC on Polygon) to pay for the gas fee of this 0 value transaction. This is part of the ``` validateOTP ``` call and funds will be deposited to the address provided in ``` createOTP ``` (the resolving address).
 
-## 4. Sending MATIC/ERC20/ERC721 to existing and non-existent IDriss users on Polygon
+## 4. Sending crypto & NFTs to any email, phone number or Twitter username
 
-### Send MATIC/ERC20/ERC721 assets to users that have an IDriss registered, and to those who do not have one registered.
+### Send MATIC/ERC20/ERC721 assets on Polygon to anyone with and without a registered IDriss.
 In case that the user resolves to an address in the IDriss registry, assets are directly transferred to the user.
 In the other case, assets are being sent to our SendToAnyone smart contract, so that the user can claim it after registering.
 Please note that if the smart contract is used, it additionally invokes approve function for the contract to be able to hold it in the escrow.
