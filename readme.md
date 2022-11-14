@@ -8,29 +8,25 @@ This is a node.js and webpack library for integrating [IDriss](https://www.idris
 
 IDriss builds tools making web3 more usable for everyone 🤝
 
-## Benefits
-
-- Enabling more social UX by letting use IDriss names in search bars
-- Enhancing the UI of your app by replacing wallet addresses with IDriss names
-- Verifying Twitter usernames, emails, or phone numbers of your users in a decentralized manner
-- Scaling your app beyond crypto-native users
-
 ## Content
 
-This library lets you independently integrate 4 functions from two products:
+This library lets you integrate 4 independent functions from two products:
 
 **IDriss Book** - decentralized mapping of emails, phone numbers and Twitter usernames to wallet addresses
-1. Resolving IDriss names
-2. Reverse Resolving IDriss names
-3. Registering IDriss names inside your app
+1. [Resolving](#1-resolving)
+2. [Reverse resolving](#2-reverse-resolving)
+3. [Registering new records](#3-registering-new-records)
 
 **IDriss Send** - mass web3 onboarding & asset distribution tool
 
-4. Sending crypto & NFTs to any email, phone number or Twitter username
+4. [Sending crypto & NFTs to emails, phone numbers, and Twitter usernames](#4-sending-crypto--nfts-to-emails-phone-numbers-and-twitter-usernames)
 
-***
+## Benefits
 
-**IDriss name - email, phone number or Twitter username*
+- Improving UX by letting use familiar web2 identifiers in search bars and input fields
+- Augmenting UI by replacing wallet addresses with human-readable names
+- Linking Twitter usernames, emails, and phone numbers to user profiles in a decentralized manner
+- Scaling your app beyond crypto-native userbase
 
 ## Cloning This Lib
 ```
@@ -139,7 +135,7 @@ const {IdrissCrypto, Authorization} = require("idriss-crypto");
 The library is designed both for es6 and cjs.
 
 # Functions
-## 1. Resolving IDriss Names
+## 1. Resolving
 
 ### Resolve emails, phone numbers, and Twitter usernames to wallet addresses.
 
@@ -207,7 +203,7 @@ An example implementation in the user interface of a wallet:
 <img alt="UI Implementation Example" src="img/resolving_idriss.png"/>
 </p>
 
-## 2. Reverse Resolving IDriss Names
+## 2. Reverse Resolving
 
 ### Show emails, phone numbers, and Twitter usernames instead of wallet addresses.
 
@@ -254,8 +250,7 @@ An example of implementation in the user interface:
 </p>
 
 
-## 3. Registering IDriss Names Inside Your Project
-
+## 3. Registering New Records
 
 ### Onboard users to IDriss directly from your app's interface.
 
@@ -444,12 +439,13 @@ try {
 * The address paying for the free sign up (``` selectedAccount ```) will be defined as the owner address of a given IDriss. We strongly advise that the payment transaction is confirmed by a wallet owned and operated by the user in pocession of the respective email/phone/Twitter account only. Only the owner address will be able to make any changes (including deletions) to an IDriss.
 * If ``` selectedAccount ``` has no funds, a faucet will deposit some funds (MATIC on Polygon) to pay for the gas fee of this 0 value transaction. This is part of the ``` validateOTP ``` call and funds will be deposited to the address provided in ``` createOTP ``` (the resolving address).
 
-## 4. Sending crypto & NFTs to any email, phone number or Twitter username
+## 4. Sending crypto & NFTs to emails, phone numbers, and Twitter usernames
 
-### Send MATIC/ERC20/ERC721 assets on Polygon to anyone with and without a registered IDriss.
-In case that the user resolves to an address in the IDriss registry, assets are directly transferred to the user.
-In the other case, assets are being sent to our SendToAnyone smart contract, so that the user can claim it after registering.
-Please note that if the smart contract is used, it additionally invokes approve function for the contract to be able to hold it in the escrow.
+### Send MATIC/ERC20/ERC721/ERC1155 assets on Polygon to anyone with and without a registered IDriss.
+* In case the recipient is already registered in the address book, assets are directly transferred to the user. 
+* In the other case, assets are being sent to the SendToAnyone smart contract, so that the user can claim them after registering. Please note that if the smart contract is used, it additionally invokes approve function for the contract to be able to hold it in the escrow.
+
+Sample UI implementation: [IDriss Send](https://www.idriss.xyz/send)
 
 Use transferToIDriss
 
