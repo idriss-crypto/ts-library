@@ -8,23 +8,27 @@ This is a node.js and webpack library for integrating [IDriss](https://www.idris
 
 IDriss builds tools making web3 more usable for everyone 🤝
 
-
-The key benefits of integrating are:
+## Benefits
 
 - Enabling more social UX by letting use IDriss names in search bars
 - Enhancing the UI of your app by replacing wallet addresses with IDriss names
 - Verifying Twitter usernames, emails, or phone numbers of your users in a decentralized manner
 - Scaling your app beyond crypto-native users
 
-**The library lets you independently integrate 4 functions from two products:**
+## Content
 
-IDriss Book - *decentralized mapping of emails, phone numbers and Twitter usernames to wallet addresses*
+This library lets you independently integrate 4 functions from two products:
+
+**IDriss Book** - decentralized mapping of emails, phone numbers and Twitter usernames to wallet addresses
 1. Resolving IDriss names
 2. Reverse Resolving IDriss names
 3. Registering IDriss names inside your app
 
-IDriss Send - *mass web3 onboarding & asset distribution tool*
+**IDriss Send** - mass web3 onboarding & asset distribution tool
+
 4. Sending crypto & NFTs to any email, phone number or Twitter username
+
+***
 
 **IDriss name - email, phone number or Twitter username*
 
