@@ -6,24 +6,29 @@
 
 This is a node.js and webpack library for integrating [IDriss](https://www.idriss.xyz/) into your project.
 
-IDriss is a decentralized mapping of emails, phone numbers and Twitter usernames to cryptocurrency wallet addresses.
+IDriss builds tools making web3 more usable for everyone 🤝
 
-The key benefits of integrating IDriss are:
+## Content
 
-- User-friendly wallet address format that can be easily shared verbally, or in writing for the purpose of sending or receiving crypto
-- Effective organization and quicker access to your multiple wallet addresses (you have them available under one, memorable IDriss)
-- Easier deposits into your wallet from crypto exchanges and other wallets
-- (Coming soon) Additional revenue stream for your project
+This library lets you integrate 4 independent functions from two products:
 
-**The library has 4 main functions:**
-1. Resolving IDriss names
-2. Reverse Resolving IDriss names
-3. Registering IDriss names inside your app
-4. Sending MATIC/ERC20/ERC721 to existing and nonexistent IDriss users
+**IDriss Book** - decentralized mapping of emails, phone numbers and Twitter usernames to wallet addresses
+1. [Resolving](#1-resolving)
+2. [Reverse resolving](#2-reverse-resolving)
+3. [Registering new records](#3-registering-new-records)
 
-**IDriss name - email, phone number or Twitter username*
+**IDriss Send** - mass web3 onboarding & asset distribution tool
 
-## Cloning this lib
+4. [Sending crypto & NFTs to emails, phone numbers, and Twitter usernames](#4-sending-crypto--nfts-to-emails-phone-numbers-and-twitter-usernames)
+
+## Benefits
+
+- Improving UX by letting use familiar web2 identifiers in search bars and input fields
+- Augmenting UI by replacing wallet addresses with human-readable names
+- Linking Twitter usernames, emails, and phone numbers to user profiles in a decentralized manner
+- Scaling your app beyond crypto-native userbase
+
+## Cloning This Lib
 ```
 git clone --recurse-submodules https://github.com/idriss-crypto/contracts.git
 ```
@@ -80,7 +85,7 @@ resolves to
     'Phantom SOL': '6GmzRK2qLhBPK2WwYM14EGnxh95jBTsJGXMgFyM3VeVk'
 }
 ```
-# How to load this library
+# How to Load This Library?
 ## Webpage with webpack
 ```bash
 npm install idriss-crypto
@@ -129,8 +134,8 @@ const {IdrissCrypto, Authorization} = require("idriss-crypto");
 
 The library is designed both for es6 and cjs.
 
-# Functionalities
-## 1. Resolving IDriss Names
+# Functions
+## 1. Resolving
 
 ### Resolve emails, phone numbers, and Twitter usernames to wallet addresses.
 
@@ -198,9 +203,9 @@ An example implementation in the user interface of a wallet:
 <img alt="UI Implementation Example" src="img/resolving_idriss.png"/>
 </p>
 
-## 2. Reverse Resolving IDriss Names
+## 2. Reverse Resolving
 
-### Show emails, phone numbers, and Twitter usernames instead of wallet addresses.
+### Display emails, phone numbers, and Twitter usernames instead of wallet addresses.
 
 Use reverseResolve:
 
@@ -245,8 +250,7 @@ An example of implementation in the user interface:
 </p>
 
 
-## 3. Registering IDriss Names Inside Your Project
-
+## 3. Registering New Records
 
 ### Onboard users to IDriss directly from your app's interface.
 
@@ -435,12 +439,15 @@ try {
 * The address paying for the free sign up (``` selectedAccount ```) will be defined as the owner address of a given IDriss. We strongly advise that the payment transaction is confirmed by a wallet owned and operated by the user in pocession of the respective email/phone/Twitter account only. Only the owner address will be able to make any changes (including deletions) to an IDriss.
 * If ``` selectedAccount ``` has no funds, a faucet will deposit some funds (MATIC on Polygon) to pay for the gas fee of this 0 value transaction. This is part of the ``` validateOTP ``` call and funds will be deposited to the address provided in ``` createOTP ``` (the resolving address).
 
-## 4. Sending MATIC/ERC20/ERC721 to existing and non-existent IDriss users on Polygon
+## 4. Sending crypto & NFTs to emails, phone numbers, and Twitter usernames
 
-### Send MATIC/ERC20/ERC721 assets to users that have an IDriss registered, and to those who do not have one registered.
-In case that the user resolves to an address in the IDriss registry, assets are directly transferred to the user.
-In the other case, assets are being sent to our SendToAnyone smart contract, so that the user can claim it after registering.
-Please note that if the smart contract is used, it additionally invokes approve function for the contract to be able to hold it in the escrow.
+### Send to anyone, no wallet required for the recipient.
+* Supported assets: MATIC/ERC20/ERC721/ERC1155 on Polygon network.
+* Assets can be sent to individuals or distributed to groups of users. 
+* Assets are sent to a proxy smart contract. The approve function is invoked so the contract can hold the assets in escrow. A wallet is generated for the recipient during the claiming process. 
+* In case the recipient is already registered in the address book, assets are directly transferred to the user.
+
+Sample UI implementation: [IDriss Send](https://www.idriss.xyz/send)
 
 Use transferToIDriss
 
@@ -508,6 +515,6 @@ yarn testE2e
 ## Working Examples
 
 
-* For functionalities (1) and (2), check our [browser extension](https://github.com/idriss-crypto/browser-extensions).
+* For functions (1) and (2), check our [browser extension](https://github.com/idriss-crypto/browser-extensions).
 * [IDriss Send](https://github.com/deliriusz/send-to-anyone-page) is an example for a working integration of (3).
-* Check the [claim page](https://github.com/idrisssystem/claim) of IDriss Send for a working example of functionalities (1) and (4).
+* Check the [claim page](https://github.com/idrisssystem/claim) of IDriss Send for a working example of functions (1) and (4).
