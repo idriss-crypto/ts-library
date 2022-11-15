@@ -110,18 +110,21 @@ export abstract class BaseIdrissCrypto {
         let result: MultiSendToHashTransactionReceipt | TransactionReceipt
 
         const sendToAnyoneContractAllowances = new Map<string, AssetLiability>()
+        const tippingContractAllowances = new Map<string, AssetLiability>()
 
         const registeredUsersSendParams = []
         const newUsersSendParams = []
 
         for (let sendParam of sendParams) {
-            const hash = await this.getUserHash(sendParam.walletType, sendParam.beneficiary);
+            const hash = await this.getUserHash(sendParam.walletType!, sendParam.beneficiary);
             const resolvedIDriss = await this.resolve(sendParam.beneficiary)
 
+            //TODO: add approve for all for ERC721
             if (resolvedIDriss
-                && resolvedIDriss[sendParam.walletType.walletTag!]
-                && resolvedIDriss[sendParam.walletType.walletTag!].length > 0) {
-                sendParam.hash = resolvedIDriss[sendParam.walletType.walletTag!]
+                && resolvedIDriss[sendParam.walletType!.walletTag!]
+                && resolvedIDriss[sendParam.walletType!.walletTag!].length > 0) {
+                sendParam.hash = resolvedIDriss[sendParam.walletType!.walletTag!]
+                this.addAssetForAllowanceToMap(tippingContractAllowances, sendParam.asset)
                 registeredUsersSendParams.push(sendParam)
             } else {
                 sendParam.hash = hash
@@ -136,9 +139,12 @@ export abstract class BaseIdrissCrypto {
             ...Array.from(sendToAnyoneContractAllowances.values())
         ], signer, this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS, transactionOptions);
 
-        for (let registeredUser of registeredUsersSendParams) {
-            result = await this.callWeb3Tipping(
-               registeredUser.hash!, registeredUser.asset, registeredUser.message ?? '', transactionOptions)
+        await this.approveAssets([
+            ...Array.from(tippingContractAllowances.values())
+        ], signer, this.IDRISS_TIPPING_CONTRACT_ADDRESS, transactionOptions);
+
+        if (registeredUsersSendParams.length > 0) {
+            result = await this.callWeb3multiTipping(registeredUsersSendParams, transactionOptions)
         }
 
         if (newUsersSendParams.length > 0) {
@@ -146,6 +152,11 @@ export abstract class BaseIdrissCrypto {
         }
 
         return result!
+    }
+
+    private async encodeTippingToHex(param: SendToAnyoneParams): Promise<string> {
+        const method = await this.getTippingMethod(param)
+        return method.encodeABI()
     }
 
     private async encodeSendToAnyoneToHex(hash: string, param: SendToAnyoneParams): Promise<string> {
@@ -300,10 +311,9 @@ export abstract class BaseIdrissCrypto {
 
     private async callWeb3Tipping(resolvedAddress: string, asset: AssetLiability, message: string, transactionOptions:TransactionOptions):Promise<TransactionReceipt> {
         const paymentFee = await this.calculateTippingPaymentFee(asset.amount, asset.type)
-        const maticToSend = asset.type === AssetType.Native ? BigNumber.from(asset.amount).add(paymentFee) : paymentFee
+        const maticToSend = asset.type === AssetType.Native ? BigNumber.from(asset.amount) : paymentFee
         const signer = await this.getConnectedAccount()
         let transactionReceipt: TransactionReceipt
-        const tippingContract = await this.tippingContractPromise
 
         await this.approveAssets([asset], signer,
            this.IDRISS_TIPPING_CONTRACT_ADDRESS, transactionOptions);
@@ -316,28 +326,72 @@ export abstract class BaseIdrissCrypto {
 
         message = message ?? ''
 
-        switch (asset.type) {
+        transactionReceipt = (await this.getTippingMethod({
+            asset: asset,
+            message: message,
+            beneficiary: message,
+            hash: resolvedAddress
+        })).send(sendOptions)
+
+        return transactionReceipt
+    }
+
+    private async getTippingMethod(params: SendToAnyoneParams): Promise<any> {
+        let method: any
+        const message = params.message ?? ''
+        const tippingContract = await this.tippingContractPromise
+
+        switch (params.asset.type) {
             case AssetType.Native:
-                transactionReceipt = await tippingContract.methods
-                    .sendTo(resolvedAddress, message)
-                    .send(sendOptions)
+                method = await tippingContract.methods
+                    .sendTo(params.hash, params.asset.amount.toString(), message)
                 break;
             case AssetType.ERC20:
-                transactionReceipt = await tippingContract.methods
-                    .sendTokenTo(resolvedAddress, asset.amount, asset.assetContractAddress, message)
-                    .send(sendOptions)
+                method = await tippingContract.methods
+                    .sendTokenTo(params.hash, params.asset.amount.toString(), params.asset.assetContractAddress, message)
                 break;
             case AssetType.ERC721:
-                transactionReceipt = await tippingContract.methods
-                    .sendERC721To(resolvedAddress, asset.assetId, asset.assetContractAddress, message)
-                    .send(sendOptions)
+                method = await tippingContract.methods
+                    .sendERC721To(params.hash, params.asset.assetId, params.asset.assetContractAddress, message)
                 break;
             case AssetType.ERC1155:
-                transactionReceipt = await tippingContract.methods
-                    .sendERC1155To(resolvedAddress, asset.assetId, asset.amount, asset.assetContractAddress, message)
-                    .send(sendOptions)
+                method = await tippingContract.methods
+                    .sendERC1155To(params.hash, params.asset.assetId, params.asset.amount.toString(), params.asset.assetContractAddress, message)
                 break;
         }
+
+        return method
+    }
+
+    private async callWeb3multiTipping(params: SendToAnyoneParams[], transactionOptions:TransactionOptions):Promise<TransactionReceipt> {
+        let maticToSend: BigNumberish = BigNumber.from(0)
+        const signer = await this.getConnectedAccount()
+        let transactionReceipt: TransactionReceipt
+        const tippingContract = await this.tippingContractPromise
+        const encodedCalldata = []
+
+        for (let param of params) {
+            const paymentFee = await this.calculateTippingPaymentFee(param.asset.amount, param.asset.type)
+            let properParamAmountToSend
+
+            if (param.asset.type === AssetType.Native) {
+                properParamAmountToSend = param.asset.amount
+            } else {
+                properParamAmountToSend = paymentFee
+            }
+
+            maticToSend = maticToSend.add(properParamAmountToSend)
+
+            encodedCalldata.push(await this.encodeTippingToHex(param))
+        }
+
+        transactionReceipt = await tippingContract.methods
+            .batch(encodedCalldata)
+            .send({
+                from: signer,
+                ...transactionOptions,
+                value: maticToSend.toString()
+            })
 
         return transactionReceipt
     }

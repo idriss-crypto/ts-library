@@ -11,6 +11,17 @@
 		"type": "constructor"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "bytes",
+				"name": "innerError",
+				"type": "bytes"
+			}
+		],
+		"name": "BatchError",
+		"type": "error"
+	},
+	{
 		"inputs": [],
 		"name": "tipping__withdraw__OnlyAdminCanWithdraw",
 		"type": "error"
@@ -179,6 +190,19 @@
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes[]",
+				"name": "_calls",
+				"type": "bytes[]"
+			}
+		],
+		"name": "batch",
+		"outputs": [],
+		"stateMutability": "payable",
 		"type": "function"
 	},
 	{
@@ -354,6 +378,11 @@
 				"internalType": "address",
 				"name": "_recipient",
 				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
 			},
 			{
 				"internalType": "string",
