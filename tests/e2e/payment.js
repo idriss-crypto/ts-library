@@ -238,33 +238,37 @@ describe('Payments', async () => {
 
     describe('Send to existing hash', () => {
         it('is able to send coins to existing IDriss', async () => {
-            const balanceBefore = await web3.eth.getBalance(signer1Address)
+            const recipientBalanceBefore = await web3.eth.getBalance(signer1Address)
+            const payerBalanceBefore = await web3.eth.getBalance(ownerAddress)
+            const amount = '10000000000000000000'
 
             const result = await idrissCryptoLib.transferToIDriss('hello@idriss.xyz', testWalletType, {
-                amount: 1000,
+                amount: amount,
                 type: AssetType.Native,
             })
 
-            const balanceAfter = await web3.eth.getBalance(signer1Address)
+            const weiUsed = BigNumber.from(result.gasUsed).mul(result.effectiveGasPrice)
+            const recipientBalanceAfter = await web3.eth.getBalance(signer1Address)
+            const payerBalanceAfter = await web3.eth.getBalance(ownerAddress)
 
             assert(result.status)
-            assert.equal(BigNumber.from(balanceAfter).sub(BigNumber.from(balanceBefore)), 1000)
+            assert.equal(BigNumber.from(recipientBalanceAfter).sub(BigNumber.from(recipientBalanceBefore)).toString(),
+                BigNumber.from(amount).sub(BigNumber.from(amount).div(100)).toString())
+            assert.equal(BigNumber.from(payerBalanceBefore).sub(BigNumber.from(payerBalanceAfter)).sub(weiUsed).toString(), amount) //1% fee
         })
 
         it('is able to multisend coins to existing IDriss', async () => {
-            const balanceBefore = await web3.eth.getBalance(signer1Address)
-
-            // const result = await idrissCryptoLib.transferToIDriss('hello@idriss.xyz', testWalletType, {
-            //     amount: 1000,
-            //     type: AssetType.Native,
-            // })
+            const recipientBalanceBefore = await web3.eth.getBalance(signer1Address)
+            const payerBalanceBefore = await web3.eth.getBalance(ownerAddress)
+            const balance1 = BigNumber.from('10000000000000000000')
+            const balance2 = BigNumber.from('35000')
 
             const result = await idrissCryptoLib.multitransferToIDriss([
                 {
                     beneficiary: 'hello@idriss.xyz',
                     walletType: testWalletType,
                     asset: {
-                        amount: 1000,
+                        amount: balance1,
                         type: AssetType.Native,
                     }
                 },
@@ -272,16 +276,23 @@ describe('Payments', async () => {
                     beneficiary: 'hello@idriss.xyz',
                     walletType: testWalletType,
                     asset: {
-                        amount: 350,
+                        amount: balance2,
                         type: AssetType.Native,
                     }
                 }
             ])
 
-            const balanceAfter = await web3.eth.getBalance(signer1Address)
+            const weiUsed = BigNumber.from(result.gasUsed).mul(result.effectiveGasPrice)
+            const recipientBalanceAfter = await web3.eth.getBalance(signer1Address)
+            const payerBalanceAfter = await web3.eth.getBalance(ownerAddress)
 
             assert(result.status)
-            assert.equal(BigNumber.from(balanceAfter).sub(BigNumber.from(balanceBefore)), 1350)
+
+            assert.equal(BigNumber.from(payerBalanceBefore).sub(BigNumber.from(payerBalanceAfter)).sub(weiUsed).toString(),
+                balance1.add(balance2).toString()) //1% fee
+
+            assert.equal(BigNumber.from(recipientBalanceAfter).sub(BigNumber.from(recipientBalanceBefore)).toString(),
+                balance1.add(balance2).sub(balance1.add(balance2).div(100)).toString())
         })
 
         it('is able to send ERC20 to existing IDriss', async () => {

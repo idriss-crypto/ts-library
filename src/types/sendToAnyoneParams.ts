@@ -4,7 +4,7 @@ import {AssetLiability} from "./assetLiability";
 export type SendToAnyoneParams = {
    beneficiary: string,
    hash?: string,
-   walletType: Required<ResolveOptions>,
+   walletType?: Required<ResolveOptions>,
    asset: AssetLiability,
    message?: string
 }

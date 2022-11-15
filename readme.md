@@ -59,7 +59,7 @@ The same is possible with Twitter usernames:
     const resultTwitter = await idriss.resolve("@idriss_xyz");
     console.log(resultTwitter);
 ```
-resolves to
+Resolves to: 
 ```json
 {
     "Metamask ETH": "0x5ABca791C22E7f99237fCC04639E094Ffa0cCce9",
@@ -77,7 +77,7 @@ And phone numbers:
     const resultPhone = await idriss.resolve("+16506655942");
     console.log(resultPhone);
 ```
-resolves to
+Resolves to: 
 ```javascript
 {
     'Binance BTC': '1FdqxZsS6HVEs1NaQUdkoQWKYA9R9yfhdz',
@@ -449,7 +449,7 @@ try {
 
 Sample UI implementation: [IDriss Send](https://www.idriss.xyz/send)
 
-Use transferToIDriss
+**Use transferToIDriss**
 
 ```typescript
 public async transferToIDriss (
@@ -480,7 +480,7 @@ const transactionReceipt = await idriss.transferToIDriss(
 console.log(transactionReceipt)
 
 ```
-This resolves to SendToHashTransactionReceipt object, which gives info about the transaction that was performed and if SendToHash smart contract was used, it returns claim password for the user
+This resolves to SendToHashTransactionReceipt object, which gives info about the transaction that was performed and if SendToHash smart contract was used, it returns claim password and claim url for the user
 
 You can also call the smart contact directly:
 
@@ -503,6 +503,50 @@ reverse = await sendToAnyoneContract.methods
         value: 1_000_000_000_000_000
     });
 ```
+
+**Use multitransferToIDriss**
+
+```typescript
+public async multitransferToIDriss(
+    sendParams: SendToAnyoneParams[],
+    transactionOptions: TransactionOptions = {}
+):Promise<MultiSendToHashTransactionReceipt | TransactionReceipt>
+```
+And in code:
+
+```typescript
+
+const obj = new IdrissCrypto()
+
+const transactionReceipt = await obj.multitransferToIDriss([
+                {
+                    beneficiary: testMail,
+                    walletType: testWalletType,
+                    asset: {
+                        amount: amountToSend,
+                        type: AssetType.ERC721,
+                        assetContractAddress: mockNFTContract.address,
+                        assetId: 11
+                    }
+                },
+                {
+                    beneficiary: testMail2,
+                    walletType: testWalletType,
+                    asset: {
+                        amount: amountToSend,
+                        type: AssetType.ERC721,
+                        assetContractAddress: mockNFTContract.address,
+                        assetId: 12
+                    }
+                },
+            ])
+
+console.log(transactionReceipt)
+
+```
+This resolves to MultiSendToHashTransactionReceipt object, which gives info about the transaction that was performed and if SendToHash smart contract was used, it returns list of claim passwords & claim links for the users
+
+Direct use of the smart contract multicall function is ill-advised, as there are many transformations for multicall to work
 
 ## Testing
 In order to run tests, please execute following commands:
