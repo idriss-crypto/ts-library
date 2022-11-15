@@ -35,6 +35,7 @@ export abstract class BaseIdrissCrypto {
     protected PRICE_ORACLE_CONTRACT_ADDRESS = '0xAB594600376Ec9fD91F8e885dADF0CE036862dE0';
     protected IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS = '0xf333EDE8D49dD100F02c946809C9F5D9867D10C0';
     protected IDRISS_TIPPING_CONTRACT_ADDRESS = '0xb05dC103DEc7c482CB30A7AF83053E3ea0F08027';
+    protected IDRISS_HOMEPAGE = 'https://idriss.xyz';
 
     // we split web3 from web3 for registry, as registry is only accessible on Polygon,
     // and library is about to support multiple chains
@@ -207,7 +208,7 @@ export abstract class BaseIdrissCrypto {
             && resolvedIDriss[walletType.walletTag!].length > 0) {
             result = await this.callWeb3Tipping(resolvedIDriss[walletType.walletTag!], asset, message, transactionOptions)
         } else {
-            result = await this.callWeb3SendToAnyone(hash, asset, message, transactionOptions)
+            result = await this.callWeb3SendToAnyone(hash, beneficiary, asset, message, transactionOptions)
         }
 
         return result
@@ -422,7 +423,8 @@ export abstract class BaseIdrissCrypto {
             const hashWithPassword = await this.generateHashWithPassword(param.hash!, claimPassword)
             encodedCalldata.push(await this.encodeSendToAnyoneToHex(hashWithPassword, param))
 
-            beneficiaryClaims.push({beneficiary: param.hash!, claimPassword: claimPassword})
+            const claimUrl = this.generateClaimUrl(param.beneficiary, param.asset, "$TBD$", claimPassword)
+            beneficiaryClaims.push({beneficiary: param.hash!, claimPassword: claimPassword, claimUrl: claimUrl})
         }
 
         transactionReceipt = await sendToHashContract.methods
@@ -433,6 +435,10 @@ export abstract class BaseIdrissCrypto {
                value: maticToSend.toString()
            })
 
+        beneficiaryClaims.forEach((val) => {
+            val.claimUrl = val.claimUrl.replace('$TBD$', `${transactionReceipt.blockNumber}`)
+        })
+
         return {
             transactionReceipt,
             // @ts-ignore
@@ -440,7 +446,17 @@ export abstract class BaseIdrissCrypto {
         }
     }
 
-    private async callWeb3SendToAnyone(hash: string, asset: AssetLiability, message: string, transactionOptions:TransactionOptions):Promise<SendToHashTransactionReceipt> {
+    private generateClaimUrl (beneficiary: string, asset: AssetLiability, block: string, claimPassword: string) {
+        const assetId = asset.type === AssetType.ERC1155 || asset.type === AssetType.ERC721
+            ? `&assetId=${asset.assetId}` : ''
+        const assetAddress = asset.type !== AssetType.Native ? `&assetAddress=${asset.assetContractAddress}` : ''
+        return `${this.IDRISS_HOMEPAGE}/claim?identifier=${beneficiary}&claimPassword=${claimPassword}`
+            + `${assetId}&assetType=${asset.type}${assetAddress}&blockNumber=${block}`
+    }
+
+    private async callWeb3SendToAnyone(hash: string, beneficiary: string, asset: AssetLiability,
+                                       message: string, transactionOptions:TransactionOptions)
+                                            :Promise<{ transactionReceipt: TransactionReceipt; claimUrl: string; claimPassword: string }> {
         const paymentFee = await this.calculateSendToAnyonePaymentFee(asset.amount, asset.type)
         const maticToSend = asset.type === AssetType.Native ? BigNumber.from(asset.amount).add(paymentFee) : paymentFee
         const signer = await this.getConnectedAccount()
@@ -464,7 +480,8 @@ export abstract class BaseIdrissCrypto {
 
         return {
             transactionReceipt,
-            claimPassword
+            claimPassword,
+            claimUrl: this.generateClaimUrl(beneficiary, asset, `${transactionReceipt.blockNumber}`, claimPassword)
         }
     }
 
