@@ -234,7 +234,7 @@ An example of implementation in the user interface:
 ### Send MATIC/ERC20/ERC721 to send assets to both users that have IDriss registered, and to those who are yet to have one on Polygon chain
 In case that the user resolves to an address in IDriss registry, asset transfer is performed directly to the user.
 The asset is being send to SendToAnyone smart contract, so that the user can claim it after registering.
-Please note that if the smart contract is used, it additionally invokes approve function for the contract to be able to hold it in hte escrow.
+Please note that if the smart contract is used, it additionally invokes approve function for the contract to be able to hold it in the escrow.
 
 **Use transferToIDriss**
 
@@ -333,7 +333,7 @@ console.log(transactionReceipt)
 ```
 This resolves to MultiSendToHashTransactionReceipt object, which gives info about the transaction that was performed and if SendToHash smart contract was used, it returns list of claim passwords & claim links for the users
 
-Direct use of the smart contract multicall function is illadvised, as there are many transformations for multicall to work
+Direct use of the smart contract multicall function is ill-advised, as there are many transformations for multicall to work
 
 ## 4. Registering IDriss Names Inside Your Project
 
