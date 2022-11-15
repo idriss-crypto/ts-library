@@ -205,7 +205,7 @@ An example implementation in the user interface of a wallet:
 
 ## 2. Reverse Resolving
 
-### Show emails, phone numbers, and Twitter usernames instead of wallet addresses.
+### Display emails, phone numbers, and Twitter usernames instead of wallet addresses.
 
 Use reverseResolve:
 
@@ -441,9 +441,11 @@ try {
 
 ## 4. Sending crypto & NFTs to emails, phone numbers, and Twitter usernames
 
-### Send MATIC/ERC20/ERC721/ERC1155 assets on Polygon to anyone with and without a registered IDriss.
-* In case the recipient is already registered in the address book, assets are directly transferred to the user. 
-* In the other case, assets are being sent to the SendToAnyone smart contract, so that the user can claim them after registering. Please note that if the smart contract is used, it additionally invokes approve function for the contract to be able to hold it in the escrow.
+### Send to anyone, no wallet required for the recipient.
+* Supported assets: MATIC/ERC20/ERC721/ERC1155 on Polygon network.
+* Assets can be sent to individuals or distributed to groups of users. 
+* Assets are sent to a proxy smart contract. The approve function is invoked so the contract can hold the assets in escrow. A wallet is generated for the recipient during the claiming process. 
+* In case the recipient is already registered in the address book, assets are directly transferred to the user.
 
 Sample UI implementation: [IDriss Send](https://www.idriss.xyz/send)
 
@@ -513,6 +515,6 @@ yarn testE2e
 ## Working Examples
 
 
-* For functionalities (1) and (2), check our [browser extension](https://github.com/idriss-crypto/browser-extensions).
+* For functions (1) and (2), check our [browser extension](https://github.com/idriss-crypto/browser-extensions).
 * [IDriss Send](https://github.com/deliriusz/send-to-anyone-page) is an example for a working integration of (3).
-* Check the [claim page](https://github.com/idrisssystem/claim) of IDriss Send for a working example of functionalities (1) and (4).
+* Check the [claim page](https://github.com/idrisssystem/claim) of IDriss Send for a working example of functions (1) and (4).
