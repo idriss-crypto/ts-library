@@ -879,6 +879,131 @@ describe('Payments', async () => {
         });
     });
 
+    describe('Send to existing and nonexisting hash', () => {
+
+        // Proof of concept test
+        it('is able to multisend coins to existing and nonexisting IDriss', async () => {
+            const dollarPrice = await idrissCryptoLib.getDollarPriceInWei()
+            const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
+            const existingMail = 'hello@idriss.xyz'
+            const nonexistingMail = 'nonexisting@idriss.xyz'
+            const testHash = await digestMessage(nonexistingMail + walletTagHash)
+
+            const existingBalanceBefore = await web3.eth.getBalance(signer1Address)
+
+            const contractBalanceBefore = await web3.eth.getBalance(sendToHashContract.address)
+
+            const amountToSend = '10000000000000000000'
+            const amountToSend2 = '4200000000000000000'
+
+            const result = await idrissCryptoLib.multitransferToIDriss([
+                {
+                    beneficiary: existingMail,
+                    walletType: testWalletType,
+                    asset: {
+                        amount: amountToSend,
+                        type: AssetType.Native,
+                    }
+                },
+                {
+                    beneficiary: nonexistingMail,
+                    walletType: testWalletType,
+                    asset: {
+                        amount: amountToSend2,
+                        type: AssetType.Native,
+                    }
+                }
+            ])
+
+            const existingBalanceAfter = await web3.eth.getBalance(signer1Address)
+
+            const hashWithPassword = (await sendToHashContract.functions
+                .hashIDrissWithPassword(testHash, result.data[0].claimPassword))[0]
+
+            nonexistingBalanceAfter = await sendToHashContract.functions.balanceOf(hashWithPassword, AssetType.Native, idrissCryptoLib.ZERO_ADDRESS, 0)
+
+            assert(result.transactionReceipt.status)
+            assert(result.data.length,1)
+            assert.equal(result.data[0].claimPassword.length, 32)
+            // not checking again for exact amount, see other tests
+            assert(existingBalanceAfter > existingBalanceBefore)
+            assert.equal(nonexistingBalanceAfter.toString(), amountToSend2)
+        })
+
+    });
+
+    describe('Send to IDriss hash and wallet address', () => {
+
+        // Proof of concept test
+        it('is able to multisend coins to existing IDriss and wallet address', async () => {
+            const recipient1BalanceBefore = await web3.eth.getBalance(signer1Address)
+            const recipient2BalanceBefore = await web3.eth.getBalance(signer2Address)
+            const payerBalanceBefore = await web3.eth.getBalance(ownerAddress)
+            const amountToSend = BigNumber.from('10000000000000000000')
+            const amountToSend2 = BigNumber.from('35000')
+
+
+            const result = await idrissCryptoLib.multitransferToIDriss([
+                {
+                    beneficiary: signer2Address,
+                    walletType: testWalletType,
+                    asset: {
+                        amount: amountToSend,
+                        type: AssetType.Native,
+                    }
+                },
+                {
+                    beneficiary: 'hello@idriss.xyz',
+                    walletType: testWalletType,
+                    asset: {
+                        amount: amountToSend2,
+                        type: AssetType.Native,
+                    }
+                }
+            ])
+
+
+            const weiUsed = BigNumber.from(result.gasUsed).mul(result.effectiveGasPrice)
+            const recipient1BalanceAfter = await web3.eth.getBalance(signer1Address)
+            const recipient2BalanceAfter = await web3.eth.getBalance(signer2Address)
+            const payerBalanceAfter = await web3.eth.getBalance(ownerAddress)
+
+            assert(result.status)
+
+            assert.equal(BigNumber.from(payerBalanceBefore).sub(BigNumber.from(payerBalanceAfter)).sub(weiUsed).toString(),
+                amountToSend.add(amountToSend2).toString())
+
+            //1% fee
+            assert.equal(BigNumber.from(recipient1BalanceAfter).add(BigNumber.from(recipient2BalanceAfter)).sub(BigNumber.from(recipient1BalanceBefore)).sub(BigNumber.from(recipient2BalanceBefore)).toString(),
+                amountToSend.add(amountToSend2).sub(amountToSend.add(amountToSend2).div(100)).toString())
+        })
+
+    });
+
+    describe('Send to wallet address', () => {
+
+        it('is able to send coins to wallet address', async () => {
+            const recipientBalanceBefore = await web3.eth.getBalance(signer1Address)
+            const payerBalanceBefore = await web3.eth.getBalance(ownerAddress)
+            const amount = '10000000000000000000'
+
+            const result = await idrissCryptoLib.transferToIDriss(signer1Address, testWalletType, {
+                amount: amount,
+                type: AssetType.Native,
+            })
+
+            const weiUsed = BigNumber.from(result.gasUsed).mul(result.effectiveGasPrice)
+            const recipientBalanceAfter = await web3.eth.getBalance(signer1Address)
+            const payerBalanceAfter = await web3.eth.getBalance(ownerAddress)
+
+            assert(result.status)
+            assert.equal(BigNumber.from(recipientBalanceAfter).sub(BigNumber.from(recipientBalanceBefore)).toString(),
+                BigNumber.from(amount).sub(BigNumber.from(amount).div(100)).toString())
+            assert.equal(BigNumber.from(payerBalanceBefore).sub(BigNumber.from(payerBalanceAfter)).sub(weiUsed).toString(), amount) //1% fee
+        })
+
+    });
+
     describe('Calculate fee', () => {
         it('returns proper payment fee', async () => {
             const dollarPrice = await idrissCryptoLib.getDollarPriceInWei()
