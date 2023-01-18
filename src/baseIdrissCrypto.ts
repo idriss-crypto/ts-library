@@ -117,6 +117,14 @@ export abstract class BaseIdrissCrypto {
         const newUsersSendParams = []
 
         for (let sendParam of sendParams) {
+
+            if ((await this.web3Promise).utils.isAddress(sendParam.beneficiary)) {
+                sendParam.hash = sendParam.beneficiary;
+                this.addAssetForAllowanceToMap(tippingContractAllowances, sendParam.asset)
+                registeredUsersSendParams.push(sendParam)
+                continue;
+            }
+
             const hash = await this.getUserHash(sendParam.walletType!, sendParam.beneficiary);
             const resolvedIDriss = await this.resolve(sendParam.beneficiary)
 
@@ -199,9 +207,15 @@ export abstract class BaseIdrissCrypto {
             throw new Error('Only transfers on Polygon are supported at the moment')
         }
 
+        let result: SendToHashTransactionReceipt | TransactionReceipt
+
+        if ((await this.web3Promise).utils.isAddress(beneficiary)) {
+            result = await this.callWeb3Tipping(beneficiary, asset, message, transactionOptions)
+            return result
+        }
+
         const hash = await this.getUserHash(walletType, beneficiary);
         const resolvedIDriss = await this.resolve(beneficiary)
-        let result: SendToHashTransactionReceipt | TransactionReceipt
 
         if (resolvedIDriss
             && resolvedIDriss[walletType.walletTag!]
