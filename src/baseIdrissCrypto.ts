@@ -255,6 +255,20 @@ export abstract class BaseIdrissCrypto {
         return await this.callWeb3ClaimPayment(hash, claimPassword, asset, transactionOptions)
     }
 
+    public async revertPayment(
+        beneficiary: string,
+        assetType: AssetType,
+        assetContractAddress: string = this.ZERO_ADDRESS,
+        transactionOptions: TransactionOptions = {}
+    ):Promise<TransactionReceipt> {
+
+        let result: TransactionReceipt
+
+        result = await this.callRevertPayment(beneficiary, assetType, assetContractAddress, transactionOptions)
+        return result
+
+    }
+
     protected async transformIdentifier(input: string): Promise<string> {
         let identifier = this.lowerFirst(input).replace(" ", "");
         const inputType = BaseIdrissCrypto.matchInput(input);
@@ -347,6 +361,25 @@ export abstract class BaseIdrissCrypto {
             beneficiary: message,
             hash: resolvedAddress
         })).send(sendOptions)
+
+        return transactionReceipt
+    }
+
+    private async callRevertPayment(beneficiary: string, assetType: number, assetContractAddress: string, transactionOptions:TransactionOptions):Promise<TransactionReceipt> {
+
+        const signer = await this.getConnectedAccount()
+        let transactionReceipt: TransactionReceipt
+
+        const sendOptions = {
+                from: signer,
+                ...transactionOptions
+            }
+
+        const sendToHashContract = await this.idrissSendToAnyoneContractPromise
+
+        transactionReceipt = await sendToHashContract.methods
+            .revertPayment(beneficiary, assetType, assetContractAddress)
+            .send(sendOptions);
 
         return transactionReceipt
     }

@@ -1004,6 +1004,65 @@ describe('Payments', async () => {
 
     });
 
+    describe('Send to nonexisting hash and revert payment', () => {
+        it('is able to send coins to nonexisting IDriss and revert the payment', async () => {
+            const dollarPrice = await idrissCryptoLib.getDollarPriceInWei()
+            const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
+            const testMail = 'nonexisting@idriss.xyz'
+            const testHash = await digestMessage(testMail + walletTagHash)
+            const amountToSend = '159755594'
+            const userFee = BigNumber.from(dollarPrice).add(amountToSend)
+
+            const contractBalanceBefore = await web3.eth.getBalance(sendToHashContract.address)
+
+            const result = await idrissCryptoLib.transferToIDriss(testMail, testWalletType, {
+                amount: amountToSend,
+                type: AssetType.Native,
+            })
+
+            const transaction = await web3.eth.getTransaction(result.transactionReceipt.transactionHash)
+            const hashWithPassword = (await sendToHashContract.functions
+                .hashIDrissWithPassword(testHash, result.claimPassword))[0]
+
+            const userBalanceAfter = await sendToHashContract.functions.balanceOf(hashWithPassword, AssetType.Native, idrissCryptoLib.ZERO_ADDRESS, 0)
+            const contractBalanceAfter = await web3.eth.getBalance(sendToHashContract.address)
+
+            assert(result.transactionReceipt.status)
+            assert.equal(result.claimPassword.length, 32)
+            assert.equal(transaction.value, userFee.toString())
+            assert.equal(BigNumber.from(contractBalanceAfter).sub(contractBalanceBefore), userFee.toString())
+            assert.equal(userBalanceAfter.toString(), amountToSend)
+
+            const contractBalanceBefore2 = await web3.eth.getBalance(sendToHashContract.address)
+            const senderBalanceBefore = await web3.eth.getBalance(ownerAddress)
+
+            const revertedResult = await idrissCryptoLib.revertPayment(hashWithPassword, AssetType.Native)
+
+            const contractBalanceAfter2 = await web3.eth.getBalance(sendToHashContract.address)
+            const senderBalanceAfter = await web3.eth.getBalance(ownerAddress)
+
+            const transactionRevert = await web3.eth.getTransaction(revertedResult.transactionHash)
+
+            assert(revertedResult.status)
+            assert.equal(BigNumber.from(contractBalanceBefore2).sub(amountToSend).toString(),contractBalanceAfter2.toString())
+        })
+
+        it('it throws an error if revertPayment fails', async () => {
+
+            const notClaimableIDrissHash = '0x50c5a97607e73b12ea1fa5e437860f9cb7c138cc6210cf1d9804aed5f5ac5305'
+
+            let error
+            try {
+                const result = await idrissCryptoLib.revertPayment(notClaimableIDrissHash, AssetType.Native)
+            } catch (e) {
+                error = e
+            }
+
+            assert(error instanceof Error)
+        });
+
+    });
+
     describe('Calculate fee', () => {
         it('returns proper payment fee', async () => {
             const dollarPrice = await idrissCryptoLib.getDollarPriceInWei()
