@@ -487,18 +487,25 @@ export abstract class BaseIdrissCrypto {
         const beneficiaryClaims = []
 
         for (let param of params) {
+                console.log("Asset amount pre-iteration is: ", param.asset.amount.toString())
+        }
+
+        for (let param of params) {
             const paymentFee = await this.calculateSendToAnyonePaymentFee(param.asset.amount, param.asset.type)
             let properParamAmountToSend
+            let newParam = {...param, asset: {...param.asset}}
 
             if (param.asset.type === AssetType.Native) {
+                console.log("Asset amount this iteration is: ", param.asset.amount.toString())
                 properParamAmountToSend = BigNumber.from(param.asset.amount).add(paymentFee)
                 // for native currency we pass item value in amount
-                param.asset.amount = properParamAmountToSend
+                newParam.asset.amount = properParamAmountToSend
             } else {
                 properParamAmountToSend = paymentFee
             }
 
             maticToSend = maticToSend.add(properParamAmountToSend)
+            params[params.indexOf(param)] = newParam
 
             const claimPassword = await this.generateClaimPassword()
             const hashWithPassword = await this.generateHashWithPassword(param.hash!, claimPassword)
@@ -507,6 +514,9 @@ export abstract class BaseIdrissCrypto {
             const claimUrl = this.generateClaimUrl(param.beneficiary, param.asset, "$TBD$", claimPassword)
             beneficiaryClaims.push({beneficiary: param.hash!, claimPassword: claimPassword, claimUrl: claimUrl})
         }
+
+        console.log("Finals params: ", params)
+        console.log("Sending amount: ", maticToSend.toString())
 
         if (!transactionOptions.gas) {
             try {
