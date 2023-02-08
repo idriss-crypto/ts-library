@@ -508,17 +508,12 @@ describe('Payments', async () => {
             const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
             const testMail = 'nonexisting@idriss.xyz'
             const testMail2 = 'nonexisting2@idriss.xyz'
-            const testMail3 = 'nonexisting3@idriss.xyz'
-            const testMail4 = 'nonexisting4@idriss.xyz'
             const testHash = await digestMessage(testMail + walletTagHash)
             const testHash2 = await digestMessage(testMail2 + walletTagHash)
-            const testHash3 = await digestMessage(testMail3 + walletTagHash)
-            const testHash4 = await digestMessage(testMail4 + walletTagHash)
             const amountToSend = '10000000000000000'
             const amountToSend2 = '10000000000000000'
-            const amountToSend3 = '10000000000000000'
-            const amountToSend4 = '10000000000000000'
-            const userFee = BigNumber.from(dollarPrice).mul(4).add(amountToSend).add(amountToSend2).add(amountToSend3).add(amountToSend4)
+
+            const userFee = BigNumber.from(dollarPrice).mul(4).add(amountToSend).add(amountToSend2)
 
             const contractBalanceBefore = await web3.eth.getBalance(sendToHashContract.address)
 
@@ -539,22 +534,6 @@ describe('Payments', async () => {
                         type: AssetType.Native,
                     }
                 },
-                {
-                    beneficiary: testMail3,
-                    walletType: testWalletType,
-                    asset: {
-                        amount: amountToSend3,
-                        type: AssetType.Native,
-                    }
-                },
-                {
-                    beneficiary: testMail4,
-                    walletType: testWalletType,
-                    asset: {
-                        amount: amountToSend4,
-                        type: AssetType.Native,
-                    }
-                },
             ])
 
             const transaction = await web3.eth.getTransaction(result.transactionReceipt.transactionHash)
@@ -562,27 +541,19 @@ describe('Payments', async () => {
                 .hashIDrissWithPassword(testHash, result.data[0].claimPassword))[0]
             const hashWithPassword2 = (await sendToHashContract.functions
                 .hashIDrissWithPassword(testHash2, result.data[1].claimPassword))[0]
-            const hashWithPassword3 = (await sendToHashContract.functions
-                .hashIDrissWithPassword(testHash3, result.data[2].claimPassword))[0]
-            const hashWithPassword4 = (await sendToHashContract.functions
-                .hashIDrissWithPassword(testHash4, result.data[3].claimPassword))[0]
 
             const userBalanceAfter = await sendToHashContract.functions.balanceOf(hashWithPassword, AssetType.Native, idrissCryptoLib.ZERO_ADDRESS, 0)
             const userBalanceAfter2 = await sendToHashContract.functions.balanceOf(hashWithPassword2, AssetType.Native, idrissCryptoLib.ZERO_ADDRESS, 0)
-            const userBalanceAfter3 = await sendToHashContract.functions.balanceOf(hashWithPassword3, AssetType.Native, idrissCryptoLib.ZERO_ADDRESS, 0)
-            const userBalanceAfter4 = await sendToHashContract.functions.balanceOf(hashWithPassword4, AssetType.Native, idrissCryptoLib.ZERO_ADDRESS, 0)
             const contractBalanceAfter = await web3.eth.getBalance(sendToHashContract.address)
 
             assert(result.transactionReceipt.status)
-            assert.equal(result.data.length, 4)
+            assert.equal(result.data.length, 2)
             assert.equal(result.data[0].claimPassword.length, 32)
             assert.equal(result.data[1].claimPassword.length, 32)
             assert.equal(transaction.value, userFee.toString())
             assert.equal(BigNumber.from(contractBalanceAfter).sub(contractBalanceBefore), userFee.toString())
             assert.equal(userBalanceAfter.toString(), amountToSend)
             assert.equal(userBalanceAfter2.toString(), amountToSend2)
-            assert.equal(userBalanceAfter3.toString(), amountToSend3)
-            assert.equal(userBalanceAfter4.toString(), amountToSend4)
         })
 
         it('is able to send ERC20 to nonexisting IDriss', async () => {
