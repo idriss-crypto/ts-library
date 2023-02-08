@@ -342,18 +342,33 @@ export abstract class BaseIdrissCrypto {
         const paymentFee = await this.calculateTippingPaymentFee(asset.amount, asset.type)
         const maticToSend = asset.type === AssetType.Native ? BigNumber.from(asset.amount) : paymentFee
         const signer = await this.getConnectedAccount()
+
         let transactionReceipt: TransactionReceipt
 
         await this.approveAssets([asset], signer,
            this.IDRISS_TIPPING_CONTRACT_ADDRESS, transactionOptions);
+
+        message = message ?? ''
+
+        if (!transactionOptions.gas) {
+            try {
+                transactionOptions.gas = await (await this.getTippingMethod({
+                    asset: asset,
+                    message: message,
+                    beneficiary: message,
+                    hash: resolvedAddress
+                })).estimateGas({from: signer, value: maticToSend.toString()});
+            }
+            catch (e) {
+                console.log("Could not estimate gas: ", e);
+            }
+        }
 
         const sendOptions = {
                 from: signer,
                 ...transactionOptions,
                 value: maticToSend.toString()
             }
-
-        message = message ?? ''
 
         transactionReceipt = (await this.getTippingMethod({
             asset: asset,
@@ -369,13 +384,21 @@ export abstract class BaseIdrissCrypto {
 
         const signer = await this.getConnectedAccount()
         let transactionReceipt: TransactionReceipt
+        const sendToHashContract = await this.idrissSendToAnyoneContractPromise
+
+        if (!transactionOptions.gas) {
+            try {
+                transactionOptions.gas = await sendToHashContract.methods.revertPayment(beneficiary, assetType, assetContractAddress).estimateGas({from: signer});
+            }
+            catch (e) {
+                console.log("Could not estimate gas: ", e);
+            }
+        }
 
         const sendOptions = {
                 from: signer,
                 ...transactionOptions
             }
-
-        const sendToHashContract = await this.idrissSendToAnyoneContractPromise
 
         transactionReceipt = await sendToHashContract.methods
             .revertPayment(beneficiary, assetType, assetContractAddress)
@@ -433,6 +456,15 @@ export abstract class BaseIdrissCrypto {
             encodedCalldata.push(await this.encodeTippingToHex(param))
         }
 
+        if (!transactionOptions.gas) {
+            try {
+                transactionOptions.gas = await tippingContract.methods.batch(encodedCalldata).estimateGas({from: signer, value: maticToSend.toString()});
+            }
+            catch (e) {
+               console.log("Could not estimate gas: ", e);
+           }
+        }
+
         transactionReceipt = await tippingContract.methods
             .batch(encodedCalldata)
             .send({
@@ -440,6 +472,8 @@ export abstract class BaseIdrissCrypto {
                 ...transactionOptions,
                 value: maticToSend.toString()
             })
+
+        delete transactionOptions.gas
 
         return transactionReceipt
     }
@@ -474,6 +508,15 @@ export abstract class BaseIdrissCrypto {
             beneficiaryClaims.push({beneficiary: param.hash!, claimPassword: claimPassword, claimUrl: claimUrl})
         }
 
+        if (!transactionOptions.gas) {
+            try {
+                transactionOptions.gas = await sendToHashContract.methods.batch(encodedCalldata).estimateGas({from: signer, value: maticToSend.toString()});
+            }
+            catch (e) {
+                console.log("Could not estimate gas: ", e);
+            }
+        }
+
         transactionReceipt = await sendToHashContract.methods
            .batch(encodedCalldata)
            .send({
@@ -481,6 +524,8 @@ export abstract class BaseIdrissCrypto {
                ...transactionOptions,
                value: maticToSend.toString()
            })
+
+        delete transactionOptions.gas
 
         beneficiaryClaims.forEach((val) => {
             val.claimUrl = val.claimUrl.replace('$TBD$', `${transactionReceipt.blockNumber}`)
@@ -515,6 +560,15 @@ export abstract class BaseIdrissCrypto {
 
         const claimPassword = await this.generateClaimPassword()
         const hashWithPassword = await this.generateHashWithPassword(hash, claimPassword)
+
+        if (!transactionOptions.gas) {
+            try {
+                transactionOptions.gas = await sendToHashContract.methods.sendToAnyone(hashWithPassword, asset.amount, asset.type.valueOf(), asset.assetContractAddress ?? this.ZERO_ADDRESS, asset.assetId ?? 0, message ?? '').estimateGas({from: signer, value: maticToSend.toString()});
+            }
+            catch (e) {
+                console.log("Could not estimate gas: ", e);
+            }
+        }
 
         transactionReceipt = await sendToHashContract.methods
             .sendToAnyone(hashWithPassword, asset.amount, asset.type.valueOf(),
@@ -594,6 +648,14 @@ export abstract class BaseIdrissCrypto {
             throw Error("Invalid asset contract address sent for claiming")
         }
 
+        if (!transactionOptions.gas) {
+            try {
+                transactionOptions.gas = await sendToHashContract.methods.claim(hash, claimPass, asset.type.valueOf(), asset.assetContractAddress ?? this.ZERO_ADDRESS).estimateGas({from: signer});
+            }
+            catch (e) {
+                console.log("Could not estimate gas: ", e);
+            }
+        }
 
         return await sendToHashContract.methods
             .claim(hash, claimPass, asset.type.valueOf(), asset.assetContractAddress ?? this.ZERO_ADDRESS)
