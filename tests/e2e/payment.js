@@ -510,9 +510,10 @@ describe('Payments', async () => {
             const testMail2 = 'nonexisting2@idriss.xyz'
             const testHash = await digestMessage(testMail + walletTagHash)
             const testHash2 = await digestMessage(testMail2 + walletTagHash)
-            const amountToSend = '159755594'
-            const amountToSend2 = '5490000'
-            const userFee = BigNumber.from(dollarPrice).mul(2).add(amountToSend).add(amountToSend2)
+            const amountToSend = '10000000000000000'
+            const amountToSend2 = '10000000000000000'
+
+            const userFee = BigNumber.from(dollarPrice).mul(4).add(amountToSend).add(amountToSend2)
 
             const contractBalanceBefore = await web3.eth.getBalance(sendToHashContract.address)
 
@@ -893,8 +894,8 @@ describe('Payments', async () => {
 
             const contractBalanceBefore = await web3.eth.getBalance(sendToHashContract.address)
 
-            const amountToSend = '10000000000000000000'
-            const amountToSend2 = '4200000000000000000'
+            const amountToSend = '100000000000000'
+            const amountToSend2 = '42000000000000'
 
             const result = await idrissCryptoLib.multitransferToIDriss([
                 {
