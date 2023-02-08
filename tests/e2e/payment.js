@@ -513,7 +513,7 @@ describe('Payments', async () => {
             const amountToSend = '10000000000000000'
             const amountToSend2 = '10000000000000000'
 
-            const userFee = BigNumber.from(dollarPrice).mul(4).add(amountToSend).add(amountToSend2)
+            const userFee = BigNumber.from(dollarPrice).mul(2).add(amountToSend).add(amountToSend2)
 
             const contractBalanceBefore = await web3.eth.getBalance(sendToHashContract.address)
 
