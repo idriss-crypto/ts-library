@@ -302,7 +302,7 @@ export abstract class BaseIdrissCrypto {
     }
 
     private async generateIDrissReverseMappingContract() {
-        return new (await this.web3Promise).eth.Contract(
+        return new (await this.registryWeb3Promise).eth.Contract(
             IDrissReverseMappingAbi as AbiItem[],
             this.IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS
         );
