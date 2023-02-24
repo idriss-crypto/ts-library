@@ -563,7 +563,6 @@ export abstract class BaseIdrissCrypto {
 
         const claimPassword = await this.generateClaimPassword()
         const hashWithPassword = await this.generateHashWithPassword(hash, claimPassword)
-
         if (!transactionOptions.gas) {
             try {
                 transactionOptions.gas = await sendToHashContract.methods.sendToAnyone(hashWithPassword, asset.amount, asset.type.valueOf(), asset.assetContractAddress ?? this.ZERO_ADDRESS, asset.assetId ?? 0, message ?? '').estimateGas({from: signer, value: maticToSend.toString()});
@@ -629,6 +628,7 @@ export abstract class BaseIdrissCrypto {
     }
 
     public async calculateTippingPaymentFee(paymentAmount: BigNumberish, assetType: AssetType) {
+        if (assetType === AssetType.ERC20) return '0'
         const tippingContract = await this.tippingContractPromise
         return await tippingContract.methods.getPaymentFee(paymentAmount, assetType).call()
     }
@@ -682,19 +682,17 @@ export abstract class BaseIdrissCrypto {
         const contract = await this.generateERC20Contract(asset.assetContractAddress!)
         const allowance = await contract.methods.allowance(signer, contractToAuthorize).call()
 
-
-
         if (BigNumber.from(allowance).lte(asset.amount)) {
             if (!transactionOptions.gas) {
                 try {
-                    transactionOptions.gas = await contract.methods.approve(contractToAuthorize, BigNumber.from(asset.amount).sub(allowance).toString()).estimateGas({from: signer});
+                    transactionOptions.gas = await contract.methods.approve(contractToAuthorize, BigNumber.from(asset.amount).toString()).estimateGas({from: signer});
                 }
                 catch (e) {
                    console.log("Could not estimate gas: ", e);
                }
             }
             let approval = await contract.methods
-                .approve(contractToAuthorize, BigNumber.from(asset.amount).sub(allowance).toString())
+                .approve(contractToAuthorize, BigNumber.from(asset.amount).toString())
                 .send({
                     from: signer,
                     ...transactionOptions
