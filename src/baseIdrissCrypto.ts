@@ -682,14 +682,27 @@ export abstract class BaseIdrissCrypto {
         const contract = await this.generateERC20Contract(asset.assetContractAddress!)
         const allowance = await contract.methods.allowance(signer, contractToAuthorize).call()
 
+
+
         if (BigNumber.from(allowance).lte(asset.amount)) {
-            return contract.methods
+            if (!transactionOptions.gas) {
+                try {
+                    transactionOptions.gas = await contract.methods.approve(contractToAuthorize, BigNumber.from(asset.amount).sub(allowance).toString()).estimateGas({from: signer});
+                }
+                catch (e) {
+                   console.log("Could not estimate gas: ", e);
+               }
+            }
+            let approval = await contract.methods
                 .approve(contractToAuthorize, BigNumber.from(asset.amount).sub(allowance).toString())
                 .send({
                     from: signer,
                     ...transactionOptions
                 })
+            delete transactionOptions.gas
+            return approval
         }
+
         return true
     }
 
@@ -702,12 +715,24 @@ export abstract class BaseIdrissCrypto {
         const approvedAccount = await contract.methods.getApproved(asset.assetId).call()
 
         if (`${approvedAccount}`.toLowerCase() !== `${contractToAuthorize}`.toLowerCase()) {
-            return contract.methods
+
+            if (!transactionOptions.gas) {
+                try {
+                    transactionOptions.gas = await contract.methods.approve(contractToAuthorize, asset.assetId).estimateGas({from: signer});
+                }
+                catch (e) {
+                   console.log("Could not estimate gas: ", e);
+               }
+            }
+
+            let approval = await contract.methods
                 .approve(contractToAuthorize, asset.assetId)
                 .send ({
                     from: signer,
                     ...transactionOptions
                 })
+            delete transactionOptions.gas
+            return approval
         }
         return true
     }
@@ -722,13 +747,24 @@ export abstract class BaseIdrissCrypto {
         const isApproved = await contract.methods.isApprovedForAll(signer, contractToAuthorize).call()
 
         if (isApproved !== authToSet) {
-            return contract.methods
+
+             if (!transactionOptions.gas) {
+                try {
+                    transactionOptions.gas = await contract.methods.setApprovalForAll(contractToAuthorize, true).estimateGas({from: signer});
+                }
+                catch (e) {
+                   console.log("Could not estimate gas: ", e);
+               }
+            }
+            let approval = await contract.methods
                 // unfortunately ERC1155 standard does not allow granular permissions, and only option is to approve all user tokens
                 .setApprovalForAll(contractToAuthorize, true)
                 .send ({
                     from: signer,
                     ...transactionOptions
                 })
+            delete transactionOptions.gas
+            return approval
         }
         return true
     }
