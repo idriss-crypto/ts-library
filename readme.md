@@ -259,7 +259,7 @@ An example of implementation in the user interface:
 * ValidateOTP -> ValidateOTPTestnet
 * CheckPayment -> CheckPaymentTestnet
 
-###### Visit [our docs](https://docs.idriss.xyz/guides/technical-deep-dive/smart-contracts) to check the mainnet and testnet payment contracts to call during the onboarding flow.
+Visit [our docs](https://docs.idriss.xyz/developer-guides/smart-contracts) to check the mainnet and testnet payment contracts to call during the onboarding flow.
 
 *Class Authorization*
 
@@ -391,7 +391,7 @@ payment = await paymentContract.methods.payNative(receipt_hash, resCreateOTP.has
                 gasPrice: resValidateOTP.gas
             });
 ```
-where ```loadPaymentContract()``` loads the [payment contract](https://docs.idriss.xyz/guides/technical-deep-dive/smart-contracts).
+where ```loadPaymentContract()``` loads the [payment contract](https://docs.idriss.xyz/developer-guides/smart-contracts).
 
 #### CheckPayment
 
@@ -418,7 +418,7 @@ export class ValidateOTPResponse {
     public referralLink: string;
 }
 ```
-The referral link can be used to acquire IDriss points and can be viewed on our [dashboard](https://www.idriss.xyz/dashboard). More information on this [here](https://docs.idriss.xyz/guides/for-users/rewards-system).
+The referral link can be used to acquire IDriss points and can be viewed on our [dashboard](https://www.idriss.xyz/dashboard). More information on this can be found [here](https://docs.idriss.xyz/contributor-guides/reward-system).
 
 Example:
 
