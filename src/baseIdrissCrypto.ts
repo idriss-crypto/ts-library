@@ -1,8 +1,9 @@
-import {TwitterNameResolver} from "./twitterNameResolver";
 import Web3 from "web3";
 import {AbiItem} from "web3-utils";
 import {provider, TransactionReceipt} from "web3-core";
+import {BigNumber, BigNumberish} from "ethers";
 
+import {TwitterNameResolver} from "./twitterNameResolver";
 import {ResolveOptions} from "./types/resolveOptions";
 import {AssetLiability} from "./types/assetLiability";
 import IDrissTippingAbi from "./abi/tipping.json";
@@ -15,7 +16,6 @@ import IERC721Abi from "./abi/ierc721.json";
 import IERC1155Abi from "./abi/ierc1155.json";
 import {AssetType} from "./types/assetType";
 import {ConnectionOptions} from "./types/connectionOptions";
-import {BigNumber, BigNumberish} from "ethers";
 import {MultiSendToHashTransactionReceipt, SendToHashTransactionReceipt} from "./types/sendToHashTransactionReceipt";
 import {TransactionOptions} from "./types/transactionOptions";
 import {SendToAnyoneParams} from "./types/sendToAnyoneParams";
