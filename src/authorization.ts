@@ -1,4 +1,9 @@
 import {fetchSafe} from "./utils";
+import Web3 from "web3";
+import {AbiItem} from "web3-utils";
+import {provider, TransactionReceipt} from "web3-core";
+
+
 
 export class Authorization {
     static async CreateOTP(tag: string, identifier: string, address: string, secretWord: string | null = null): Promise<CreateOTPResponse> {
@@ -50,6 +55,30 @@ export class Authorization {
     }
 
 
+    static async MakePayment(token: string, sessionKey: string): Promise<CheckPaymentResponse> {
+
+        const url = "https://www.idriss.xyz/v1/checkPayment";
+        const searchParams = [];
+        searchParams.push(["token", token]);
+        searchParams.push(["session_key", sessionKey]);
+        const response = await fetchSafe(url + '?' + searchParams.map(x => encodeURIComponent(x[0]) + '=' + encodeURIComponent(x[1])).join('&'), {
+            method: 'GET'
+        })
+        if (response.status != 200) {
+            const responseText = await response.text();
+            let message;
+            try {
+                message = JSON.parse(responseText).message;
+            } catch (ex) {
+                message = responseText;
+            }
+            throw new Error("IDriss api responded with code " + response.status + " " + response.statusText + "\r\n" + message);
+        }
+        const decodedResponse = await (response.json());
+        return new CheckPaymentResponse(decodedResponse.message, decodedResponse.txn_hash, decodedResponse.session_key, decodedResponse.referralLink);
+    }
+
+
     static async CheckPayment(token: string, sessionKey: string): Promise<CheckPaymentResponse> {
         const url = "https://www.idriss.xyz/v1/checkPayment";
         const searchParams = [];
@@ -71,6 +100,14 @@ export class Authorization {
         const decodedResponse = await (response.json());
         return new CheckPaymentResponse(decodedResponse.message, decodedResponse.txn_hash, decodedResponse.session_key, decodedResponse.referralLink);
     }
+
+    private async generatePaymentContract(web3, ) {
+        return new (await this.registryWeb3Promise).eth.Contract(
+            IDrissPaymentAbi as AbiItem[],
+            this.IDRISS_REGISTRY_CONTRACT_ADDRESS
+        );
+    }
+
 }
 
 export class CreateOTPResponse {
