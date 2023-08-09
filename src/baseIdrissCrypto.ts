@@ -7,6 +7,7 @@ import {TwitterNameResolver} from "./twitterNameResolver";
 import {ResolveOptions} from "./types/resolveOptions";
 import {AssetLiability} from "./types/assetLiability";
 import IDrissTippingAbi from "./abi/tipping.json";
+import GitcoinVotingAbi from "./abi/voting.json";
 import IDrissRegistryAbi from "./abi/idrissRegistry.json";
 import IDrissReverseMappingAbi from "./abi/idrissReverseMapping.json";
 import IDrissSendToAnyoneAbi from "./abi/idrissSendToAnyone.json";
@@ -19,6 +20,7 @@ import {ConnectionOptions} from "./types/connectionOptions";
 import {MultiSendToHashTransactionReceipt, SendToHashTransactionReceipt} from "./types/sendToHashTransactionReceipt";
 import {TransactionOptions} from "./types/transactionOptions";
 import {SendToAnyoneParams} from "./types/sendToAnyoneParams";
+import {VotingParams} from "./types/votingParams";
 
 export abstract class BaseIdrissCrypto {
     protected web3Promise:Promise<Web3>;
@@ -28,6 +30,7 @@ export abstract class BaseIdrissCrypto {
     private idrissSendToAnyoneContractPromise;
     private priceOracleContractPromise;
     private tippingContractPromise;
+    private votingContractPromise;
     private twitterNameResolver: TwitterNameResolver;
     protected ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
     protected IDRISS_REGISTRY_CONTRACT_ADDRESS = '0x2EcCb53ca2d4ef91A79213FDDF3f8c2332c2a814';
@@ -35,6 +38,7 @@ export abstract class BaseIdrissCrypto {
     protected PRICE_ORACLE_CONTRACT_ADDRESS = '0xAB594600376Ec9fD91F8e885dADF0CE036862dE0';
     protected IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS = '0xf333EDE8D49dD100F02c946809C9F5D9867D10C0';
     protected IDRISS_TIPPING_CONTRACT_ADDRESS = '0xb05dC103DEc7c482CB30A7AF83053E3ea0F08027';
+    protected VOTING_CONTRACT_ADDRESS = '0x4bbE502461D67d2cecB3834Ff2440510f33BE024';
     protected IDRISS_HOMEPAGE = 'https://idriss.xyz';
 
     // we split web3 from web3 for registry, as registry is only accessible on Polygon,
@@ -50,6 +54,8 @@ export abstract class BaseIdrissCrypto {
             connectionOptions.sendToAnyoneContractAddress : this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS
         this.IDRISS_TIPPING_CONTRACT_ADDRESS = (typeof connectionOptions.tippingContractAddress !== 'undefined') ?
             connectionOptions.tippingContractAddress : this.IDRISS_TIPPING_CONTRACT_ADDRESS
+        this.VOTING_CONTRACT_ADDRESS = (typeof connectionOptions.votingContractAddress !== 'undefined') ?
+            connectionOptions.votingContractAddress : this.VOTING_CONTRACT_ADDRESS
 
         this.web3Promise = Promise.resolve(web3)
         this.registryWeb3Promise = Promise.resolve(registryWeb3)
@@ -59,6 +65,7 @@ export abstract class BaseIdrissCrypto {
         this.idrissSendToAnyoneContractPromise = this.generateIDrissSendToAnyoneContract();
         this.priceOracleContractPromise = this.generatePriceOracleContract();
         this.tippingContractPromise = this.generateTippingContract();
+        this.votingContractPromise = this.generateVotingContract();
     }
 
     public static matchInput(input: string): "phone" | "mail" | "twitter" | null {
@@ -228,6 +235,20 @@ export abstract class BaseIdrissCrypto {
         return result
     }
 
+    //@dev only callable on supported gitcoin round networks (optimism)
+    public async vote(
+        encodedVote: string,
+        asset: AssetLiability,
+        transactionOptions: TransactionOptions = {}
+    ):Promise<TransactionReceipt> {
+
+        let result: TransactionReceipt
+
+        result = await this.callWeb3Vote(encodedVote, asset, transactionOptions)
+
+        return result
+    }
+
     public async getUserHash(walletType: Required<ResolveOptions>, beneficiary: string) {
         const cleanedTag = this.getWalletTag(walletType);
         const transformedBeneficiary = await this.transformIdentifier(beneficiary)
@@ -338,6 +359,41 @@ export abstract class BaseIdrissCrypto {
         return (await this.idrissSendToAnyoneContractPromise).methods.hashIDrissWithPassword(hash, claimPassword).call()
     }
 
+    private async callWeb3Vote(encodedVote: string, asset: AssetLiability, transactionOptions:TransactionOptions):Promise<TransactionReceipt> {
+        const nativeToSend = asset.type === AssetType.Native ? BigNumber.from(asset.amount) : BigNumber.from("0");
+        const signer = await this.getConnectedAccount()
+
+        let transactionReceipt: TransactionReceipt
+
+        await this.approveAssets([asset], signer,
+           this.VOTING_CONTRACT_ADDRESS, transactionOptions);
+
+        if (!transactionOptions.gas) {
+            try {
+                transactionOptions.gas = await (await this.getVotingMethod({
+                    encodedVote: encodedVote,
+                    asset: asset
+                })).estimateGas({from: signer, value: nativeToSend.toString()});
+            }
+            catch (e) {
+                console.log("Could not estimate gas: ", e);
+            }
+        }
+
+        const sendOptions = {
+                from: signer,
+                ...transactionOptions,
+                value: nativeToSend.toString()
+            }
+
+        transactionReceipt = (await this.getVotingMethod({
+            encodedVote: encodedVote,
+            asset: asset
+        })).send(sendOptions)
+
+        return transactionReceipt
+    }
+
     private async callWeb3Tipping(resolvedAddress: string, asset: AssetLiability, message: string, transactionOptions:TransactionOptions):Promise<TransactionReceipt> {
         const paymentFee = await this.calculateTippingPaymentFee(asset.amount, asset.type)
         const maticToSend = asset.type === AssetType.Native ? BigNumber.from(asset.amount) : paymentFee
@@ -405,6 +461,19 @@ export abstract class BaseIdrissCrypto {
             .send(sendOptions);
 
         return transactionReceipt
+    }
+
+    private async getVotingMethod(params: VotingParams): Promise<any> {
+        let method: any
+        const votingContract = await this.votingContractPromise
+
+        // may change in the future
+        switch (params.asset.type) {
+            case AssetType.Native:
+                method = await votingContract.methods.vote(params.encodedVote)
+                break;
+        }
+        return method
     }
 
     private async getTippingMethod(params: SendToAnyoneParams): Promise<any> {
@@ -778,6 +847,13 @@ export abstract class BaseIdrissCrypto {
         return new (await this.web3Promise).eth.Contract(
             IDrissTippingAbi as AbiItem[],
             this.IDRISS_TIPPING_CONTRACT_ADDRESS
+        );
+    }
+
+    private async generateVotingContract() {
+        return new (await this.web3Promise).eth.Contract(
+            GitcoinVotingAbi as AbiItem[],
+            this.VOTING_CONTRACT_ADDRESS
         );
     }
 
