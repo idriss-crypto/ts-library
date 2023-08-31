@@ -1,6 +1,7 @@
 import {AssetLiability} from "./assetLiability";
 
-export type SendToAnyoneParams = {
+export type VotingParams = {
    encodedVote: string,
+   roundContractAddress: string,
    asset: AssetLiability,
 }
