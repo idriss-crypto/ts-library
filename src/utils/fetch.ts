@@ -1,3 +1,4 @@
+// TODO: use axios
 export async function fetchSafe(input: RequestInfo, init?: RequestInit) {
     if ('fetch' in globalThis)
         return await fetch(input, init)
