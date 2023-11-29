@@ -562,3 +562,7 @@ yarn testE2e
 * For functions (1) and (2), check our [browser extension](https://github.com/idriss-crypto/browser-extensions).
 * [IDriss Send](https://github.com/deliriusz/send-to-anyone-page) is an example for a working integration of (3).
 * Check the [claim page](https://github.com/idrisssystem/claim) of IDriss Send for a working example of functions (1) and (4).
+
+## License
+
+This project is licensed under [GPLv3](https://github.com/idriss-crypto/ts-library/blob/master/LICENSE).
