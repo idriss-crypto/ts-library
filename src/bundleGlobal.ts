@@ -1,4 +1,4 @@
-import * as all from "./browser";
+import * as all from './browser'
 
-// @ts-ignore
-window.IdrissCrypto = all;
+// @ts-expect-error
+window.IdrissCrypto = all
