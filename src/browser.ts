@@ -12,7 +12,7 @@ export class IdrissCrypto extends BaseIdrissCrypto {
       BaseIdrissCrypto.generateWeb3(Web3Promise, polygonEndpoint), connectionOptions)
   }
 
-  protected async digestMessage (message: string) {
+  protected async digestMessage (message: string): Promise<string> {
     const msgUint8 = new TextEncoder().encode(message) // encode as (utf-8) Uint8Array
     const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8) // hash the message
     const hashArray = Array.from(new Uint8Array(hashBuffer)) // convert buffer to byte array
@@ -21,19 +21,28 @@ export class IdrissCrypto extends BaseIdrissCrypto {
   }
 
   protected async getConnectedAccount (): Promise<string> {
-    const ethereum = this.getInjectedEthereum()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+    const ethereum: any = this.getInjectedEthereum()
 
     if (typeof ethereum === 'undefined') {
       throw new Error('No wallet detected.')
     }
 
-    const accounts = await ethereum.request({ method: 'eth_requestAccounts' })
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    const accounts: string[] = await ethereum.request({ method: 'eth_requestAccounts' })
     return accounts[0]
   }
 
+  /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
   private getInjectedEthereum (): any {
+    // making sure context is browser
+    if (typeof window !== 'undefined') {
     // casting to any to skip error saying that ethereum does not exist in type window
-    return window && (window as any).ethereum
+      return (window as any).ethereum
+    } else {
+      throw new Error('Window is not defined.')
+    }
   }
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 }
 export { Authorization, CreateOTPResponse, WrongOTPException, AuthorizationTestnet, CreateOTPResponseTestnet, WrongOTPExceptionTestnet }

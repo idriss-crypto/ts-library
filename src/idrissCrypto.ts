@@ -1,6 +1,6 @@
 import { BaseIdrissCrypto } from './baseIdrissCrypto'
 import { type ConnectionOptions } from './types/connectionOptions'
-const crypto = require('crypto')
+import * as crypto from 'crypto'
 
 /**
  * This class is used for NodeJS
@@ -13,7 +13,7 @@ export class IdrissCrypto extends BaseIdrissCrypto {
   }
 
   protected async digestMessage (message: string): Promise<string> {
-    return crypto.createHash('sha256').update(message).digest('hex')
+    return await crypto.createHash('sha256').update(message).digest('hex')
   }
 
   protected async getConnectedAccount (): Promise<string> {

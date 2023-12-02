@@ -678,7 +678,6 @@ export abstract class BaseIdrissCrypto {
           transactionOptions)
       }
 
-      // @ts-expect-error
       if (approvalTransactionReceipt !== true && approvalTransactionReceipt && !approvalTransactionReceipt.status) {
         throw new Error(`Setting asset allowance failed for address ${asset.assetContractAddress}. Please check your asset balance.`)
       }
