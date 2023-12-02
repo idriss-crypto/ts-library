@@ -248,8 +248,13 @@ describe('Payments', async () => {
     });
 
     describe('Send to existing hash', () => {
-        it.only('is able to send coins to existing IDriss', async () => {
+        it('is able to send coins to existing IDriss', async () => {
+            const payerBalanceBefore = await web3.eth.getBalance(ownerAddress)
+            const payerBalanceBeforeAsBigNumber = BigNumber.from(payerBalanceBefore);
+
             const recipientBalanceBefore = await web3.eth.getBalance(signer1Address)
+            const recipientBalanceBeforeAsBigNumber = BigNumber.from(recipientBalanceBefore);
+
             const amount = '10000000000000000000'
 
             const result = await idrissCryptoLib.transferToIDriss('hello@idriss.xyz', testWalletType, {
@@ -259,11 +264,8 @@ describe('Payments', async () => {
 
             const weiUsed = BigNumber.from(result.gasUsed).mul(result.effectiveGasPrice)
             const recipientBalanceAfter = await web3.eth.getBalance(signer1Address)
-            const recipientBalanceBeforeAsBigNumber = BigNumber.from(recipientBalanceBefore);
             const recipientBalanceAfterAsBigNumber = BigNumber.from(recipientBalanceAfter);
 
-            const payerBalanceBefore = await web3.eth.getBalance(ownerAddress)
-            const payerBalanceBeforeAsBigNumber = BigNumber.from(payerBalanceBefore);
             const payerBalanceAfter = await web3.eth.getBalance(ownerAddress)
 
 

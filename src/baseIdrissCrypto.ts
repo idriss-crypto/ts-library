@@ -1072,10 +1072,6 @@ export abstract class BaseIdrissCrypto {
           transactionOptions.gas = BigNumber.isBigNumber(transactionOptions.gas)
             ? transactionOptions.gas.toNumber()
             : transactionOptions.gas;
-
-          transactionOptions.gas = transactionOptions.gas
-            ? Math.ceil((transactionOptions.gas * 120) / 100)
-            : undefined;
         } catch (e) {
           console.log("Could not estimate gas: ", e);
         }
