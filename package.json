@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@types/node-fetch": "^2.5.12",
-    "ethers": "^5.6.9",
+    "ethers": "^5.7.2",
     "node-fetch": "^2.6.7",
     "web3": "^1.7.4"
   },

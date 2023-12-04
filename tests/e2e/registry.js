@@ -1,3 +1,4 @@
+const { ethers } = require("ethers");
 const {
     IdrissCrypto,
     Authorization,
@@ -14,11 +15,8 @@ const Web3 = require("web3");
 const { Web3ProviderAdapter } = require("../../lib/web3Provider");
 
 const createProvider = async () => {
-    // const httpProvider = new Web3.providers.HttpProvider(
-    //     "https://polygon-rpc.com/",
-    // );
-    // const web3Provider = Web3ProviderAdapter.fromWeb3(new Web3(httpProvider));
-    const web3Provider = Web3ProviderAdapter.fromEthers(new ethers.providers.JsonRpcProvider({url: "https://polygon-rpc.com/" }))
+    // const web3Provider = Web3ProviderAdapter.fromWeb3(new Web3(new Web3.providers.HttpProvider("https://polygon-rpc.com/")));
+    const web3Provider = Web3ProviderAdapter.fromEthersV5(new ethers.providers.JsonRpcProvider({url: "https://polygon-rpc.com/" }))
     const obj = new IdrissCrypto({ web3Provider: web3Provider });
     return obj;
 };

@@ -74,7 +74,7 @@ export class Web3ProviderAdapter {
     });
   }
 
-  public static fromEthers(
+  public static fromEthersV5(
     ethersWeb3Provider: ethers.providers.JsonRpcProvider,
   ) {
     return new Web3Provider({
@@ -117,7 +117,7 @@ export class Web3ProviderAdapter {
                 const { gas, ...otherTransactionOptions } = transactionOptions;
                 const adaptedSendOptions = {
                   ...otherTransactionOptions,
-                  gasPrice: gas,
+                  gasLimit: gas,
                 };
                 const result = await ethersWeb3Provider
                   .getSigner()
@@ -139,9 +139,10 @@ export class Web3ProviderAdapter {
               encodeABI: () => {
                 return populatedTransaction.data ?? "";
               },
-              estimateGas: async () => {
+              estimateGas: async (options) => {
                 const gasEstimation = await contract.estimateGas[method.name](
                   ...method.args,
+                  options,
                 );
                 return gasEstimation.toNumber();
               },
@@ -180,12 +181,15 @@ export class Web3ProviderAdapter {
           },
         };
       },
-      getTransactionCount: ethersWeb3Provider.getTransactionCount,
-      // TODO: figure out random hex from ethers, probably it can be used by a single util between different web3 providers
+      getTransactionCount: (addr) => {
+        return ethersWeb3Provider.getTransactionCount(addr);
+      },
       randomHex: (bytesSize) => {
-        const randNum = Math.random() * 100000;
-        const amount = ethers.utils.parseUnits(randNum.toString(), bytesSize);
-        return amount.toString();
+        const randomBytes = ethers.utils.randomBytes(bytesSize);
+
+        const hexString = ethers.utils.hexlify(randomBytes);
+
+        return hexString;
       },
     });
   }

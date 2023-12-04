@@ -59,7 +59,6 @@ export abstract class BaseIdrissCrypto {
     };
 
     this.web3Provider = connectionOptions.web3Provider;
-    // TODO: what about registry?
     this.registryWeb3Provider = connectionOptions.web3Provider;
 
     this.idrissRegistryContract = this.web3Provider.createContract(
@@ -90,39 +89,48 @@ export abstract class BaseIdrissCrypto {
   }
 
   public async resolve(input: string, options: ResolveOptions = {}) {
-    let identifier = await transformIdentifier(input);
-    let foundMatchesPromises: { [key: string]: Promise<string> } = {};
-    for (let [network, coins] of Object.entries(WALLET_TAGS)) {
+    const identifier = await transformIdentifier(input);
+    const foundMatchesPromises: { [key: string]: Promise<string> } = {};
+
+    for (const [network, coins] of Object.entries(WALLET_TAGS)) {
       if (options.network && network != options.network) continue;
-      for (let [coin, tags] of Object.entries(coins)) {
+
+      for (const [coin, tags] of Object.entries(coins)) {
         if (options.coin && coin != options.coin) continue;
-        for (let [tag, tag_key] of Object.entries(tags)) {
+
+        for (const [tag, tag_key] of Object.entries(tags)) {
           if (tag_key) {
-            foundMatchesPromises[tag] = this.digestMessage(
-              identifier + tag_key,
-            ).then((digested) => {
-              return this.idrissRegistryContract.callMethod({
-                method: { name: "getIDriss", args: [digested] },
-              });
-            });
-            foundMatchesPromises[tag];
-            foundMatchesPromises[tag].catch(() => { });
+            foundMatchesPromises[tag] = (async () => {
+              try {
+                const digested = await this.digestMessage(identifier + tag_key);
+                const address = await this.idrissRegistryContract.callMethod({
+                  method: { name: "getIDriss", args: [digested] },
+                });
+                return address;
+              } catch (error) {
+                // Omit errors
+              }
+            })();
           }
         }
       }
     }
-    ///awaiting on the end for better performance
-    let foundMatches: { [key: string]: string } = {};
-    for (let [tag, promise] of Object.entries(foundMatchesPromises)) {
-      try {
-        let address = await promise;
-        if (address && address.length > 0) {
-          foundMatches[tag] = address;
+
+    const foundMatches: { [key: string]: string } = {};
+
+    // Awaiting all promises for better performance
+    await Promise.all(
+      Object.entries(foundMatchesPromises).map(async ([tag, promise]) => {
+        try {
+          const address = await promise;
+          if (address && address.length > 0) {
+            foundMatches[tag] = address;
+          }
+        } catch (error) {
+          // Omit errors
         }
-      } catch (e) {
-        //ommit
-      }
-    }
+      }),
+    );
 
     return foundMatches;
   }
@@ -1028,8 +1036,9 @@ export abstract class BaseIdrissCrypto {
     });
   }
 
-  protected async generateClaimPassword(): Promise<string> {
-    return this.web3Provider.randomHex(16).slice(2);
+  protected async generateClaimPassword() {
+    const hex = this.web3Provider.randomHex(16).slice(2);
+    return hex;
   }
 
   private async authorizeERC20ForContract(
