@@ -22,15 +22,15 @@ const createProvider = async () => {
 };
 
 describe("translating address", () => {
-    it.only("Email", async () => {
+    it("Email", async () => {
         const obj = await createProvider();
-        const resultEmail = await obj.resolve("hello@idriss.xyz");
+        const resultAddress = await obj.resolve("hello@idriss.xyz");
         assert.equal(
-            resultEmail["Metamask ETH"],
+            resultAddress["Metamask ETH"],
             "0x11E9F9344A9720d2B2B5F0753225bb805161139B",
         );
         assert.equal(
-            resultEmail["Coinbase BTC"],
+            resultAddress["Coinbase BTC"],
             "bc1qsvz5jumwew8haj4czxpzxujqz8z6xq4nxxh7vh",
         );
     }).timeout(10000);

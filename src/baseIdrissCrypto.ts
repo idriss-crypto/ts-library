@@ -98,19 +98,27 @@ export abstract class BaseIdrissCrypto {
 
     const resolveAddressessPromises = filteredWalletTags.map(
       async ({ tagAddress, tagName }) => {
-        const digested = await this.digestMessage(identifier + tagAddress);
-        const resolvedAddress: string =
-          await this.idrissRegistryContract.callMethod({
-            method: { name: "getIDriss", args: [digested] },
-          });
-        return { tagName, resolvedAddress };
+        try {
+          const digested = await this.digestMessage(identifier + tagAddress);
+
+          const resolvedAddress: string =
+            await this.idrissRegistryContract.callMethod({
+              method: { name: "getIDriss", args: [digested] },
+            });
+          return { tagName, resolvedAddress };
+        } catch {
+          // return undefined because getIDriss contract throws error when it cannot find
+          return undefined;
+        }
       },
     );
 
     const result = await Promise.all(resolveAddressessPromises);
 
     return Object.fromEntries(
-      result.map(({ tagName, resolvedAddress }) => [tagName, resolvedAddress]),
+      result
+        .filter(Boolean)
+        .map(({ tagName, resolvedAddress }) => [tagName, resolvedAddress]),
     );
   }
 

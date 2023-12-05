@@ -1,2 +1,1 @@
-export * from "./getTwitterId";
-export * from "./reverseTwitterId";
+export * from "./utils";

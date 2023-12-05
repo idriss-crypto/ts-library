@@ -1,4 +1,4 @@
-import {fetchSafe} from "../utils/fetch";
+import {fetchSafe} from "../utils/fetchSafe";
 
 export class Authorization {
     static async CreateOTP(tag: string, identifier: string, address: string, secretWord: string | null = null): Promise<CreateOTPResponse> {
