@@ -1,2 +1,2 @@
-export * from "./constants";
-export * from './getWalletTag';
+export * from './utils';
+export * from './types';

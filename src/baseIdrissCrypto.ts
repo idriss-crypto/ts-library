@@ -3,7 +3,6 @@ import { BigNumber, BigNumberish } from "ethers";
 
 import { reverseTwitterID } from "./twitter";
 import {
-  ResolveOptions,
   AssetLiability,
   AssetType,
   ConnectionOptions,
@@ -15,10 +14,15 @@ import {
   VotingParams,
 } from "./types";
 import { Web3Provider } from "./web3Provider";
-import { getWalletTag, WALLET_TAGS } from "./wallet";
+import {
+  filterWalletTags,
+  getWalletTagAddress,
+  ResolveOptions,
+} from "./wallet";
 import { Contract, ContractsAddresses, CONTRACTS_ADDRESSES } from "./contract";
 import { ABIS } from "./abi";
 import { matchInput, transformIdentifier } from "./utils";
+import { NonOptional } from "./utils-types";
 
 const IDRISS_HOMEPAGE = "https://idriss.xyz";
 
@@ -88,51 +92,26 @@ export abstract class BaseIdrissCrypto {
     return matchInput(input);
   }
 
-  public async resolve(input: string, options: ResolveOptions = {}) {
+  public async resolve(input: string, resolveOptions: ResolveOptions = {}) {
     const identifier = await transformIdentifier(input);
-    const foundMatchesPromises: { [key: string]: Promise<string> } = {};
+    const filteredWalletTags = filterWalletTags(resolveOptions);
 
-    for (const [network, coins] of Object.entries(WALLET_TAGS)) {
-      if (options.network && network != options.network) continue;
-
-      for (const [coin, tags] of Object.entries(coins)) {
-        if (options.coin && coin != options.coin) continue;
-
-        for (const [tag, tag_key] of Object.entries(tags)) {
-          if (tag_key) {
-            foundMatchesPromises[tag] = (async () => {
-              try {
-                const digested = await this.digestMessage(identifier + tag_key);
-                const address = await this.idrissRegistryContract.callMethod({
-                  method: { name: "getIDriss", args: [digested] },
-                });
-                return address;
-              } catch (error) {
-                // Omit errors
-              }
-            })();
-          }
-        }
-      }
-    }
-
-    const foundMatches: { [key: string]: string } = {};
-
-    // Awaiting all promises for better performance
-    await Promise.all(
-      Object.entries(foundMatchesPromises).map(async ([tag, promise]) => {
-        try {
-          const address = await promise;
-          if (address && address.length > 0) {
-            foundMatches[tag] = address;
-          }
-        } catch (error) {
-          // Omit errors
-        }
-      }),
+    const resolveAddressessPromises = filteredWalletTags.map(
+      async ({ tagAddress, tagName }) => {
+        const digested = await this.digestMessage(identifier + tagAddress);
+        const resolvedAddress: string =
+          await this.idrissRegistryContract.callMethod({
+            method: { name: "getIDriss", args: [digested] },
+          });
+        return { tagName, resolvedAddress };
+      },
     );
 
-    return foundMatches;
+    const result = await Promise.all(resolveAddressessPromises);
+
+    return Object.fromEntries(
+      result.map(({ tagName, resolvedAddress }) => [tagName, resolvedAddress]),
+    );
   }
 
   public async multitransferToIDriss(
@@ -270,12 +249,12 @@ export abstract class BaseIdrissCrypto {
 
   public async transferToIDriss(
     beneficiary: string,
-    walletType: Required<ResolveOptions>,
+    resolveOptions: NonOptional<ResolveOptions>,
     asset: AssetLiability,
     message: string,
     transactionOptions: TransactionOptions = {},
   ) {
-    if (walletType.network !== "evm") {
+    if (resolveOptions.network !== "evm") {
       throw new Error("Only transfers on Polygon are supported at the moment");
     }
 
@@ -291,16 +270,16 @@ export abstract class BaseIdrissCrypto {
       return result;
     }
 
-    const hash = await this.getUserHash(walletType, beneficiary);
+    const hash = await this.getUserHash(resolveOptions, beneficiary);
     const resolvedIDriss = await this.resolve(beneficiary);
 
     if (
       resolvedIDriss &&
-      resolvedIDriss[walletType.walletTag!] &&
-      resolvedIDriss[walletType.walletTag!].length > 0
+      resolvedIDriss[resolveOptions.walletTag!] &&
+      resolvedIDriss[resolveOptions.walletTag!].length > 0
     ) {
       result = await this.callWeb3Tipping(
-        resolvedIDriss[walletType.walletTag!],
+        resolvedIDriss[resolveOptions.walletTag!],
         asset,
         message,
         transactionOptions,
@@ -338,18 +317,18 @@ export abstract class BaseIdrissCrypto {
   }
 
   public async getUserHash(
-    walletType: Required<ResolveOptions>,
+    resolveOptions: NonOptional<ResolveOptions>,
     beneficiary: string,
   ) {
-    const cleanedTag = getWalletTag(walletType);
+    const cleanedTagAddress = getWalletTagAddress(resolveOptions);
     const transformedBeneficiary = await transformIdentifier(beneficiary);
-    return this.digestMessage(transformedBeneficiary + cleanedTag);
+    return this.digestMessage(transformedBeneficiary + cleanedTagAddress);
   }
 
   public async claim(
     beneficiary: string,
     claimPassword: string,
-    walletType: Required<ResolveOptions>,
+    walletType: NonOptional<ResolveOptions>,
     asset: AssetLiability,
     transactionOptions: TransactionOptions = {},
   ) {
@@ -383,7 +362,7 @@ export abstract class BaseIdrissCrypto {
 
   public async getHashForIdentifier(
     identifier: string,
-    walletType: Required<ResolveOptions>,
+    walletType: NonOptional<ResolveOptions>,
     claimPassword: string,
   ): Promise<string> {
     const hash = await this.getUserHash(walletType, identifier);

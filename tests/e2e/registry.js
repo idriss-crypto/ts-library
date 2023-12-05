@@ -15,14 +15,14 @@ const Web3 = require("web3");
 const { Web3ProviderAdapter } = require("../../lib/web3Provider");
 
 const createProvider = async () => {
-    // const web3Provider = Web3ProviderAdapter.fromWeb3(new Web3(new Web3.providers.HttpProvider("https://polygon-rpc.com/")));
-    const web3Provider = Web3ProviderAdapter.fromEthersV5(new ethers.providers.JsonRpcProvider({url: "https://polygon-rpc.com/" }))
+    const web3Provider = Web3ProviderAdapter.fromWeb3(new Web3(new Web3.providers.HttpProvider("https://polygon-rpc.com/")));
+    // const web3Provider = Web3ProviderAdapter.fromEthersV5(new ethers.providers.JsonRpcProvider({url: "https://polygon-rpc.com/" }))
     const obj = new IdrissCrypto({ web3Provider: web3Provider });
     return obj;
 };
 
 describe("translating address", () => {
-    it("Email", async () => {
+    it.only("Email", async () => {
         const obj = await createProvider();
         const resultEmail = await obj.resolve("hello@idriss.xyz");
         assert.equal(
