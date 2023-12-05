@@ -103,8 +103,8 @@ describe('Payments', async () => {
             providerOrUrl: url
         });
 
-        // const web3Provider = Web3ProviderAdapter.fromWeb3(new Web3(testProvider));
-        const web3Provider = Web3ProviderAdapter.fromEthersV5(new ethers.providers.Web3Provider(testProvider));
+        const web3Provider = Web3ProviderAdapter.fromWeb3(new Web3(testProvider));
+        // const web3Provider = Web3ProviderAdapter.fromEthersV5(new ethers.providers.Web3Provider(testProvider));
 
         idrissCryptoLib = new IdrissCrypto({
             web3Provider: web3Provider,

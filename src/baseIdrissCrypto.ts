@@ -13,7 +13,7 @@ import {
   SendToAnyoneParams,
   VotingParams,
 } from "./types";
-import { Web3Provider } from "./web3Provider";
+import { Web3Provider, Web3ProviderAdapter } from "./web3Provider";
 import {
   filterWalletTags,
   getWalletTagAddress,
@@ -23,6 +23,7 @@ import { Contract, ContractsAddresses, CONTRACTS_ADDRESSES } from "./contract";
 import { ABIS } from "./abi";
 import { matchInput, transformIdentifier } from "./utils";
 import { NonOptional } from "./utils-types";
+import Web3 from "web3";
 
 const IDRISS_HOMEPAGE = "https://idriss.xyz";
 
@@ -63,14 +64,18 @@ export abstract class BaseIdrissCrypto {
     };
 
     this.web3Provider = connectionOptions.web3Provider;
-    this.registryWeb3Provider = connectionOptions.web3Provider;
+    const web3Provider = Web3ProviderAdapter.fromWeb3(
+      new Web3(new Web3.providers.HttpProvider("https://polygon-rpc.com/")),
+    );
+    // this.registryWeb3Provider = connectionOptions.web3Provider;
+    this.registryWeb3Provider = web3Provider;
 
-    this.idrissRegistryContract = this.web3Provider.createContract(
+    this.idrissRegistryContract = this.registryWeb3Provider.createContract(
       ABIS.IDrissRegistryAbi,
       this.contractsAddressess.idrissRegistry,
     );
 
-    this.idrissReverseMappingContract = this.web3Provider.createContract(
+    this.idrissReverseMappingContract = this.registryWeb3Provider.createContract(
       ABIS.IDrissReverseMappingAbi,
       this.contractsAddressess.idrissReverseMapping,
     );
