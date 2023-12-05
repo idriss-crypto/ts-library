@@ -18,12 +18,14 @@
       "node"
     ],
     "typeRoots": [
-      "./node_modules/@types"
+      "./node_modules/@types",
+      "@types"
     ],
-    "moduleResolution": "node"
+    "moduleResolution": "NodeNext"
   },
   "include": [
-    "src"
+    "src",
+    "@types/reset.d.ts"
   ],
   "exclude": [
     "node_modules",
