@@ -167,7 +167,7 @@ export class Web3ProviderAdapter {
             };
 
             const result = await ethersWeb3Provider
-              .getSigner()
+              .getSigner(adaptedTransactionOptions.from)
               .sendTransaction(adaptedTransactionOptions);
 
             const minedResult = await result.wait();

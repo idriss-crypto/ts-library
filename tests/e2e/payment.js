@@ -1166,7 +1166,7 @@ describe('Payments', async () => {
             // assert.equal(contractBalanceAfter, amountToSend.toString())
         })
 
-        it.skip('allows to override connection options', async () => {
+        it('allows to override connection options', async () => {
             const dollarPrice = await idrissCryptoLib.getDollarPriceInWei()
             const walletTagHash = '5d181abc9dcb7e79ce50e93db97addc1caf9f369257f61585889870555f8c321'
             const testMail = 'nonexisting3@idriss.xyz'

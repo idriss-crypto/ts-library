@@ -1026,7 +1026,6 @@ export abstract class BaseIdrissCrypto {
         ],
       },
       transactionOptions: {
-        from: signer,
         ...transactionOptions,
         //TODO: check on this, should work automatically
         nonce: await this.web3Provider.getTransactionCount(
