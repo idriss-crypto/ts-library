@@ -33,6 +33,7 @@ export abstract class BaseIdrissCrypto {
   protected contractsAddressess: ContractsAddresses;
 
   private idrissRegistryContract: Contract;
+  private idrissMultipleRegistryContract: Contract;
   private idrissReverseMappingContract: Contract;
   private idrissSendToAnyoneContract: Contract;
   private priceOracleContract: Contract;
@@ -49,6 +50,9 @@ export abstract class BaseIdrissCrypto {
       idrissRegistry:
         connectionOptions.idrissRegistryContractAddress ??
         CONTRACTS_ADDRESSES.idrissRegistry,
+      idrissMultipleRegistry:
+        connectionOptions.idrissMultipleRegistryContractAddress ??
+        CONTRACTS_ADDRESSES.idrissMultipleRegistry,
       idrissReverseMapping:
         connectionOptions.reverseIDrissMappingContractAddress ??
         CONTRACTS_ADDRESSES.idrissReverseMapping,
@@ -64,21 +68,29 @@ export abstract class BaseIdrissCrypto {
     };
 
     this.web3Provider = connectionOptions.web3Provider;
-    const web3Provider = Web3ProviderAdapter.fromWeb3(
-      new Web3(new Web3.providers.HttpProvider("https://polygon-rpc.com/")),
-    );
-    // this.registryWeb3Provider = connectionOptions.web3Provider;
-    this.registryWeb3Provider = web3Provider;
+    this.registryWeb3Provider = connectionOptions.web3Provider;
+
+    // const web3Provider = Web3ProviderAdapter.fromWeb3(
+    //   new Web3(new Web3.providers.HttpProvider("https://polygon-rpc.com/")),
+    // );
+    // this.registryWeb3Provider = web3Provider;
 
     this.idrissRegistryContract = this.registryWeb3Provider.createContract(
       ABIS.IDrissRegistryAbi,
       this.contractsAddressess.idrissRegistry,
     );
 
-    this.idrissReverseMappingContract = this.registryWeb3Provider.createContract(
-      ABIS.IDrissReverseMappingAbi,
-      this.contractsAddressess.idrissReverseMapping,
-    );
+    this.idrissMultipleRegistryContract =
+      this.registryWeb3Provider.createContract(
+        ABIS.IDrissMultipleRegistryAbiJson,
+        this.contractsAddressess.idrissMultipleRegistry,
+      );
+
+    this.idrissReverseMappingContract =
+      this.registryWeb3Provider.createContract(
+        ABIS.IDrissReverseMappingAbi,
+        this.contractsAddressess.idrissReverseMapping,
+      );
     this.idrissSendToAnyoneContract = this.web3Provider.createContract(
       ABIS.IDrissSendToAnyoneAbi,
       this.contractsAddressess.idrissSendToAnyone,
@@ -101,29 +113,37 @@ export abstract class BaseIdrissCrypto {
     const identifier = await transformIdentifier(input);
     const filteredWalletTags = filterWalletTags(resolveOptions);
 
-    const resolveAddressessPromises = filteredWalletTags.map(
+    const digestPromises = filteredWalletTags.map(
       async ({ tagAddress, tagName }) => {
-        try {
-          const digested = await this.digestMessage(identifier + tagAddress);
-
-          const resolvedAddress: string =
-            await this.idrissRegistryContract.callMethod({
-              method: { name: "getIDriss", args: [digested] },
-            });
-          return { tagName, resolvedAddress };
-        } catch {
-          // return undefined because getIDriss contract throws error when it cannot find
-          return undefined;
-        }
+        const digested = await this.digestMessage(identifier + tagAddress);
+        return { digested, tagName };
       },
     );
 
-    const result = await Promise.all(resolveAddressessPromises);
+    const digestionResult = await Promise.all(digestPromises);
+    const digestedMessages = digestionResult.map((v) => v.digested);
+
+    const getMultipleIDrissResponse: Array<[string, string]> =
+      await this.idrissMultipleRegistryContract.callMethod({
+        method: { name: "getMultipleIDriss", args: [digestedMessages] },
+      });
 
     return Object.fromEntries(
-      result
-        .filter(Boolean)
-        .map(({ tagName, resolvedAddress }) => [tagName, resolvedAddress]),
+      getMultipleIDrissResponse.map(([digested, resolvedAddress]) => {
+        if (!resolvedAddress) {
+          return undefined;
+        }
+
+        const foundResult = digestionResult.find(
+          (v) => v.digested === digested,
+        );
+
+        if (!foundResult) {
+          throw new Error(`Expected digested message: ${digested}`);
+        }
+
+        return [foundResult.tagName, resolvedAddress];
+      }).filter(Boolean),
     );
   }
 

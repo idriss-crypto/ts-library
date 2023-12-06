@@ -115,15 +115,15 @@ export class Web3ProviderAdapter {
             return {
               send: async (transactionOptions) => {
                 const { gas, ...otherTransactionOptions } = transactionOptions;
-                const adaptedSendOptions = {
+                const adaptedTransactionOptions = {
                   ...otherTransactionOptions,
                   gasLimit: gas,
                 };
                 const result = await ethersWeb3Provider
-                  .getSigner()
+                  .getSigner(adaptedTransactionOptions.from)
                   .sendTransaction({
                     ...populatedTransaction,
-                    ...adaptedSendOptions,
+                    ...adaptedTransactionOptions,
                     to: address,
                   });
                 const minedResult = await result.wait();

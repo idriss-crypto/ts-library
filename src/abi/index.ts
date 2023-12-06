@@ -1,6 +1,7 @@
 import IDrissTippingAbiJson from "./tipping.json";
 import GitcoinVotingAbiJson from "./voting.json";
 import IDrissRegistryAbiJson from "./idrissRegistry.json";
+import IDrissMultipleRegistryAbiJson from "./idrissMultipleRegistry.json";
 import IDrissReverseMappingAbiJson from "./idrissReverseMapping.json";
 import IDrissSendToAnyoneAbiJson from "./idrissSendToAnyone.json";
 import PriceOracleAbiJson from "./priceOracleV3Aggregator.json";
@@ -28,4 +29,5 @@ export const ABIS = {
   IERC20Abi: IERC20AbiJson as Abi[],
   IERC721Abi: IERC721AbiJson as Abi[],
   IERC1155Abi: IERC1155AbiJson as Abi[],
+  IDrissMultipleRegistryAbiJson: IDrissMultipleRegistryAbiJson as Abi[]
 };

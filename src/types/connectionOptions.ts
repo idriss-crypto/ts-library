@@ -6,6 +6,7 @@ type CommonConnectionOptions = {
    tippingContractAddress?: string;
    votingContractAddress?: string;
    idrissRegistryContractAddress?: string;
+   idrissMultipleRegistryContractAddress?: string;
    reverseIDrissMappingContractAddress?: string;
    priceOracleContractAddress?: string;
 };

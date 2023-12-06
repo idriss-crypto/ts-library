@@ -1,0 +1,33 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "string[]",
+        "name": "hashes",
+        "type": "string[]"
+      }
+    ],
+    "name": "getMultipleIDriss",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "hash",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "result",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct IDrissWrapperContract.IDrissResult[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]
