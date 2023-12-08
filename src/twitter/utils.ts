@@ -1,5 +1,5 @@
 import { fetchSafe } from "../utils";
-import { IDRISS_GET_TWITTER_NAME_URL } from "./constants";
+import { IDRISS_GET_TWITTER_ID_URL, IDRISS_GET_TWITTER_NAME_URL } from "./constants";
 
 export const reverseTwitterID = async (id: string): Promise<string> => {
   const response = await fetchSafe(
@@ -22,7 +22,7 @@ export const getTwitterID = async (
   inputCombination: string,
 ): Promise<string> => {
   const response = await fetchSafe(
-    IDRISS_GET_TWITTER_NAME_URL + encodeURIComponent(inputCombination),
+    IDRISS_GET_TWITTER_ID_URL + encodeURIComponent(inputCombination),
   );
   if (response.status != 200)
     throw new Error(
