@@ -44,7 +44,7 @@ export abstract class BaseIdrissCrypto {
 
   // we split web3 from web3 for registry, as registry is only accessible on Polygon,
   // and library is about to support multiple chains
-  constructor(connectionOptions: ConnectionOptions) {
+  constructor(url: string, connectionOptions: ConnectionOptions) {
     this.contractsAddressess = {
       ...CONTRACTS_ADDRESSES,
       idrissRegistry:
@@ -68,12 +68,11 @@ export abstract class BaseIdrissCrypto {
     };
 
     this.web3Provider = connectionOptions.web3Provider;
-    this.registryWeb3Provider = connectionOptions.web3Provider;
+    // this.registryWeb3Provider = connectionOptions.web3Provider;
 
-    // const web3Provider = Web3ProviderAdapter.fromWeb3(
-    //   new Web3(new Web3.providers.HttpProvider("https://polygon-rpc.com/")),
-    // );
-    // this.registryWeb3Provider = web3Provider;
+    this.registryWeb3Provider = Web3ProviderAdapter.fromWeb3(
+      new Web3(new Web3.providers.HttpProvider(url)),
+    );
 
     this.idrissRegistryContract = this.registryWeb3Provider.createContract(
       ABIS.IDrissRegistryAbi,
@@ -129,21 +128,23 @@ export abstract class BaseIdrissCrypto {
       });
 
     return Object.fromEntries(
-      getMultipleIDrissResponse.map(([digested, resolvedAddress]) => {
-        if (!resolvedAddress) {
-          return undefined;
-        }
+      getMultipleIDrissResponse
+        .map(([digested, resolvedAddress]) => {
+          if (!resolvedAddress) {
+            return undefined;
+          }
 
-        const foundResult = digestionResult.find(
-          (v) => v.digested === digested,
-        );
+          const foundResult = digestionResult.find(
+            (v) => v.digested === digested,
+          );
 
-        if (!foundResult) {
-          throw new Error(`Expected digested message: ${digested}`);
-        }
+          if (!foundResult) {
+            throw new Error(`Expected digested message: ${digested}`);
+          }
 
-        return [foundResult.tagName, resolvedAddress];
-      }).filter(Boolean),
+          return [foundResult.tagName, resolvedAddress];
+        })
+        .filter(Boolean),
     );
   }
 
@@ -440,15 +441,18 @@ export abstract class BaseIdrissCrypto {
             roundContractAddress: roundContractAddress,
             asset: asset,
           })
-        ).estimateGas({ from: signer, value: nativeToSend.toString() });
+        ).estimateGas({
+          from: transactionOptions.from ?? signer,
+          value: nativeToSend.toString(),
+        });
       } catch (e) {
         console.log("Could not estimate gas: ", e);
       }
     }
 
     const sendOptions = {
-      from: signer,
       ...transactionOptions,
+      from: transactionOptions.from ?? signer,
       value: nativeToSend.toString(),
     };
 
@@ -500,7 +504,7 @@ export abstract class BaseIdrissCrypto {
           hash: resolvedAddress,
         });
         transactionOptions.gas = await tippingMethod.estimateGas({
-          from: signer,
+          from: transactionOptions.from ?? signer,
           value: maticToSend.toString(),
         });
       } catch (e) {
@@ -509,8 +513,8 @@ export abstract class BaseIdrissCrypto {
     }
 
     const sendOptions = {
-      from: signer,
       ...transactionOptions,
+      from: transactionOptions.from ?? signer,
       value: maticToSend.toString(),
     };
 
@@ -544,7 +548,7 @@ export abstract class BaseIdrissCrypto {
               args: [beneficiary, assetType, assetContractAddress],
             },
             estimateGasOptions: {
-              from: signer,
+              from: transactionOptions.from ?? signer,
             },
           });
       } catch (e) {
@@ -553,8 +557,8 @@ export abstract class BaseIdrissCrypto {
     }
 
     const sendOptions = {
-      from: signer,
       ...transactionOptions,
+      from: transactionOptions.from ?? signer,
     };
 
     transactionReceipt = await this.idrissSendToAnyoneContract.sendTransaction({
@@ -683,7 +687,7 @@ export abstract class BaseIdrissCrypto {
         transactionOptions.gas = await this.tippingContract.estimateGas({
           method: { name: "batch", args: [encodedCalldata] },
           estimateGasOptions: {
-            from: signer,
+            from: transactionOptions.from ?? signer,
             value: maticToSend.toString(),
           },
         });
@@ -698,8 +702,8 @@ export abstract class BaseIdrissCrypto {
         args: [encodedCalldata],
       },
       transactionOptions: {
-        from: signer,
         ...transactionOptions,
+        from: transactionOptions.from ?? signer,
         value: maticToSend.toString(),
       },
     });
@@ -769,7 +773,7 @@ export abstract class BaseIdrissCrypto {
           await this.idrissSendToAnyoneContract.estimateGas({
             method: { name: "batch", args: [encodedCalldata] },
             estimateGasOptions: {
-              from: signer,
+              from: transactionOptions.from ?? signer,
               value: maticToSend.toString(),
             },
           });
@@ -784,8 +788,8 @@ export abstract class BaseIdrissCrypto {
         args: [encodedCalldata],
       },
       transactionOptions: {
-        from: signer,
         ...transactionOptions,
+        from: transactionOptions.from ?? signer,
         value: maticToSend.toString(),
       },
     });
@@ -875,7 +879,7 @@ export abstract class BaseIdrissCrypto {
               ],
             },
             estimateGasOptions: {
-              from: signer,
+              from: transactionOptions.from ?? signer,
               value: maticToSend.toString(),
             },
           });
@@ -898,8 +902,8 @@ export abstract class BaseIdrissCrypto {
         ],
       },
       transactionOptions: {
-        from: signer,
         ...transactionOptions,
+        from: transactionOptions.from ?? signer,
         value: maticToSend.toString(),
       },
     });
@@ -1019,7 +1023,7 @@ export abstract class BaseIdrissCrypto {
               ],
             },
             estimateGasOptions: {
-              from: signer,
+              from: transactionOptions.from ?? signer,
             },
           });
       } catch (e) {
@@ -1086,7 +1090,7 @@ export abstract class BaseIdrissCrypto {
               ],
             },
             estimateGasOptions: {
-              from: signer,
+              from: transactionOptions.from ?? signer,
             },
           });
           transactionOptions.gas = BigNumber.isBigNumber(transactionOptions.gas)
@@ -1106,8 +1110,8 @@ export abstract class BaseIdrissCrypto {
             ],
           },
           transactionOptions: {
-            from: signer,
             ...transactionOptions,
+            from: transactionOptions.from ?? signer,
           },
         });
         delete transactionOptions.gas;
@@ -1150,7 +1154,7 @@ export abstract class BaseIdrissCrypto {
               args: [contractToAuthorize, asset.assetId],
             },
             estimateGasOptions: {
-              from: signer,
+              from: transactionOptions.from ?? signer,
             },
           });
         } catch (e) {
@@ -1161,8 +1165,8 @@ export abstract class BaseIdrissCrypto {
       let approval = await contract.sendTransaction({
         method: { name: "approve", args: [contractToAuthorize, asset.assetId] },
         transactionOptions: {
-          from: signer,
           ...transactionOptions,
+          from: transactionOptions.from ?? signer,
         },
       });
       delete transactionOptions.gas;
@@ -1199,7 +1203,7 @@ export abstract class BaseIdrissCrypto {
               args: [contractToAuthorize, true],
             },
             estimateGasOptions: {
-              from: signer,
+              from: transactionOptions.from ?? signer,
             },
           });
         } catch (e) {
@@ -1213,8 +1217,8 @@ export abstract class BaseIdrissCrypto {
           args: [contractToAuthorize, true],
         },
         transactionOptions: {
-          from: signer,
           ...transactionOptions,
+          from: transactionOptions.from ?? signer,
         },
       });
       delete transactionOptions.gas;

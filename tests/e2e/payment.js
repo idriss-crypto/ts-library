@@ -8,6 +8,7 @@ const { IdrissCrypto } = require("../../lib");
 const { AssetType } = require("../../lib/types/assetType");
 
 const IDrissArtifact = require('../artifacts/tests/contracts/src/contracts/mocks/IDrissRegistryMock.sol/IDriss.json')
+const IDrissWrapperArtifact = require('../artifacts/tests/contracts/src/contracts/mocks/IDrissWrapperMock.sol/IDrissWrapperContract.json')
 const MaticPriceAggregatorV3MockArtifact = require('../artifacts/tests/contracts/src/contracts/mocks/MaticPriceAggregatorV3Mock.sol/MaticPriceAggregatorV3Mock.json')
 const MockERC1155Artifact = require('../artifacts/tests/contracts/src/contracts/mocks/IDrissRegistryMock.sol/MockERC1155.json')
 const MockNFTArtifact = require('../artifacts/tests/contracts/src/contracts/mocks/IDrissRegistryMock.sol/MockNFT.json')
@@ -31,6 +32,7 @@ describe('Payments', async () => {
     let mockERC1155Contract
     let mockERC1155_2Contract
     let mockPriceOracleContract
+    let mockMultiResolver
     let ownerAddress
     let signer1Address
     let signer2Address
@@ -75,6 +77,7 @@ describe('Payments', async () => {
             idrissContract.deployed()
         ])
 
+        mockMultiResolver = await hre.ethers.getContractFactoryFromArtifact(IDrissWrapperArtifact).then(contract => contract.deploy(idrissContract.address))
         sendToHashContract = await hre.ethers.getContractFactoryFromArtifact(SendToHashArtifact).then(contract => contract.deploy(idrissContract.address, mockPriceOracleContract.address))
         tippingContract = await hre.ethers.getContractFactoryFromArtifact(TippingArtifact).then(contract => contract.deploy(mockPriceOracleContract.address))
         mockERC1155Contract = await hre.ethers.getContractFactoryFromArtifact(MockERC1155Artifact).then(contract => contract.deploy())
@@ -85,6 +88,7 @@ describe('Payments', async () => {
         mockToken2Contract = await hre.ethers.getContractFactoryFromArtifact(MockTokenArtifact).then(contract => contract.deploy())
 
         await Promise.all([
+            mockMultiResolver.deployed(),
             tippingContract.deployed(),
             sendToHashContract.deployed(),
             mockERC1155Contract.deployed(),
@@ -106,12 +110,13 @@ describe('Payments', async () => {
         const web3Provider = Web3ProviderAdapter.fromWeb3(new Web3(testProvider));
         // const web3Provider = Web3ProviderAdapter.fromEthersV5(new ethers.providers.Web3Provider(testProvider));
 
-        idrissCryptoLib = new IdrissCrypto({
+        idrissCryptoLib = new IdrissCrypto(url, {
             web3Provider: web3Provider,
             sendToAnyoneContractAddress: sendToHashContract.address,
             tippingContractAddress: tippingContract.address,
             idrissRegistryContractAddress: idrissContract.address,
             priceOracleContractAddress: mockPriceOracleContract.address,
+            idrissMultipleRegistryContractAddress: mockMultiResolver.address
         });
 
         await idrissContract.functions.addIDriss(signer1Hash, signer1Address)
@@ -262,8 +267,6 @@ describe('Payments', async () => {
             const recipientBalanceAfterAsBigNumber = BigNumber.from(recipientBalanceAfter);
 
             const payerBalanceAfter = await web3.eth.getBalance(ownerAddress)
-
-
 
             assert(result.status)
             assert.equal(recipientBalanceAfterAsBigNumber.sub(recipientBalanceBeforeAsBigNumber).toString(),

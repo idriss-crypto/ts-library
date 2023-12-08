@@ -6,8 +6,8 @@ import crypto from "crypto";
  * This class is used for NodeJS
  */
 export class IdrissCrypto extends BaseIdrissCrypto {
-    constructor(connectionOptions: ConnectionOptions) {
-        super(connectionOptions);
+    constructor(url: string = "https://polygon-rpc.com/", connectionOptions: ConnectionOptions) {
+        super(url, connectionOptions);
     }
 
     protected async digestMessage(message: string): Promise<string> {

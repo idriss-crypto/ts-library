@@ -1,13 +1,8 @@
 import { BaseIdrissCrypto } from "./baseIdrissCrypto";
 
 export class IdrissCrypto extends BaseIdrissCrypto {
-    constructor(connectionOptions: ConnectionOptions) {
-        super(connectionOptions);
-    }
-
-    static async create(connectionOptions: ConnectionOptions) {
-        const instance = new IdrissCrypto(connectionOptions);
-        return instance;
+    constructor(url: string = "https://polygon-rpc.com/", connectionOptions: ConnectionOptions) {
+        super(url, connectionOptions);
     }
 
     protected async digestMessage(message: string) {
