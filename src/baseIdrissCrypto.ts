@@ -144,7 +144,7 @@ export abstract class BaseIdrissCrypto {
 
           return [foundResult.tagName, resolvedAddress];
         })
-        .filter(Boolean),
+        .filter((v):v is [string, string] => Boolean(v)),
     );
   }
 

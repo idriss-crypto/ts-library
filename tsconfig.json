@@ -10,7 +10,6 @@
     "outDir": "lib",
     "rootDir": "src",
     "strict": true,
-    "strictNullChecks": true,
     "noImplicitAny": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
@@ -18,14 +17,12 @@
       "node"
     ],
     "typeRoots": [
-      "./node_modules/@types",
-      "@types"
+      "./node_modules/@types"
     ],
-    "moduleResolution": "NodeNext"
+    "moduleResolution": "node"
   },
   "include": [
-    "src",
-    "@types/reset.d.ts"
+    "src"
   ],
   "exclude": [
     "node_modules",
