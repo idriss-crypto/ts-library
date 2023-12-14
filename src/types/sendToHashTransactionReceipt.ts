@@ -1,4 +1,4 @@
-import { TransactionReceipt } from "web3-core";
+import type { TransactionReceipt } from "web3-core/types";
 
 export type SendToHashTransactionReceipt = {
     transactionReceipt: TransactionReceipt;

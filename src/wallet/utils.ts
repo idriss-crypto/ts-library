@@ -1,6 +1,6 @@
 import type { ResolveOptions } from "./types";
 import { WALLET_TAGS } from "./constants";
-import { NonOptional } from "../utils-types";
+import type { NonOptional } from "../utils-types";
 
 export const filterWalletTags = ({
   coin,

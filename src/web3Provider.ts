@@ -1,8 +1,7 @@
 import { ethers } from "ethers";
 import Web3 from "web3";
-import { Abi } from "./abi";
-
-import { Contract } from "./contract";
+import type { Abi } from "./abi/types";
+import type { Contract } from "./contract/types";
 
 interface IWeb3Provider {
   isAddress: (maybeAddress: string) => boolean;

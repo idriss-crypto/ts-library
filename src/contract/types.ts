@@ -1,5 +1,5 @@
-import { TransactionReceipt } from "web3-core";
-import {
+import type { TransactionReceipt } from "web3-core/types";
+import type {
   PreparedTransaction,
   TransactionOptions,
 } from "../types/transactionOptions";

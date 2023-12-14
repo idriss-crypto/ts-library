@@ -17,7 +17,6 @@ module.exports = (env) => {
           stream: require.resolve("stream-browserify"),
           crypto: require.resolve("crypto-browserify"),
           assert: require.resolve("assert/"),
-          crypto: require.resolve("crypto-browserify"),
           http: require.resolve("stream-http"),
           https: require.resolve("https-browserify"),
           url: require.resolve("url/"),

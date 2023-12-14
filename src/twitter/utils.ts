@@ -1,4 +1,4 @@
-import { fetchSafe } from "../utils";
+import { fetchSafe } from "../utils/fetchSafe";
 import { IDRISS_GET_TWITTER_ID_URL, IDRISS_GET_TWITTER_NAME_URL } from "./constants";
 
 export const reverseTwitterID = async (id: string): Promise<string> => {

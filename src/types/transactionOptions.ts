@@ -1,5 +1,5 @@
-import { TransactionReceipt } from "web3-core";
-import { EstimateGasOptions } from "../contract/types";
+import type { TransactionReceipt } from "web3-core/types";
+import type { EstimateGasOptions } from "../contract/types";
 /**
  * Those are optional configuration items for transaction that can override defaults
  */

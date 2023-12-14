@@ -1,8 +1,9 @@
 import { BaseIdrissCrypto } from "./baseIdrissCrypto";
-import { ConnectionOptions } from "./types/connectionOptions";
-import crypto from "crypto";
+import type { ConnectionOptions } from "./types/connectionOptions";
+import { createHash } from "crypto";
 import { provider } from "web3-core";
-import { Web3Provider, Web3ProviderAdapter } from "./web3Provider";
+import type { Web3Provider } from "./web3Provider";
+import { Web3ProviderAdapter } from "./web3Provider";
 import Web3 from "web3";
 import { ethers } from "ethers";
 
@@ -32,7 +33,7 @@ export class IdrissCrypto extends BaseIdrissCrypto {
       web3Provider = Web3ProviderAdapter.fromWeb3(
         new Web3(
           connectionOptions.web3Provider ??
-          new Web3.providers.HttpProvider(url),
+            new Web3.providers.HttpProvider(url),
         ),
       );
     }
@@ -41,7 +42,7 @@ export class IdrissCrypto extends BaseIdrissCrypto {
   }
 
   protected async digestMessage(message: string): Promise<string> {
-    return crypto.createHash("sha256").update(message).digest("hex");
+    return createHash("sha256").update(message).digest("hex");
   }
 
   protected async getConnectedAccount(): Promise<string> {

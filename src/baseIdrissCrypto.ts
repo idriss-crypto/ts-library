@@ -1,29 +1,33 @@
-import { TransactionReceipt } from "web3-core";
-import { BigNumber, BigNumberish } from "ethers";
+import type { TransactionReceipt } from "web3-core/types";
+import type { BigNumberish } from "@ethersproject/bignumber";
+import { BigNumber } from "@ethersproject/bignumber";
 
-import { reverseTwitterID } from "./twitter";
-import {
-  AssetLiability,
-  AssetType,
-  ConnectionOptions,
-  MultiSendToHashTransactionReceipt,
-  SendToHashTransactionReceipt,
-  PreparedTransaction,
-  TransactionOptions,
-  SendToAnyoneParams,
-  VotingParams,
-} from "./types";
-import { Web3Provider, Web3ProviderAdapter } from "./web3Provider";
-import {
-  filterWalletTags,
-  getWalletTagAddress,
-  ResolveOptions,
-} from "./wallet";
-import { Contract, ContractsAddresses, CONTRACTS_ADDRESSES } from "./contract";
-import { ABIS } from "./abi";
-import { matchInput, transformIdentifier } from "./utils";
+import { reverseTwitterID } from "./twitter/utils";
+import type { Web3Provider } from "./web3Provider";
+import { Web3ProviderAdapter } from "./web3Provider";
+import { ABIS } from "./abi/constants";
 import { NonOptional } from "./utils-types";
 import Web3 from "web3";
+import { CONTRACTS_ADDRESSES } from "./contract/constants";
+import type { ContractsAddresses } from "./contract/constants";
+import type { Contract } from "./contract/types";
+import type { ConnectionOptions } from "./types/connectionOptions";
+import { matchInput } from "./utils/matchInput";
+import type { ResolveOptions } from "./wallet/types";
+import { transformIdentifier } from "./utils/transformIdentifier";
+import { filterWalletTags, getWalletTagAddress } from "./wallet/utils";
+import type { SendToAnyoneParams } from "./types/sendToAnyoneParams";
+import type {
+  PreparedTransaction,
+  TransactionOptions,
+} from "./types/transactionOptions";
+import type {
+  MultiSendToHashTransactionReceipt,
+  SendToHashTransactionReceipt,
+} from "./types/sendToHashTransactionReceipt";
+import type { AssetLiability } from "./types/assetLiability";
+import { AssetType } from "./types/assetType";
+import type { VotingParams } from "./types/votingParams";
 
 const IDRISS_HOMEPAGE = "https://idriss.xyz";
 
@@ -144,7 +148,7 @@ export abstract class BaseIdrissCrypto {
 
           return [foundResult.tagName, resolvedAddress];
         })
-        .filter((v):v is [string, string] => Boolean(v)),
+        .filter((v): v is [string, string] => Boolean(v)),
     );
   }
 

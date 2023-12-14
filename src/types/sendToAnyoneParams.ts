@@ -1,6 +1,6 @@
-import { AssetLiability } from "./assetLiability";
-import { NonOptional } from "../utils-types";
-import { ResolveOptions } from "../wallet";
+import type { AssetLiability } from "./assetLiability";
+import type { NonOptional } from "../utils-types";
+import type { ResolveOptions } from "../wallet/types";
 
 export type SendToAnyoneParams = {
    beneficiary: string;

@@ -1,4 +1,4 @@
-import { WALLET_TAGS } from "./constants";
+import type { WALLET_TAGS } from "./constants";
 
 type WalletTag = (typeof WALLET_TAGS)[number];
 type WalletTagName = WalletTag["tagName"];

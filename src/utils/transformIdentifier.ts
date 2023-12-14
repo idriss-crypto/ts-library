@@ -1,4 +1,4 @@
-import { getTwitterID } from "../twitter";
+import { getTwitterID } from "../twitter/utils";
 import { convertPhone } from "./convertPhone";
 import { matchInput } from "./matchInput";
 import { toTitleCase } from "./toTitleCase";

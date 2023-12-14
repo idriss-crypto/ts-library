@@ -1,9 +1,9 @@
-import { AssetType } from "./assetType"
-import {BigNumberish} from "ethers";
+import type { AssetType } from "./assetType";
+import type { BigNumberish } from "@ethersproject/bignumber";
 
 export type AssetLiability = {
-   amount: BigNumberish,
-   type: AssetType,
-   assetContractAddress?: string | null,
-   assetId?: string | null
-}
+  amount: BigNumberish;
+  type: AssetType;
+  assetContractAddress?: string | null;
+  assetId?: string | null;
+};
