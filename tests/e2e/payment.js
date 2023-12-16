@@ -107,17 +107,9 @@ describe('Payments', async () => {
             providerOrUrl: url
         });
 
-        // Old way of doing things
-        // const web3Provider = testProvider;
-
-        // Pass Web3Js instance
-        // const web3Provider = new Web3(testProvider);
-
-        // Pass ethers.providers.Web3Provider instance
-        const web3Provider = new ethers.providers.Web3Provider(testProvider);
-
         idrissCryptoLib = new IdrissCrypto(url, {
-            web3Provider: web3Provider,
+            web3Provider: testProvider,
+            providerType: 'web3',
             sendToAnyoneContractAddress: sendToHashContract.address,
             tippingContractAddress: tippingContract.address,
             idrissRegistryContractAddress: idrissContract.address,

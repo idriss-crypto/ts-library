@@ -1,4 +1,3 @@
-const { ethers } = require("ethers");
 const {
   IdrissCrypto,
   Authorization,
@@ -11,23 +10,9 @@ const {
 const assert = require("assert");
 const { BaseIdrissCrypto } = require("../../lib/baseIdrissCrypto");
 
-const Web3 = require("web3");
-const { Web3ProviderAdapter } = require("../../lib/web3Provider");
 
 const createProvider = async () => {
-  // Old way of doing things
-  // const obj = new IdrissCrypto();
-
-  // Pass Web3Js instance
-  // const web3Provider = new Web3(
-  //   new Web3.providers.HttpProvider("https://polygon-rpc.com/"),
-  // );
-  // Pass ethers.providers.Web3Provider instance
-  const web3Provider = new ethers.providers.JsonRpcProvider({
-    url: "https://polygon-rpc.com/",
-  });
-  const obj = new IdrissCrypto(undefined, { web3Provider: web3Provider });
-
+  const obj = new IdrissCrypto(undefined, { providerType: "web3" });
   return obj;
 };
 
