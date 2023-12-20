@@ -1,5 +1,6 @@
 const path = require("path");
 const fs = require("fs");
+const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 
 module.exports = (env) => {
   if (env.m == 1) {
@@ -12,17 +13,7 @@ module.exports = (env) => {
         path: path.resolve(__dirname, "lib/bundle"),
         filename: "[name].js",
       },
-      resolve: {
-        fallback: {
-          stream: require.resolve("stream-browserify"),
-          crypto: require.resolve("crypto-browserify"),
-          assert: require.resolve("assert/"),
-          http: require.resolve("stream-http"),
-          https: require.resolve("https-browserify"),
-          url: require.resolve("url/"),
-          os: require.resolve("os-browserify/browser"),
-        },
-      },
+      plugins: [new NodePolyfillPlugin()],
     };
   } else {
     return {
@@ -36,18 +27,7 @@ module.exports = (env) => {
         filename: "[name].js",
       },
       experiments: { outputModule: true },
-      resolve: {
-        fallback: {
-          stream: require.resolve("stream-browserify"),
-          crypto: require.resolve("crypto-browserify"),
-          assert: require.resolve("assert/"),
-          crypto: require.resolve("crypto-browserify"),
-          http: require.resolve("stream-http"),
-          https: require.resolve("https-browserify"),
-          url: require.resolve("url/"),
-          os: require.resolve("os-browserify/browser"),
-        },
-      },
+      plugins: [new NodePolyfillPlugin()],
     };
   }
 };
