@@ -218,7 +218,7 @@ And in code:
 
 const obj = new IdrissCrypto()
 
-const reverse = await obj.reverseResolve("0x995945Fb74e0f8e345b3f35472c3e07202Eb38Ac")
+const reverse = await obj.reverseResolve("0x5ABca791C22E7f99237fCC04639E094Ffa0cCce9")
 
 console.log(reverse)
 
