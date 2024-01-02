@@ -1,14 +1,18 @@
 import {BaseIdrissCrypto} from "./baseIdrissCrypto";
 
 export class IdrissCrypto extends BaseIdrissCrypto {
-    constructor(polygonEndpoint: string = "https://polygon-rpc.com/", connectionOptions: ConnectionOptions = {}) {
+    constructor(twitterApiKey: string, polygonEndpoint: string = "https://polygon-rpc.com/", connectionOptions: ConnectionOptions = {}) {
         // @ts-ignore
         const Web3Promise = import("web3/dist/web3.min.js")
-        super(BaseIdrissCrypto.generateWeb3(Web3Promise, polygonEndpoint, connectionOptions.web3Provider),
-            BaseIdrissCrypto.generateWeb3(Web3Promise, polygonEndpoint), connectionOptions);
+        super(
+            BaseIdrissCrypto.generateWeb3(Web3Promise, polygonEndpoint, connectionOptions.web3Provider),
+            BaseIdrissCrypto.generateWeb3(Web3Promise, polygonEndpoint),
+            connectionOptions,
+            twitterApiKey
+        );
     }
 
-    protected async digestMessage(message:string) {
+    protected async digestMessage(message: string) {
         const msgUint8 = new TextEncoder().encode(message);                           // encode as (utf-8) Uint8Array
         const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);  // hash the message
         const hashArray = Array.from(new Uint8Array(hashBuffer));                     // convert buffer to byte array
@@ -23,7 +27,7 @@ export class IdrissCrypto extends BaseIdrissCrypto {
             throw new Error('No wallet detected.');
         }
 
-        const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+        const accounts = await ethereum.request({method: 'eth_requestAccounts'});
         return accounts[0];
     }
 
@@ -36,5 +40,13 @@ export class IdrissCrypto extends BaseIdrissCrypto {
 
 import {Authorization, CreateOTPResponse, WrongOTPException} from "./authorization"
 import {AuthorizationTestnet, CreateOTPResponseTestnet, WrongOTPExceptionTestnet} from "./authorizationTestnet"
-import { ConnectionOptions } from "./types/connectionOptions";
-export {Authorization, CreateOTPResponse, WrongOTPException, AuthorizationTestnet, CreateOTPResponseTestnet, WrongOTPExceptionTestnet};
+import {ConnectionOptions} from "./types/connectionOptions";
+
+export {
+    Authorization,
+    CreateOTPResponse,
+    WrongOTPException,
+    AuthorizationTestnet,
+    CreateOTPResponseTestnet,
+    WrongOTPExceptionTestnet
+};

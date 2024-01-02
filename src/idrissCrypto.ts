@@ -1,24 +1,33 @@
 import {BaseIdrissCrypto} from "./baseIdrissCrypto";
-import { ConnectionOptions } from "./types/connectionOptions";
+import {ConnectionOptions} from "./types/connectionOptions";
+
 let crypto = require('crypto');
 
 /**
  * This class is used for NodeJS
  */
 export class IdrissCrypto extends BaseIdrissCrypto {
-    constructor(polygonEndpoint: string = "https://polygon-rpc.com/", connectionOptions: ConnectionOptions = {}) {
+    constructor(twitterApiKey: string, polygonEndpoint: string = "https://polygon-rpc.com/", connectionOptions: ConnectionOptions = {}) {
         const Web3Promise = import("web3");
-        super(BaseIdrissCrypto.generateWeb3(Web3Promise, polygonEndpoint, connectionOptions.web3Provider),
-            BaseIdrissCrypto.generateWeb3(Web3Promise, polygonEndpoint), connectionOptions);
-        }
+        super(
+            BaseIdrissCrypto.generateWeb3(Web3Promise, polygonEndpoint, connectionOptions.web3Provider),
+            BaseIdrissCrypto.generateWeb3(Web3Promise, polygonEndpoint),
+            connectionOptions,
+            twitterApiKey
+        );
+    }
 
-    protected async digestMessage(message: string):Promise<string> {
+    protected async digestMessage(message: string): Promise<string> {
         return crypto.createHash('sha256').update(message).digest('hex');
     }
 
     protected async getConnectedAccount(): Promise<string> {
         return this.web3Promise
-            .then(web3 => {return web3.eth.getAccounts()})
-            .then(acc => {return acc[0]})
+            .then(web3 => {
+                return web3.eth.getAccounts()
+            })
+            .then(acc => {
+                return acc[0]
+            })
     }
 }
