@@ -36,7 +36,6 @@ export abstract class BaseIdrissCrypto {
   protected registryWeb3Provider: Web3Provider;
   protected contractsAddressess: ContractsAddresses;
 
-  private idrissRegistryContract: Contract;
   private idrissMultipleRegistryContract: Contract;
   private idrissReverseMappingContract: Contract;
   private idrissSendToAnyoneContract: Contract;
@@ -72,15 +71,9 @@ export abstract class BaseIdrissCrypto {
     };
 
     this.web3Provider = connectionOptions.web3Provider;
-    // this.registryWeb3Provider = connectionOptions.web3Provider;
 
     this.registryWeb3Provider = Web3ProviderAdapter.fromWeb3(
       new Web3(new Web3.providers.HttpProvider(url)),
-    );
-
-    this.idrissRegistryContract = this.registryWeb3Provider.createContract(
-      ABIS.IDrissRegistryAbi,
-      this.contractsAddressess.idrissRegistry,
     );
 
     this.idrissMultipleRegistryContract =
@@ -892,7 +885,6 @@ export abstract class BaseIdrissCrypto {
       }
     }
 
-    // TODO: fails here on ethers
     transactionReceipt = await this.idrissSendToAnyoneContract.sendTransaction({
       method: {
         name: "sendToAnyone",
