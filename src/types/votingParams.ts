@@ -1,4 +1,4 @@
-import type { AssetLiability } from "./assetLiability";
+import type { AssetLiability } from './assetLiability';
 
 export type VotingParams = {
   encodedVote: string;

@@ -1,35 +1,35 @@
-import type { TransactionReceipt } from "web3-core/types";
-import type { BigNumberish } from "@ethersproject/bignumber";
-import { BigNumber } from "@ethersproject/bignumber";
+import type { TransactionReceipt } from 'web3-core/types';
+import type { BigNumberish } from '@ethersproject/bignumber';
+import { BigNumber } from '@ethersproject/bignumber';
+import Web3 from 'web3';
 
-import { reverseTwitterID } from "./twitter/utils";
-import type { Web3Provider } from "./web3Provider";
-import { Web3ProviderAdapter } from "./web3Provider";
-import { ABIS } from "./abi/constants";
-import { NonOptional } from "./utils-types";
-import Web3 from "web3";
-import { CONTRACTS_ADDRESSES } from "./contract/constants";
-import type { ContractsAddresses } from "./contract/constants";
-import type { Contract } from "./contract/types";
-import type { ConnectionOptions } from "./types/connectionOptions";
-import { matchInput } from "./utils/matchInput";
-import type { ResolveOptions } from "./wallet/types";
-import { transformIdentifier } from "./utils/transformIdentifier";
-import { filterWalletTags, getWalletTagAddress } from "./wallet/utils";
-import type { SendToAnyoneParams } from "./types/sendToAnyoneParams";
+import { reverseTwitterID } from './twitter/utils';
+import type { Web3Provider } from './web3Provider';
+import { Web3ProviderAdapter } from './web3Provider';
+import { ABIS } from './abi/constants';
+import { NonOptional } from './utils-types';
+import { CONTRACTS_ADDRESSES } from './contract/constants';
+import type { ContractsAddresses } from './contract/constants';
+import type { Contract } from './contract/types';
+import type { ConnectionOptions } from './types/connectionOptions';
+import { matchInput } from './utils/matchInput';
+import type { ResolveOptions } from './wallet/types';
+import { transformIdentifier } from './utils/transformIdentifier';
+import { filterWalletTags, getWalletTagAddress } from './wallet/utils';
+import type { SendToAnyoneParams } from './types/sendToAnyoneParams';
 import type {
   PreparedTransaction,
   TransactionOptions,
-} from "./types/transactionOptions";
+} from './types/transactionOptions';
 import type {
   MultiSendToHashTransactionReceipt,
   SendToHashTransactionReceipt,
-} from "./types/sendToHashTransactionReceipt";
-import type { AssetLiability } from "./types/assetLiability";
-import { AssetType } from "./types/assetType";
-import type { VotingParams } from "./types/votingParams";
+} from './types/sendToHashTransactionReceipt';
+import type { AssetLiability } from './types/assetLiability';
+import { AssetType } from './types/assetType';
+import type { VotingParams } from './types/votingParams';
 
-const IDRISS_HOMEPAGE = "https://idriss.xyz";
+const IDRISS_HOMEPAGE = 'https://idriss.xyz';
 
 export abstract class BaseIdrissCrypto {
   protected web3Provider: Web3Provider;
@@ -121,14 +121,14 @@ export abstract class BaseIdrissCrypto {
 
     const getMultipleIDrissResponse: Array<[string, string]> =
       await this.idrissMultipleRegistryContract.callMethod({
-        method: { name: "getMultipleIDriss", args: [digestedMessages] },
+        method: { name: 'getMultipleIDriss', args: [digestedMessages] },
       });
 
     return Object.fromEntries(
       getMultipleIDrissResponse
         .map(([digested, resolvedAddress]) => {
           if (!resolvedAddress) {
-            return undefined;
+            return;
           }
 
           const foundResult = digestionResult.find(
@@ -141,7 +141,7 @@ export abstract class BaseIdrissCrypto {
 
           return [foundResult.tagName, resolvedAddress];
         })
-        .filter((v): v is [string, string] => Boolean(v)),
+        .filter(Boolean),
     );
   }
 
@@ -157,7 +157,7 @@ export abstract class BaseIdrissCrypto {
     const registeredUsersSendParams = [];
     const newUsersSendParams = [];
 
-    for (let sendParam of sendParams) {
+    for (const sendParam of sendParams) {
       if (this.web3Provider.isAddress(sendParam.beneficiary)) {
         sendParam.hash = sendParam.beneficiary;
         this.addAssetForAllowanceToMap(
@@ -199,14 +199,14 @@ export abstract class BaseIdrissCrypto {
     const signer = await this.getConnectedAccount();
 
     await this.approveAssets(
-      [...Array.from(sendToAnyoneContractAllowances.values())],
+      [...sendToAnyoneContractAllowances.values()],
       signer,
       this.contractsAddressess.idrissSendToAnyone,
       transactionOptions,
     );
 
     await this.approveAssets(
-      [...Array.from(tippingContractAllowances.values())],
+      [...tippingContractAllowances.values()],
       signer,
       this.contractsAddressess.idrissTipping,
       transactionOptions,
@@ -240,14 +240,14 @@ export abstract class BaseIdrissCrypto {
   ) {
     return this.idrissSendToAnyoneContract.encodeABI({
       method: {
-        name: "sendToAnyone",
+        name: 'sendToAnyone',
         args: [
           hash,
           param.asset.amount,
           param.asset.type.valueOf(),
           param.asset.assetContractAddress ?? this.contractsAddressess.zero,
           param.asset.assetId ?? 0,
-          param.message ?? "",
+          param.message ?? '',
         ],
       },
     });
@@ -258,8 +258,8 @@ export abstract class BaseIdrissCrypto {
     asset: AssetLiability,
   ) {
     if (asset.type !== AssetType.Native) {
-      if (!asset.assetContractAddress || asset.assetContractAddress === "") {
-        throw new Error("Asset address cannot be undefined");
+      if (!asset.assetContractAddress || asset.assetContractAddress === '') {
+        throw new Error('Asset address cannot be undefined');
       }
 
       // because for ERC721 we have to approve each id separately
@@ -285,8 +285,8 @@ export abstract class BaseIdrissCrypto {
     message: string,
     transactionOptions: TransactionOptions = {},
   ) {
-    if (resolveOptions.network !== "evm") {
-      throw new Error("Only transfers on Polygon are supported at the moment");
+    if (resolveOptions.network !== 'evm') {
+      throw new Error('Only transfers on Polygon are supported at the moment');
     }
 
     let result: SendToHashTransactionReceipt | TransactionReceipt;
@@ -304,47 +304,38 @@ export abstract class BaseIdrissCrypto {
     const hash = await this.getUserHash(resolveOptions, beneficiary);
     const resolvedIDriss = await this.resolve(beneficiary);
 
-    if (
-      resolvedIDriss &&
-      resolvedIDriss[resolveOptions.walletTag!] &&
-      resolvedIDriss[resolveOptions.walletTag!].length > 0
-    ) {
-      result = await this.callWeb3Tipping(
-        resolvedIDriss[resolveOptions.walletTag!],
-        asset,
-        message,
-        transactionOptions,
-      );
-    } else {
-      result = await this.callWeb3SendToAnyone(
-        hash,
-        beneficiary,
-        asset,
-        message,
-        transactionOptions,
-      );
-    }
+    result = await (resolvedIDriss &&
+    resolvedIDriss[resolveOptions.walletTag!] &&
+    resolvedIDriss[resolveOptions.walletTag!].length > 0
+      ? this.callWeb3Tipping(
+          resolvedIDriss[resolveOptions.walletTag!],
+          asset,
+          message,
+          transactionOptions,
+        )
+      : this.callWeb3SendToAnyone(
+          hash,
+          beneficiary,
+          asset,
+          message,
+          transactionOptions,
+        ));
 
     return result;
   }
 
-  //@dev only callable on supported gitcoin round networks (optimism)
-  public async vote(
+  vote(
     encodedVote: string,
     asset: AssetLiability,
     roundContractAddress: string,
     transactionOptions: TransactionOptions = {},
   ) {
-    let result: TransactionReceipt;
-
-    result = await this.callWeb3Vote(
+    return this.callWeb3Vote(
       encodedVote,
       asset,
       roundContractAddress,
       transactionOptions,
     );
-
-    return result;
   }
 
   public async getUserHash(
@@ -363,8 +354,8 @@ export abstract class BaseIdrissCrypto {
     asset: AssetLiability,
     transactionOptions: TransactionOptions = {},
   ) {
-    if (walletType.network !== "evm") {
-      throw new Error("Only transfers on Polygon are supported at the moment");
+    if (walletType.network !== 'evm') {
+      throw new Error('Only transfers on Polygon are supported at the moment');
     }
 
     const hash = await this.getUserHash(walletType, beneficiary);
@@ -405,7 +396,7 @@ export abstract class BaseIdrissCrypto {
     claimPassword: string,
   ): Promise<string> {
     return this.idrissSendToAnyoneContract.callMethod({
-      method: { name: "hashIDrissWithPassword", args: [hash, claimPassword] },
+      method: { name: 'hashIDrissWithPassword', args: [hash, claimPassword] },
     });
   }
 
@@ -418,10 +409,8 @@ export abstract class BaseIdrissCrypto {
     const nativeToSend =
       asset.type === AssetType.Native
         ? BigNumber.from(asset.amount)
-        : BigNumber.from("0");
+        : BigNumber.from('0');
     const signer = await this.getConnectedAccount();
-
-    let transactionReceipt: TransactionReceipt;
 
     await this.approveAssets(
       [asset],
@@ -432,18 +421,17 @@ export abstract class BaseIdrissCrypto {
 
     if (!transactionOptions.gas) {
       try {
-        transactionOptions.gas = await (
-          await this.getVotingMethod({
-            encodedVote: encodedVote,
-            roundContractAddress: roundContractAddress,
-            asset: asset,
-          })
-        ).estimateGas({
+        const votingMethod = await this.getVotingMethod({
+          encodedVote: encodedVote,
+          roundContractAddress: roundContractAddress,
+          asset: asset,
+        });
+        transactionOptions.gas = await votingMethod.estimateGas({
           from: transactionOptions.from ?? signer,
           value: nativeToSend.toString(),
         });
-      } catch (e) {
-        console.log("Could not estimate gas: ", e);
+      } catch (error) {
+        console.log('Could not estimate gas:', error);
       }
     }
 
@@ -453,13 +441,13 @@ export abstract class BaseIdrissCrypto {
       value: nativeToSend.toString(),
     };
 
-    transactionReceipt = await (
-      await this.getVotingMethod({
-        encodedVote: encodedVote,
-        roundContractAddress: roundContractAddress,
-        asset: asset,
-      })
-    ).send(sendOptions);
+    const votingMethod = await this.getVotingMethod({
+      encodedVote: encodedVote,
+      roundContractAddress: roundContractAddress,
+      asset: asset,
+    });
+
+    const transactionReceipt = await votingMethod.send(sendOptions);
 
     return transactionReceipt;
   }
@@ -481,8 +469,6 @@ export abstract class BaseIdrissCrypto {
         : paymentFee;
     const signer = await this.getConnectedAccount();
 
-    let transactionReceipt: TransactionReceipt;
-
     await this.approveAssets(
       [asset],
       signer,
@@ -490,7 +476,7 @@ export abstract class BaseIdrissCrypto {
       transactionOptions,
     );
 
-    message = message ?? "";
+    message = message ?? '';
 
     if (!transactionOptions.gas) {
       try {
@@ -504,8 +490,8 @@ export abstract class BaseIdrissCrypto {
           from: transactionOptions.from ?? signer,
           value: maticToSend.toString(),
         });
-      } catch (e) {
-        console.log("Could not estimate gas: ", e);
+      } catch (error) {
+        console.log('Could not estimate gas:', error);
       }
     }
 
@@ -522,7 +508,7 @@ export abstract class BaseIdrissCrypto {
       hash: resolvedAddress,
     });
 
-    transactionReceipt = await tippingMethod.send(sendOptions);
+    const transactionReceipt = await tippingMethod.send(sendOptions);
 
     return transactionReceipt;
   }
@@ -534,22 +520,20 @@ export abstract class BaseIdrissCrypto {
     transactionOptions: TransactionOptions,
   ): Promise<TransactionReceipt> {
     const signer = await this.getConnectedAccount();
-    let transactionReceipt: TransactionReceipt;
-
     if (!transactionOptions.gas) {
       try {
         transactionOptions.gas =
           await this.idrissSendToAnyoneContract.estimateGas({
             method: {
-              name: "revertPayment",
+              name: 'revertPayment',
               args: [beneficiary, assetType, assetContractAddress],
             },
             estimateGasOptions: {
               from: transactionOptions.from ?? signer,
             },
           });
-      } catch (e) {
-        console.log("Could not estimate gas: ", e);
+      } catch (error) {
+        console.log('Could not estimate gas:', error);
       }
     }
 
@@ -558,13 +542,14 @@ export abstract class BaseIdrissCrypto {
       from: transactionOptions.from ?? signer,
     };
 
-    transactionReceipt = await this.idrissSendToAnyoneContract.sendTransaction({
-      method: {
-        name: "revertPayment",
-        args: [beneficiary, assetType, assetContractAddress],
-      },
-      transactionOptions: sendOptions,
-    });
+    const transactionReceipt =
+      await this.idrissSendToAnyoneContract.sendTransaction({
+        method: {
+          name: 'revertPayment',
+          args: [beneficiary, assetType, assetContractAddress],
+        },
+        transactionOptions: sendOptions,
+      });
 
     return transactionReceipt;
   }
@@ -585,7 +570,7 @@ export abstract class BaseIdrissCrypto {
 
     return votingContract.prepareTransaction({
       method: {
-        name: "vote",
+        name: 'vote',
         args: [params.encodedVote],
       },
     });
@@ -595,21 +580,22 @@ export abstract class BaseIdrissCrypto {
     params: SendToAnyoneParams,
   ): Promise<PreparedTransaction> {
     let method: PreparedTransaction;
-    const message = params.message ?? "";
+    const message = params.message ?? '';
 
     switch (params.asset.type) {
-      case AssetType.Native:
+      case AssetType.Native: {
         method = await this.tippingContract.prepareTransaction({
           method: {
-            name: "sendTo",
+            name: 'sendTo',
             args: [params.hash, params.asset.amount.toString(), message],
           },
         });
         break;
-      case AssetType.ERC20:
+      }
+      case AssetType.ERC20: {
         method = await this.tippingContract.prepareTransaction({
           method: {
-            name: "sendTokenTo",
+            name: 'sendTokenTo',
             args: [
               params.hash,
               params.asset.amount.toString(),
@@ -619,10 +605,11 @@ export abstract class BaseIdrissCrypto {
           },
         });
         break;
-      case AssetType.ERC721:
+      }
+      case AssetType.ERC721: {
         method = await this.tippingContract.prepareTransaction({
           method: {
-            name: "sendERC721To",
+            name: 'sendERC721To',
             args: [
               params.hash,
               params.asset.assetId,
@@ -632,10 +619,11 @@ export abstract class BaseIdrissCrypto {
           },
         });
         break;
-      case AssetType.ERC1155:
+      }
+      case AssetType.ERC1155: {
         method = await this.tippingContract.prepareTransaction({
           method: {
-            name: "sendERC1155To",
+            name: 'sendERC1155To',
             args: [
               params.hash,
               params.asset.assetId,
@@ -646,6 +634,7 @@ export abstract class BaseIdrissCrypto {
           },
         });
         break;
+      }
     }
 
     return method;
@@ -658,21 +647,15 @@ export abstract class BaseIdrissCrypto {
     let maticToSend: BigNumberish = BigNumber.from(0);
 
     const signer = await this.getConnectedAccount();
-    let transactionReceipt: TransactionReceipt;
     const encodedCalldata = [];
 
-    for (let param of params) {
+    for (const param of params) {
       const paymentFee = await this.calculateTippingPaymentFee(
         param.asset.amount,
         param.asset.type,
       );
-      let properParamAmountToSend;
-
-      if (param.asset.type === AssetType.Native) {
-        properParamAmountToSend = param.asset.amount;
-      } else {
-        properParamAmountToSend = paymentFee;
-      }
+      const properParamAmountToSend =
+        param.asset.type === AssetType.Native ? param.asset.amount : paymentFee;
 
       maticToSend = maticToSend.add(properParamAmountToSend);
 
@@ -682,20 +665,20 @@ export abstract class BaseIdrissCrypto {
     if (!transactionOptions.gas) {
       try {
         transactionOptions.gas = await this.tippingContract.estimateGas({
-          method: { name: "batch", args: [encodedCalldata] },
+          method: { name: 'batch', args: [encodedCalldata] },
           estimateGasOptions: {
             from: transactionOptions.from ?? signer,
             value: maticToSend.toString(),
           },
         });
-      } catch (e) {
-        console.log("Could not estimate gas: ", e);
+      } catch (error) {
+        console.log('Could not estimate gas:', error);
       }
     }
 
-    transactionReceipt = await this.tippingContract.sendTransaction({
+    const transactionReceipt = await this.tippingContract.sendTransaction({
       method: {
-        name: "batch",
+        name: 'batch',
         args: [encodedCalldata],
       },
       transactionOptions: {
@@ -717,11 +700,10 @@ export abstract class BaseIdrissCrypto {
     let maticToSend: BigNumberish = BigNumber.from(0);
     const signer = await this.getConnectedAccount();
     const encodedCalldata = [];
-    let transactionReceipt: TransactionReceipt;
     const beneficiaryClaims = [];
 
-    for (let param of params) {
-      let newParam = { ...param, asset: { ...param.asset } };
+    for (const param of params) {
+      const newParam = { ...param, asset: { ...param.asset } };
       const paymentFee = await this.calculateSendToAnyonePaymentFee(
         newParam.asset.amount,
         newParam.asset.type,
@@ -752,7 +734,7 @@ export abstract class BaseIdrissCrypto {
       const claimUrl = this.generateClaimUrl(
         newParam.beneficiary,
         newParam.asset,
-        "$TBD$",
+        '$TBD$',
         claimPassword,
       );
       beneficiaryClaims.push({
@@ -768,37 +750,38 @@ export abstract class BaseIdrissCrypto {
       try {
         transactionOptions.gas =
           await this.idrissSendToAnyoneContract.estimateGas({
-            method: { name: "batch", args: [encodedCalldata] },
+            method: { name: 'batch', args: [encodedCalldata] },
             estimateGasOptions: {
               from: transactionOptions.from ?? signer,
               value: maticToSend.toString(),
             },
           });
-      } catch (e) {
-        console.log("Could not estimate gas: ", e);
+      } catch (error) {
+        console.log('Could not estimate gas:', error);
       }
     }
 
-    transactionReceipt = await this.idrissSendToAnyoneContract.sendTransaction({
-      method: {
-        name: "batch",
-        args: [encodedCalldata],
-      },
-      transactionOptions: {
-        ...transactionOptions,
-        from: transactionOptions.from ?? signer,
-        value: maticToSend.toString(),
-      },
-    });
+    const transactionReceipt =
+      await this.idrissSendToAnyoneContract.sendTransaction({
+        method: {
+          name: 'batch',
+          args: [encodedCalldata],
+        },
+        transactionOptions: {
+          ...transactionOptions,
+          from: transactionOptions.from ?? signer,
+          value: maticToSend.toString(),
+        },
+      });
 
     delete transactionOptions.gas;
 
-    beneficiaryClaims.forEach((val) => {
+    for (const val of beneficiaryClaims) {
       val.claimUrl = val.claimUrl.replace(
-        "$TBD$",
+        '$TBD$',
         `${transactionReceipt.blockNumber}`,
       );
-    });
+    }
 
     return {
       transactionReceipt,
@@ -815,11 +798,11 @@ export abstract class BaseIdrissCrypto {
     const assetId =
       asset.type === AssetType.ERC1155 || asset.type === AssetType.ERC721
         ? `&assetId=${asset.assetId}`
-        : "";
+        : '';
     const assetAddress =
-      asset.type !== AssetType.Native
-        ? `&assetAddress=${asset.assetContractAddress}`
-        : "";
+      asset.type === AssetType.Native
+        ? ''
+        : `&assetAddress=${asset.assetContractAddress}`;
     return (
       `${IDRISS_HOMEPAGE}/claim?identifier=${beneficiary}&claimPassword=${claimPassword}` +
       `${assetId}&assetType=${asset.type}${assetAddress}&blockNumber=${block}`
@@ -846,7 +829,6 @@ export abstract class BaseIdrissCrypto {
         ? BigNumber.from(asset.amount).add(paymentFee)
         : paymentFee;
     const signer = await this.getConnectedAccount();
-    let transactionReceipt: TransactionReceipt;
 
     await this.approveAssets(
       [asset],
@@ -865,14 +847,14 @@ export abstract class BaseIdrissCrypto {
         transactionOptions.gas =
           await this.idrissSendToAnyoneContract.estimateGas({
             method: {
-              name: "sendToAnyone",
+              name: 'sendToAnyone',
               args: [
                 hashWithPassword,
                 asset.amount,
                 asset.type.valueOf(),
                 asset.assetContractAddress ?? this.contractsAddressess.zero,
                 asset.assetId ?? 0,
-                message ?? "",
+                message ?? '',
               ],
             },
             estimateGasOptions: {
@@ -880,29 +862,30 @@ export abstract class BaseIdrissCrypto {
               value: maticToSend.toString(),
             },
           });
-      } catch (e) {
-        console.log("Could not estimate gas: ", e);
+      } catch (error) {
+        console.log('Could not estimate gas:', error);
       }
     }
 
-    transactionReceipt = await this.idrissSendToAnyoneContract.sendTransaction({
-      method: {
-        name: "sendToAnyone",
-        args: [
-          hashWithPassword,
-          asset.amount,
-          asset.type.valueOf(),
-          asset.assetContractAddress ?? this.contractsAddressess.zero,
-          asset.assetId ?? 0,
-          message ?? "",
-        ],
-      },
-      transactionOptions: {
-        ...transactionOptions,
-        from: transactionOptions.from ?? signer,
-        value: maticToSend.toString(),
-      },
-    });
+    const transactionReceipt =
+      await this.idrissSendToAnyoneContract.sendTransaction({
+        method: {
+          name: 'sendToAnyone',
+          args: [
+            hashWithPassword,
+            asset.amount,
+            asset.type.valueOf(),
+            asset.assetContractAddress ?? this.contractsAddressess.zero,
+            asset.assetId ?? 0,
+            message ?? '',
+          ],
+        },
+        transactionOptions: {
+          ...transactionOptions,
+          from: transactionOptions.from ?? signer,
+          value: maticToSend.toString(),
+        },
+      });
 
     return {
       transactionReceipt,
@@ -924,33 +907,43 @@ export abstract class BaseIdrissCrypto {
   ) {
     let approvalTransactionReceipt: TransactionReceipt | boolean = false;
 
-    for (let asset of assets) {
-      if (asset.type === AssetType.ERC20) {
-        approvalTransactionReceipt = await this.authorizeERC20ForContract(
-          signer,
-          toContract,
-          asset,
-          transactionOptions,
-        );
-      } else if (asset.type === AssetType.ERC721) {
-        approvalTransactionReceipt = await this.authorizeERC721ForContract(
-          signer,
-          toContract,
-          asset,
-          transactionOptions,
-        );
-      } else if (asset.type === AssetType.ERC1155) {
-        approvalTransactionReceipt =
-          await this.setAuthorizationForERC1155Contract(
+    for (const asset of assets) {
+      switch (asset.type) {
+        case AssetType.ERC20: {
+          approvalTransactionReceipt = await this.authorizeERC20ForContract(
             signer,
             toContract,
             asset,
-            true,
             transactionOptions,
           );
+
+          break;
+        }
+        case AssetType.ERC721: {
+          approvalTransactionReceipt = await this.authorizeERC721ForContract(
+            signer,
+            toContract,
+            asset,
+            transactionOptions,
+          );
+
+          break;
+        }
+        case AssetType.ERC1155: {
+          approvalTransactionReceipt =
+            await this.setAuthorizationForERC1155Contract(
+              signer,
+              toContract,
+              asset,
+              true,
+              transactionOptions,
+            );
+
+          break;
+        }
+        // No default
       }
 
-      // @ts-ignore
       if (
         approvalTransactionReceipt !== true &&
         approvalTransactionReceipt &&
@@ -969,10 +962,10 @@ export abstract class BaseIdrissCrypto {
     paymentAmount: BigNumberish,
     assetType: AssetType,
   ) {
-    if (assetType === AssetType.ERC20) return "0";
+    if (assetType === AssetType.ERC20) return '0';
     return this.tippingContract.callMethod({
       method: {
-        name: "getPaymentFee",
+        name: 'getPaymentFee',
         args: [paymentAmount, assetType],
       },
     });
@@ -984,7 +977,7 @@ export abstract class BaseIdrissCrypto {
   ) {
     return this.idrissSendToAnyoneContract.callMethod({
       method: {
-        name: "getPaymentFee",
+        name: 'getPaymentFee',
         args: [paymentAmount, assetType],
       },
     });
@@ -1002,7 +995,7 @@ export abstract class BaseIdrissCrypto {
       asset.type !== AssetType.Native &&
       (!asset.assetContractAddress || asset.assetContractAddress.length === 0)
     ) {
-      throw Error("Invalid asset contract address sent for claiming");
+      throw new Error('Invalid asset contract address sent for claiming');
     }
 
     if (!transactionOptions.gas) {
@@ -1010,7 +1003,7 @@ export abstract class BaseIdrissCrypto {
         transactionOptions.gas =
           await this.idrissSendToAnyoneContract.estimateGas({
             method: {
-              name: "claim",
+              name: 'claim',
               args: [
                 hash,
                 claimPass,
@@ -1022,14 +1015,14 @@ export abstract class BaseIdrissCrypto {
               from: transactionOptions.from ?? signer,
             },
           });
-      } catch (e) {
-        console.log("Could not estimate gas: ", e);
+      } catch (error) {
+        console.log('Could not estimate gas:', error);
       }
     }
 
     return this.idrissSendToAnyoneContract.sendTransaction({
       method: {
-        name: "claim",
+        name: 'claim',
         args: [
           hash,
           claimPass,
@@ -1066,7 +1059,7 @@ export abstract class BaseIdrissCrypto {
 
     const allowance = await contract.callMethod({
       method: {
-        name: "allowance",
+        name: 'allowance',
         args: [signer, contractToAuthorize],
       },
     });
@@ -1080,7 +1073,7 @@ export abstract class BaseIdrissCrypto {
         try {
           transactionOptions.gas = await contract.estimateGas({
             method: {
-              name: "approve",
+              name: 'approve',
               args: [
                 contractToAuthorize,
                 BigNumber.from(asset.amount).toString(),
@@ -1093,14 +1086,14 @@ export abstract class BaseIdrissCrypto {
           transactionOptions.gas = BigNumber.isBigNumber(transactionOptions.gas)
             ? transactionOptions.gas.toNumber()
             : transactionOptions.gas;
-        } catch (e) {
-          console.log("Could not estimate gas: ", e);
+        } catch (error) {
+          console.log('Could not estimate gas:', error);
         }
       }
       try {
-        let approval = await contract.sendTransaction({
+        const approval = await contract.sendTransaction({
           method: {
-            name: "approve",
+            name: 'approve',
             args: [
               contractToAuthorize,
               BigNumber.from(asset.amount).toString(),
@@ -1113,8 +1106,8 @@ export abstract class BaseIdrissCrypto {
         });
         delete transactionOptions.gas;
         return approval;
-      } catch (e) {
-        console.log(e);
+      } catch (error) {
+        console.log(error);
       }
     }
 
@@ -1134,7 +1127,7 @@ export abstract class BaseIdrissCrypto {
 
     const approvedAccount = await contract.callMethod({
       method: {
-        name: "getApproved",
+        name: 'getApproved',
         args: [asset.assetId],
       },
     });
@@ -1147,20 +1140,20 @@ export abstract class BaseIdrissCrypto {
         try {
           transactionOptions.gas = await contract.estimateGas({
             method: {
-              name: "approve",
+              name: 'approve',
               args: [contractToAuthorize, asset.assetId],
             },
             estimateGasOptions: {
               from: transactionOptions.from ?? signer,
             },
           });
-        } catch (e) {
-          console.log("Could not estimate gas: ", e);
+        } catch (error) {
+          console.log('Could not estimate gas:', error);
         }
       }
 
-      let approval = await contract.sendTransaction({
-        method: { name: "approve", args: [contractToAuthorize, asset.assetId] },
+      const approval = await contract.sendTransaction({
+        method: { name: 'approve', args: [contractToAuthorize, asset.assetId] },
         transactionOptions: {
           ...transactionOptions,
           from: transactionOptions.from ?? signer,
@@ -1186,7 +1179,7 @@ export abstract class BaseIdrissCrypto {
 
     const isApproved = await contract.callMethod({
       method: {
-        name: "isApprovedForAll",
+        name: 'isApprovedForAll',
         args: [signer, contractToAuthorize],
       },
     });
@@ -1196,21 +1189,21 @@ export abstract class BaseIdrissCrypto {
         try {
           transactionOptions.gas = await contract.estimateGas({
             method: {
-              name: "setApprovalForAll",
+              name: 'setApprovalForAll',
               args: [contractToAuthorize, true],
             },
             estimateGasOptions: {
               from: transactionOptions.from ?? signer,
             },
           });
-        } catch (e) {
-          console.log("Could not estimate gas: ", e);
+        } catch (error) {
+          console.log('Could not estimate gas:', error);
         }
       }
       // unfortunately ERC1155 standard does not allow granular permissions, and only option is to approve all user tokens
-      let approval = await contract.sendTransaction({
+      const approval = await contract.sendTransaction({
         method: {
-          name: "setApprovalForAll",
+          name: 'setApprovalForAll',
           args: [contractToAuthorize, true],
         },
         transactionOptions: {
@@ -1226,10 +1219,10 @@ export abstract class BaseIdrissCrypto {
 
   public async getDollarPriceInWei(): Promise<BigNumberish> {
     const currentPriceData = await this.priceOracleContract.callMethod({
-      method: { name: "latestRoundData", args: [] },
+      method: { name: 'latestRoundData', args: [] },
     });
     const priceDecimals = await this.priceOracleContract.callMethod({
-      method: { name: "decimals", args: [] },
+      method: { name: 'decimals', args: [] },
     });
 
     // because the Oracle provides only MATIC price, we calculate the opposite: dollar price in MATIC
@@ -1240,13 +1233,11 @@ export abstract class BaseIdrissCrypto {
 
   public async reverseResolve(address: string) {
     const result = await this.idrissReverseMappingContract.callMethod({
-      method: { name: "reverseIDriss", args: [address] },
+      method: { name: 'reverseIDriss', args: [address] },
     });
 
-    if (+result) {
-      return ("@" + (await reverseTwitterID(result))).toLowerCase();
-    } else {
-      return result;
-    }
+    return +result
+      ? ('@' + (await reverseTwitterID(result))).toLowerCase()
+      : result;
   }
 }

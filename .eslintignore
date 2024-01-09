@@ -2,6 +2,8 @@ node_modules
 dist
 build
 .eslintrc.cjs
+prettier.config.mjs
+hardhat.config.js
 cache
 lib
 tests

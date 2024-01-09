@@ -1,6 +1,7 @@
-import type { ResolveOptions } from "./types";
-import { WALLET_TAGS } from "./constants";
-import type { NonOptional } from "../utils-types";
+import type { NonOptional } from '../utils-types';
+
+import type { ResolveOptions } from './types';
+import { WALLET_TAGS } from './constants';
 
 export const filterWalletTags = ({
   coin,
@@ -27,7 +28,7 @@ export const filterWalletTags = ({
 export const getWalletTagAddress = (options: NonOptional<ResolveOptions>) => {
   const foundWalletTags = filterWalletTags(options);
   if (foundWalletTags.length > 1) {
-    throw new Error("Expected single wallet tag, found more.");
+    throw new Error('Expected single wallet tag, found more.');
   }
 
   return foundWalletTags[0].tagAddress;

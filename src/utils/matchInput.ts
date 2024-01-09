@@ -1,10 +1,10 @@
 export const matchInput = (input: string) => {
   const regPh =
-    /^(\+\(?\d{1,4}\s?)\)?\-?\.?\s?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/;
-  const regM = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
-  const regT = /^@[^\s]+/;
-  if (input.match(regPh)) return "phone";
-  if (input.match(regM)) return "mail";
-  if (input.match(regT)) return "twitter";
+    /^(\+\(?\d{1,4}\s?)\)?-?\.?\s?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/;
+  const regM = /^[\w.-]+@[\d.A-Za-z-]+\.[A-Za-z]{2,}/;
+  const regT = /^@\S+/;
+  if (regPh.test(input)) return 'phone';
+  if (regM.test(input)) return 'mail';
+  if (regT.test(input)) return 'twitter';
   return null;
 };

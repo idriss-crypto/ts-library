@@ -1,4 +1,4 @@
-import type { Web3Provider } from "../web3Provider";
+import type { Web3Provider } from '../web3Provider';
 
 /**
  * Those are optional configuration items that can be passed to IDrissCrypto
