@@ -1,7 +1,8 @@
-import { ethers } from "ethers";
-import Web3 from "web3";
-import type { Abi } from "./abi/types";
-import type { Contract } from "./contract/types";
+import { ethers } from 'ethers';
+import Web3 from 'web3';
+
+import type { Abi } from './abi/types';
+import type { Contract } from './contract/types';
 
 interface IWeb3Provider {
   isAddress: (maybeAddress: string) => boolean;
@@ -136,7 +137,7 @@ export class Web3ProviderAdapter {
                 };
               },
               encodeABI: () => {
-                return populatedTransaction.data ?? "";
+                return populatedTransaction.data ?? '';
               },
               estimateGas: async (options) => {
                 const gasEstimation = await contract.estimateGas[method.name](

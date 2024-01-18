@@ -1,20 +1,11 @@
-import { IdrissCrypto } from "./idrissCrypto";
-import {
-  Authorization,
-  CreateOTPResponse,
-  WrongOTPException,
-} from "./auth/authorization";
-import {
-  AuthorizationTestnet,
-  CreateOTPResponseTestnet,
-  WrongOTPExceptionTestnet,
-} from "./auth/authorizationTestnet";
+export { IdrissCrypto } from './idrissCrypto';
 export {
-  IdrissCrypto,
   Authorization,
   CreateOTPResponse,
   WrongOTPException,
+} from './auth/authorization';
+export {
   AuthorizationTestnet,
   CreateOTPResponseTestnet,
   WrongOTPExceptionTestnet,
-};
+} from './auth/authorizationTestnet';

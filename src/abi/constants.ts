@@ -1,14 +1,14 @@
-import IDrissTippingAbiJson from "./tipping.json";
-import GitcoinVotingAbiJson from "./voting.json";
-import IDrissRegistryAbiJson from "./idrissRegistry.json";
-import IDrissMultipleRegistryAbiJson from "./idrissMultipleRegistry.json";
-import IDrissReverseMappingAbiJson from "./idrissReverseMapping.json";
-import IDrissSendToAnyoneAbiJson from "./idrissSendToAnyone.json";
-import PriceOracleAbiJson from "./priceOracleV3Aggregator.json";
-import IERC20AbiJson from "./ierc20.json";
-import IERC721AbiJson from "./ierc721.json";
-import IERC1155AbiJson from "./ierc1155.json";
-import { Abi } from "./types";
+import IDrissTippingAbiJson from './tipping.json';
+import GitcoinVotingAbiJson from './voting.json';
+import IDrissRegistryAbiJson from './idrissRegistry.json';
+import IDrissMultipleRegistryAbiJson from './idrissMultipleRegistry.json';
+import IDrissReverseMappingAbiJson from './idrissReverseMapping.json';
+import IDrissSendToAnyoneAbiJson from './idrissSendToAnyone.json';
+import PriceOracleAbiJson from './priceOracleV3Aggregator.json';
+import IERC20AbiJson from './ierc20.json';
+import IERC721AbiJson from './ierc721.json';
+import IERC1155AbiJson from './ierc1155.json';
+import { Abi } from './types';
 
 export const ABIS = {
   IDrissTippingAbi: IDrissTippingAbiJson as Abi[],

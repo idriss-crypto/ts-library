@@ -1,5 +1,9 @@
-import { fetchSafe } from "../utils/fetchSafe";
-import { IDRISS_GET_TWITTER_ID_URL, IDRISS_GET_TWITTER_NAME_URL } from "./constants";
+import { fetchSafe } from '../utils/fetchSafe';
+
+import {
+  IDRISS_GET_TWITTER_ID_URL,
+  IDRISS_GET_TWITTER_NAME_URL,
+} from './constants';
 
 export const reverseTwitterID = async (id: string): Promise<string> => {
   const response = await fetchSafe(
@@ -7,12 +11,12 @@ export const reverseTwitterID = async (id: string): Promise<string> => {
   );
   if (response.status != 200)
     throw new Error(
-      "IDriss api responded with code " +
-      response.status +
-      " " +
-      response.statusText +
-      "\r\n" +
-      (await response.text()),
+      'IDriss api responded with code ' +
+        response.status +
+        ' ' +
+        response.statusText +
+        '\r\n' +
+        (await response.text()),
     );
   const json = await response.json();
   return json.twitterNames[id];
@@ -26,12 +30,12 @@ export const getTwitterID = async (
   );
   if (response.status != 200)
     throw new Error(
-      "IDriss api responded with code " +
-      response.status +
-      " " +
-      response.statusText +
-      "\r\n" +
-      (await response.text()),
+      'IDriss api responded with code ' +
+        response.status +
+        ' ' +
+        response.statusText +
+        '\r\n' +
+        (await response.text()),
     );
   const json = await response.json();
   return json.twitterID;
