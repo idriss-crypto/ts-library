@@ -2,7 +2,7 @@ name: Cicd
 
 on:
   push:
-    branches: [ 'master' ]
+    branches: ['master']
   workflow_dispatch:
 
 jobs:
@@ -22,7 +22,7 @@ jobs:
         run: |
           yarn
           yarn build
-          
+
       - name: E2E tests
         run: |
           yarn hardhat node > /dev/null &

@@ -1,24 +1,60 @@
-import {BaseIdrissCrypto} from "./baseIdrissCrypto";
-import { ConnectionOptions } from "./types/connectionOptions";
-let crypto = require('crypto');
+import { createHash } from 'node:crypto';
+
+import { provider } from 'web3-core';
+import Web3 from 'web3';
+import { ethers } from 'ethers';
+
+import { BaseIdrissCrypto } from './baseIdrissCrypto';
+import type { ConnectionOptions } from './types/connectionOptions';
+import type { Web3Provider } from './web3Provider';
+import { Web3ProviderAdapter } from './web3Provider';
+
+type IdrissCryptoConnectionOptions = Omit<ConnectionOptions, 'web3Provider'> &
+  (
+    | {
+        providerType?: 'web3';
+        web3Provider?: provider;
+      }
+    | {
+        providerType: 'ethersv5';
+        web3Provider?: ConstructorParameters<
+          typeof ethers.providers.Web3Provider
+        >[0];
+      }
+  );
 
 /**
  * This class is used for NodeJS
  */
 export class IdrissCrypto extends BaseIdrissCrypto {
-    constructor(polygonEndpoint: string = "https://polygon-rpc.com/", connectionOptions: ConnectionOptions = {}) {
-        const Web3Promise = import("web3");
-        super(BaseIdrissCrypto.generateWeb3(Web3Promise, polygonEndpoint, connectionOptions.web3Provider),
-            BaseIdrissCrypto.generateWeb3(Web3Promise, polygonEndpoint), connectionOptions);
-        }
+  constructor(
+    url: string = 'https://polygon-rpc.com/',
+    connectionOptions: IdrissCryptoConnectionOptions = {},
+  ) {
+    let web3Provider: Web3Provider;
 
-    protected async digestMessage(message: string):Promise<string> {
-        return crypto.createHash('sha256').update(message).digest('hex');
+    if (connectionOptions.providerType === 'ethersv5') {
+      const ethersProvider = connectionOptions.web3Provider
+        ? new ethers.providers.Web3Provider(connectionOptions.web3Provider)
+        : new ethers.providers.JsonRpcProvider(url);
+      web3Provider = Web3ProviderAdapter.fromEthersV5(ethersProvider);
+    } else {
+      web3Provider = Web3ProviderAdapter.fromWeb3(
+        new Web3(
+          connectionOptions.web3Provider ??
+            new Web3.providers.HttpProvider(url),
+        ),
+      );
     }
 
-    protected async getConnectedAccount(): Promise<string> {
-        return this.web3Promise
-            .then(web3 => {return web3.eth.getAccounts()})
-            .then(acc => {return acc[0]})
-    }
+    super(url, { ...connectionOptions, web3Provider });
+  }
+
+  protected async digestMessage(message: string): Promise<string> {
+    return createHash('sha256').update(message).digest('hex');
+  }
+
+  protected async getConnectedAccount(): Promise<string> {
+    return this.web3Provider.getConnectedAccount();
+  }
 }
