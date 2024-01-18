@@ -36,6 +36,7 @@ export abstract class BaseIdrissCrypto {
   protected registryWeb3Provider: Web3Provider;
   protected contractsAddressess: ContractsAddresses;
 
+  private idrissRegistryContract: Contract;
   private idrissMultipleRegistryContract: Contract;
   private idrissReverseMappingContract: Contract;
   private idrissSendToAnyoneContract: Contract;
@@ -76,6 +77,11 @@ export abstract class BaseIdrissCrypto {
       new Web3(new Web3.providers.HttpProvider(url)),
     );
 
+    this.idrissRegistryContract = this.registryWeb3Provider.createContract(
+      ABIS.IDrissRegistryAbi,
+      this.contractsAddressess.idrissRegistry,
+    );
+
     this.idrissMultipleRegistryContract =
       this.registryWeb3Provider.createContract(
         ABIS.IDrissMultipleRegistryAbiJson,
@@ -103,6 +109,12 @@ export abstract class BaseIdrissCrypto {
 
   public static matchInput(input: string) {
     return matchInput(input);
+  }
+
+  public getIDriss(hash: string) {
+    return this.idrissRegistryContract.callMethod({
+      method: { name: 'getIDriss', args: [hash] },
+    });
   }
 
   public async resolve(input: string, resolveOptions: ResolveOptions = {}) {
