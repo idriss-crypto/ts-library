@@ -1102,25 +1102,19 @@ export abstract class BaseIdrissCrypto {
           console.log('Could not estimate gas:', error);
         }
       }
-      try {
-        const approval = await contract.sendTransaction({
-          method: {
-            name: 'approve',
-            args: [
-              contractToAuthorize,
-              BigNumber.from(asset.amount).toString(),
-            ],
-          },
-          transactionOptions: {
-            ...transactionOptions,
-            from: transactionOptions.from ?? signer,
-          },
-        });
-        delete transactionOptions.gas;
-        return approval;
-      } catch (error) {
-        console.log(error);
-      }
+
+      const approval = await contract.sendTransaction({
+        method: {
+          name: 'approve',
+          args: [contractToAuthorize, BigNumber.from(asset.amount).toString()],
+        },
+        transactionOptions: {
+          ...transactionOptions,
+          from: transactionOptions.from ?? signer,
+        },
+      });
+      delete transactionOptions.gas;
+      return approval;
     }
 
     return true;
