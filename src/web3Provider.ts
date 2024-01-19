@@ -88,6 +88,8 @@ export class Web3ProviderAdapter {
 
         return {
           callMethod: async ({ method }) => {
+            const network = await ethersWeb3Provider.getNetwork();
+            console.log({ method, network });
             const result = await contract.functions[method.name](
               ...method.args,
             );

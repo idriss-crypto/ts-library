@@ -54,23 +54,19 @@ export class IdrissCrypto extends BaseIdrissCrypto {
     return hashHex;
   }
 
-  protected async getConnectedAccount(): Promise<string> {
-    const ethereum = this.getInjectedEthereum();
-
-    if (ethereum === undefined) {
-      throw new TypeError('No wallet detected.');
-    }
-
-    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-    return accounts[0];
+  public async getConnectedAccount(): Promise<string> {
+    return this.web3Provider.getConnectedAccount();
+    //
+    // const ethereum = this.getInjectedEthereum();
+    //
+    // if (ethereum === undefined) {
+    //   throw new TypeError('No wallet detected.');
+    // }
+    //
+    // const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+    // return accounts[0];
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private getInjectedEthereum(): any {
-    // casting to any to skip error saying that ethereum does not exist in type window
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return window && (window as any).ethereum;
-  }
 }
 
 export {

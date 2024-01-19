@@ -55,7 +55,7 @@
     "@openzeppelin/contracts": "^4.7.3",
     "@total-typescript/ts-reset": "^0.5.1",
     "@truffle/hdwallet-provider": "^2.0.11",
-    "@types/node": "^20.10.8",
+    "@types/node": "^20.11.5",
     "@typescript-eslint/eslint-plugin": "^6.4.0",
     "@typescript-eslint/parser": "^6.18.1",
     "hardhat": "^2.10.1",
