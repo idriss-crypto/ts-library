@@ -4,6 +4,7 @@ import {provider, TransactionReceipt} from "web3-core";
 import {BigNumber, BigNumberish} from "ethers";
 
 import {TwitterNameResolver} from "./twitterNameResolver";
+import {TwitterNameResolverArbitrary} from "./twitterNameResolverArbitrary";
 import {ResolveOptions} from "./types/resolveOptions";
 import {AssetLiability} from "./types/assetLiability";
 import IDrissTippingAbi from "./abi/tipping.json";
@@ -31,7 +32,8 @@ export abstract class BaseIdrissCrypto {
     private priceOracleContractPromise;
     private tippingContractPromise;
     private twitterNameResolver: TwitterNameResolver;
-    private TWITTER_BEARER_TOKEN = "";
+    private twitterNameResolverArbitrary: TwitterNameResolverArbitrary;
+    private TWITTER_BEARER_TOKEN: null | string = null;
     protected ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
     protected IDRISS_REGISTRY_CONTRACT_ADDRESS = '0x2EcCb53ca2d4ef91A79213FDDF3f8c2332c2a814';
     protected IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS = '0x561f1b5145897A52A6E94E4dDD4a29Ea5dFF6f64';
@@ -42,7 +44,7 @@ export abstract class BaseIdrissCrypto {
 
     // we split web3 from web3 for registry, as registry is only accessible on Polygon,
     // and library is about to support multiple chains
-    constructor(web3: Web3|Promise<Web3>, registryWeb3: Web3|Promise<Web3>, connectionOptions: ConnectionOptions, twitterApiKey: string) {
+    constructor(web3: Web3|Promise<Web3>, registryWeb3: Web3|Promise<Web3>, connectionOptions: ConnectionOptions) {
         this.IDRISS_REGISTRY_CONTRACT_ADDRESS = (typeof connectionOptions.idrissRegistryContractAddress !== 'undefined') ?
             connectionOptions.idrissRegistryContractAddress : this.IDRISS_REGISTRY_CONTRACT_ADDRESS
         this.IDRISS_REVERSE_MAPPING_CONTRACT_ADDRESS = (typeof connectionOptions.reverseIDrissMappingContractAddress !== 'undefined') ?
@@ -53,12 +55,12 @@ export abstract class BaseIdrissCrypto {
             connectionOptions.sendToAnyoneContractAddress : this.IDRISS_SEND_TO_ANYONE_CONTRACT_ADDRESS
         this.IDRISS_TIPPING_CONTRACT_ADDRESS = (typeof connectionOptions.tippingContractAddress !== 'undefined') ?
             connectionOptions.tippingContractAddress : this.IDRISS_TIPPING_CONTRACT_ADDRESS
-        this.TWITTER_BEARER_TOKEN = (typeof twitterApiKey !== 'undefined') ?
-            twitterApiKey : this.TWITTER_BEARER_TOKEN
+        this.TWITTER_BEARER_TOKEN = connectionOptions.twitterApiKey ?? null;
 
         this.web3Promise = Promise.resolve(web3)
         this.registryWeb3Promise = Promise.resolve(registryWeb3)
-        this.twitterNameResolver = new TwitterNameResolver(this.TWITTER_BEARER_TOKEN);
+        this.twitterNameResolver = new TwitterNameResolver();
+        this.twitterNameResolverArbitrary = new TwitterNameResolverArbitrary(this.TWITTER_BEARER_TOKEN);
         this.idrissRegistryContractPromise = this.generateIDrissRegistryContract();
         this.idrissReverseMappingContractPromise = this.generateIDrissReverseMappingContract();
         this.idrissSendToAnyoneContractPromise = this.generateIDrissSendToAnyoneContract();
@@ -976,7 +978,11 @@ export abstract class BaseIdrissCrypto {
         }
     }
 
-    public async reverseResolveNew(address: string) {
-        return await this.callWeb3ReverseIDriss(address)
+    public async reverseResolveArbitrary(username: string) {
+        return this.twitterNameResolverArbitrary.reverseTwitterID(username);
+    }
+
+    public async transformIdentifierArbitrary (id: string) {
+        return this.twitterNameResolverArbitrary.getTwitterID(id);
     }
 }

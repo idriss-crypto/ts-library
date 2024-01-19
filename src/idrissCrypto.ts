@@ -7,13 +7,12 @@ let crypto = require('crypto');
  * This class is used for NodeJS
  */
 export class IdrissCrypto extends BaseIdrissCrypto {
-    constructor(twitterApiKey: string, polygonEndpoint: string = "https://polygon-rpc.com/", connectionOptions: ConnectionOptions = {}) {
+    constructor(polygonEndpoint: string = "https://polygon-rpc.com/", connectionOptions: ConnectionOptions = {}) {
         const Web3Promise = import("web3");
         super(
             BaseIdrissCrypto.generateWeb3(Web3Promise, polygonEndpoint, connectionOptions.web3Provider),
             BaseIdrissCrypto.generateWeb3(Web3Promise, polygonEndpoint),
-            connectionOptions,
-            twitterApiKey
+            connectionOptions
         );
     }
 

@@ -13,4 +13,5 @@ export type ConnectionOptions = {
    idrissRegistryContractAddress?: string,
    reverseIDrissMappingContractAddress?: string,
    priceOracleContractAddress?: string,
+   twitterApiKey?: string;
 }

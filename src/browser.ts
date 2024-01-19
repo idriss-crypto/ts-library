@@ -1,14 +1,13 @@
 import {BaseIdrissCrypto} from "./baseIdrissCrypto";
 
 export class IdrissCrypto extends BaseIdrissCrypto {
-    constructor(twitterApiKey: string, polygonEndpoint: string = "https://polygon-rpc.com/", connectionOptions: ConnectionOptions = {}) {
+    constructor(polygonEndpoint: string = "https://polygon-rpc.com/", connectionOptions: ConnectionOptions = {}) {
         // @ts-ignore
         const Web3Promise = import("web3/dist/web3.min.js")
         super(
             BaseIdrissCrypto.generateWeb3(Web3Promise, polygonEndpoint, connectionOptions.web3Provider),
             BaseIdrissCrypto.generateWeb3(Web3Promise, polygonEndpoint),
             connectionOptions,
-            twitterApiKey
         );
     }
 
@@ -36,7 +35,6 @@ export class IdrissCrypto extends BaseIdrissCrypto {
         return window && (window as any).ethereum
     }
 }
-
 
 import {Authorization, CreateOTPResponse, WrongOTPException} from "./authorization"
 import {AuthorizationTestnet, CreateOTPResponseTestnet, WrongOTPExceptionTestnet} from "./authorizationTestnet"
