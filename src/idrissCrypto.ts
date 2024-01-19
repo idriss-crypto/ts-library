@@ -54,7 +54,7 @@ export class IdrissCrypto extends BaseIdrissCrypto {
     return createHash('sha256').update(message).digest('hex');
   }
 
-  protected async getConnectedAccount(): Promise<string> {
+  public async getConnectedAccount(): Promise<string> {
     return this.web3Provider.getConnectedAccount();
   }
 }
