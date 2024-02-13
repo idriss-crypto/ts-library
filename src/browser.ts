@@ -66,7 +66,6 @@ export class IdrissCrypto extends BaseIdrissCrypto {
     // const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
     // return accounts[0];
   }
-
 }
 
 export {

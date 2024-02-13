@@ -303,7 +303,6 @@ export abstract class BaseIdrissCrypto {
 
     let result: SendToHashTransactionReceipt | TransactionReceipt;
 
-    console.log('line 306');
     if (this.web3Provider.isAddress(beneficiary)) {
       result = await this.callWeb3Tipping(
         beneficiary,
@@ -313,12 +312,10 @@ export abstract class BaseIdrissCrypto {
       );
       return result;
     }
-    console.log('line 315');
 
     const hash = await this.getUserHash(resolveOptions, beneficiary);
     const resolvedIDriss = await this.resolve(beneficiary);
 
-    console.log('line 321');
     result = await (resolvedIDriss &&
     resolvedIDriss[resolveOptions.walletTag!] &&
     resolvedIDriss[resolveOptions.walletTag!].length > 0
@@ -335,7 +332,6 @@ export abstract class BaseIdrissCrypto {
           message,
           transactionOptions,
         ));
-    console.log('line 338');
     return result;
   }
 
@@ -473,12 +469,10 @@ export abstract class BaseIdrissCrypto {
     message: string,
     transactionOptions: TransactionOptions,
   ): Promise<TransactionReceipt> {
-    console.log('line 476');
     const paymentFee = await this.calculateTippingPaymentFee(
       asset.amount,
       asset.type,
     );
-    console.log('line 481');
 
     const maticToSend =
       asset.type === AssetType.Native
@@ -980,7 +974,6 @@ export abstract class BaseIdrissCrypto {
     assetType: AssetType,
   ) {
     if (assetType === AssetType.ERC20) return '0';
-    console.log({ paymentAmount, assetType });
     return this.tippingContract.callMethod({
       method: {
         name: 'getPaymentFee',
@@ -1074,10 +1067,6 @@ export abstract class BaseIdrissCrypto {
       ABIS.IERC20Abi,
       asset.assetContractAddress!,
     );
-
-    console.log({ connectedAccount: this.web3Provider.getConnectedAccount() });
-    console.log({ arguments: [signer, contractToAuthorize] });
-    console.log(this.web3Provider);
 
     const allowance = await contract.callMethod({
       method: {
