@@ -1,4 +1,4 @@
-import { fetchSafe } from "./utils";
+import {fetchSafe} from "../lib/utils";
 import { object, string } from "zod";
 
 const TwitterResponseSchema = object({

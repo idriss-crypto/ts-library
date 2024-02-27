@@ -2,7 +2,7 @@ name: Cicd
 
 on:
   push:
-    branches: [ 'master' ]
+    branches: ['master']
   workflow_dispatch:
 
 jobs:
@@ -15,14 +15,14 @@ jobs:
           git submodule update --init --recursive
           git submodule update --remote --merge
       - name: Use Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
-          node-version: 14.x
+          node-version: 18.x
       - name: Build
         run: |
           yarn
           yarn build
-          
+
       - name: E2E tests
         run: |
           yarn hardhat node > /dev/null &

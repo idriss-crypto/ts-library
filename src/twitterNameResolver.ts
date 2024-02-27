@@ -1,4 +1,4 @@
-import {fetchSafe} from "./utils";
+import {fetchSafe} from "../lib/utils";
 
 export class TwitterNameResolver {
     async getTwitterID(inputCombination: string): Promise<string> {
