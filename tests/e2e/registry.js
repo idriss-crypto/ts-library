@@ -78,7 +78,6 @@ describe('translating address', () => {
   it('Multi Resolve', async () => {
     const obj = await createProvider();
     const resultAddress = await obj.multiResolve(['hello@idriss.xyz', '@IDriss_xyz']);
-    console.log(resultAddress)
     assert.equal(
       resultAddress['hello@idriss.xyz']['Metamask ETH'],
       '0x11E9F9344A9720d2B2B5F0753225bb805161139B',
@@ -262,7 +261,6 @@ describe('Authorization', () => {
     } catch (e) {
       error = e;
     }
-    console.log(error)
     assert(error instanceof WrongOTPException);
   }).timeout(10000);
   it('Payment error', async () => {
