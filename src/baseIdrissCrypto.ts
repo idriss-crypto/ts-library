@@ -157,6 +157,56 @@ export abstract class BaseIdrissCrypto {
     );
   }
 
+  public async multiResolve(
+    inputs: string[],
+    resolveOptions: ResolveOptions = {},
+  ): Promise<{ [input: string]: { [tagName: string]: string } }> {
+    const allDigestionPromises = inputs.map(async (input) => {
+      try {
+        const identifier = await transformIdentifier(input);
+        const filteredWalletTags = filterWalletTags(resolveOptions);
+
+        return Promise.all(
+          filteredWalletTags.map(async ({ tagAddress, tagName }) => {
+            const digested = await this.digestMessage(identifier + tagAddress);
+            return { digested, tagName, input };
+          }),
+        );
+      } catch (error) {
+        console.error(`Error processing ${input}`);
+        return [];
+      }
+    });
+
+    const allDigestions = (await Promise.all(allDigestionPromises))
+      .flat()
+      .filter((v) => v);
+    const digestedMessages = allDigestions.map((v) => v.digested);
+
+    const getMultipleIDrissResponse: Array<[string, string]> =
+      await this.idrissMultipleRegistryContract.callMethod({
+        method: { name: 'getMultipleIDriss', args: [digestedMessages] },
+      });
+
+    const results: { [input: string]: { [tagName: string]: string } } = {};
+
+    getMultipleIDrissResponse.forEach(([digested, resolvedAddress]) => {
+      if (!resolvedAddress) return;
+
+      const foundResult = allDigestions.find((v) => v.digested === digested);
+      if (!foundResult)
+        throw new Error(`Expected digested message: ${digested}`);
+
+      if (!results[foundResult.input]) {
+        results[foundResult.input] = {};
+      }
+
+      results[foundResult.input][foundResult.tagName] = resolvedAddress;
+    });
+
+    return results;
+  }
+
   public async multitransferToIDriss(
     sendParams: SendToAnyoneParams[],
     transactionOptions: TransactionOptions = {},

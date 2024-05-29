@@ -75,6 +75,45 @@ describe('translating address', () => {
     );
   }).timeout(10000);
 
+  it('Multi Resolve', async () => {
+    const obj = await createProvider();
+    const resultAddress = await obj.multiResolve(['hello@idriss.xyz', '@IDriss_xyz']);
+    console.log(resultAddress)
+    assert.equal(
+      resultAddress['hello@idriss.xyz']['Metamask ETH'],
+      '0x11E9F9344A9720d2B2B5F0753225bb805161139B',
+    );
+    assert.equal(
+      resultAddress['hello@idriss.xyz']['Coinbase BTC'],
+      'bc1qsvz5jumwew8haj4czxpzxujqz8z6xq4nxxh7vh',
+    );
+    assert.equal(
+      resultAddress['@IDriss_xyz']['Metamask ETH'],
+      '0x5ABca791C22E7f99237fCC04639E094Ffa0cCce9',
+    );
+    assert.equal(
+      resultAddress['@IDriss_xyz']['Coinbase ETH'],
+      '0x995945Fb74e0f8e345b3f35472c3e07202Eb38Ac',
+    );
+    assert.equal(
+      resultAddress['@IDriss_xyz']['Argent ETH'],
+      '0x4B994A4b85378906B3FE9C5292C749f79c9aD661',
+    );
+    assert.equal(
+      resultAddress['@IDriss_xyz']['Tally ETH'],
+      '0xa1ce10d433bb841cefd82a43f10b6b597538fa1d',
+    );
+    assert.equal(
+      resultAddress['@IDriss_xyz']['Trust ETH'],
+      '0xE297b1E893e7F8849413D8ee7407DB343979A449',
+    );
+    assert.equal(
+      resultAddress['@IDriss_xyz']['Rainbow ETH'],
+      '0xe10A2331Ac5498e7544579167755d6a756786a9F',
+    );
+  }).timeout(10000);
+
+
   it('Basic request 2', async () => {
     const obj = await createProvider();
     const resultTwitter = await obj.resolve('@idriss_xyz');
@@ -223,6 +262,7 @@ describe('Authorization', () => {
     } catch (e) {
       error = e;
     }
+    console.log(error)
     assert(error instanceof WrongOTPException);
   }).timeout(10000);
   it('Payment error', async () => {
