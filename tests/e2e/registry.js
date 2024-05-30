@@ -197,6 +197,15 @@ describe('Reversed translation', () => {
     );
     assert.equal(result1, '@idriss_xyz');
   }).timeout(10000);
+  it('Can reverse resolve batch addresses', async () => {
+    const obj = await createProvider();
+
+    const resultReverseBatch = await obj.reverseResolve(['0x5ABca791C22E7f99237fCC04639E094Ffa0cCce9','0x4a3755eB99ae8b22AaFB8f16F0C51CF68Eb60b85', 'bc1qsvz5jumwew8haj4czxpzxujqz8z6xq4nxxh7vh']
+    );
+    assert.equal(resultReverseBatch['0x5ABca791C22E7f99237fCC04639E094Ffa0cCce9'], '@idriss_xyz');
+    assert.equal(resultReverseBatch['0x4a3755eB99ae8b22AaFB8f16F0C51CF68Eb60b85'], '@levertz_');
+    assert.equal(resultReverseBatch['bc1qsvz5jumwew8haj4czxpzxujqz8z6xq4nxxh7vh'], '');
+  }).timeout(10000);
 });
 
 describe('getIDriss', () => {

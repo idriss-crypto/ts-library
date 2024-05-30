@@ -38,7 +38,6 @@ export abstract class BaseIdrissCrypto {
 
   private idrissRegistryContract: Contract;
   private idrissMultipleRegistryContract: Contract;
-  private idrissReverseMappingContract: Contract;
   private idrissSendToAnyoneContract: Contract;
   private priceOracleContract: Contract;
   private tippingContract: Contract;
@@ -88,11 +87,6 @@ export abstract class BaseIdrissCrypto {
         this.contractsAddressess.idrissMultipleRegistry,
       );
 
-    this.idrissReverseMappingContract =
-      this.registryWeb3Provider.createContract(
-        ABIS.IDrissReverseMappingAbi,
-        this.contractsAddressess.idrissReverseMapping,
-      );
     this.idrissSendToAnyoneContract = this.web3Provider.createContract(
       ABIS.IDrissSendToAnyoneAbi,
       this.contractsAddressess.idrissSendToAnyone,
@@ -1286,13 +1280,36 @@ export abstract class BaseIdrissCrypto {
     return etherInWei.mul(priceDecimalsMul).div(currentPriceData.answer);
   }
 
-  public async reverseResolve(address: string) {
-    const result = await this.idrissReverseMappingContract.callMethod({
-      method: { name: 'reverseIDriss', args: [address] },
-    });
+  public async reverseResolve(input: string | string[]) {
+    const addresses = Array.isArray(input) ? input : [input];
+    const resultObject: { [key: string]: string } = Object.fromEntries(
+      addresses.map((address) => [address, '']),
+    );
+    const evmCompatibleAddresses = addresses.filter((address) =>
+      this.web3Provider.isAddress(address),
+    );
 
-    return +result
-      ? ('@' + (await reverseTwitterID(result))).toLowerCase()
-      : result;
+    const results: Array<[string, string]> =
+      await this.idrissMultipleRegistryContract.callMethod({
+        method: { name: 'getMultipleReverse', args: [evmCompatibleAddresses] },
+      });
+
+    if (!Array.isArray(input)) {
+      return +results[0][1]
+        ? ('@' + (await reverseTwitterID(results[0][1]))).toLowerCase()
+        : results[0][1];
+    }
+
+    for (const [address, result] of results) {
+      if (result) {
+        resultObject[address] = (
+          '@' + (await reverseTwitterID(result))
+        ).toLowerCase();
+      } else {
+        resultObject[address] = '';
+      }
+    }
+
+    return resultObject;
   }
 }
