@@ -103,7 +103,7 @@ export const Authorization = {
     return new ValidateOTPResponse(
       decodedResponse.message,
       decodedResponse.session_key,
-      decodedResponse.priceMATIC,
+      decodedResponse.pricePOL,
       decodedResponse.priceETH,
       decodedResponse.priceBNB,
       decodedResponse.receiptID,
@@ -190,7 +190,7 @@ export class CreateOTPResponse {
 export class ValidateOTPResponse {
   public message: string;
   public session_key: string;
-  public priceMATIC: number;
+  public pricePOL: number;
   public priceETH: number;
   public priceBNB: number;
   public receiptID: string;
@@ -199,7 +199,7 @@ export class ValidateOTPResponse {
   constructor(
     message: string,
     session_key: string,
-    priceMATIC: number,
+    pricePOL: number,
     priceETH: number,
     priceBNB: number,
     receiptID: string,
@@ -207,7 +207,7 @@ export class ValidateOTPResponse {
   ) {
     this.message = message;
     this.session_key = session_key;
-    this.priceMATIC = priceMATIC;
+    this.pricePOL = pricePOL;
     this.priceETH = priceETH;
     this.priceBNB = priceBNB;
     this.receiptID = receiptID;

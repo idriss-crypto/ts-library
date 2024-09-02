@@ -283,7 +283,7 @@ describe('Authorization', () => {
     assert(result instanceof CreateOTPResponse);
     let error = null;
     try {
-      await Authorization.CheckPayment('MATIC', result.sessionKey);
+      await Authorization.CheckPayment('POL', result.sessionKey);
     } catch (e) {
       error = e;
     }
@@ -346,7 +346,7 @@ describe('AuthorizationTestnet', () => {
     assert(result instanceof CreateOTPResponseTestnet);
     let error = null;
     try {
-      await AuthorizationTestnet.CheckPayment('MATIC', result.sessionKey);
+      await AuthorizationTestnet.CheckPayment('POL', result.sessionKey);
     } catch (e) {
       error = e;
     }
