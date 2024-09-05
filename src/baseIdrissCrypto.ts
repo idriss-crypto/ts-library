@@ -518,7 +518,7 @@ export abstract class BaseIdrissCrypto {
       asset.type,
     );
 
-    const maticToSend =
+    const polToSend =
       asset.type === AssetType.Native
         ? BigNumber.from(asset.amount)
         : paymentFee;
@@ -543,7 +543,7 @@ export abstract class BaseIdrissCrypto {
         });
         transactionOptions.gas = await tippingMethod.estimateGas({
           from: transactionOptions.from ?? signer,
-          value: maticToSend.toString(),
+          value: polToSend.toString(),
         });
       } catch (error) {
         console.log('Could not estimate gas:', error);
@@ -553,7 +553,7 @@ export abstract class BaseIdrissCrypto {
     const sendOptions = {
       ...transactionOptions,
       from: transactionOptions.from ?? signer,
-      value: maticToSend.toString(),
+      value: polToSend.toString(),
     };
 
     const tippingMethod = await this.getTippingMethod({
@@ -699,7 +699,7 @@ export abstract class BaseIdrissCrypto {
     params: SendToAnyoneParams[],
     transactionOptions: TransactionOptions,
   ): Promise<TransactionReceipt> {
-    let maticToSend: BigNumberish = BigNumber.from(0);
+    let polToSend: BigNumberish = BigNumber.from(0);
 
     const signer = await this.getConnectedAccount();
     const encodedCalldata = [];
@@ -712,7 +712,7 @@ export abstract class BaseIdrissCrypto {
       const properParamAmountToSend =
         param.asset.type === AssetType.Native ? param.asset.amount : paymentFee;
 
-      maticToSend = maticToSend.add(properParamAmountToSend);
+      polToSend = polToSend.add(properParamAmountToSend);
 
       encodedCalldata.push(await this.encodeTippingToHex(param));
     }
@@ -723,7 +723,7 @@ export abstract class BaseIdrissCrypto {
           method: { name: 'batch', args: [encodedCalldata] },
           estimateGasOptions: {
             from: transactionOptions.from ?? signer,
-            value: maticToSend.toString(),
+            value: polToSend.toString(),
           },
         });
       } catch (error) {
@@ -739,7 +739,7 @@ export abstract class BaseIdrissCrypto {
       transactionOptions: {
         ...transactionOptions,
         from: transactionOptions.from ?? signer,
-        value: maticToSend.toString(),
+        value: polToSend.toString(),
       },
     });
 
@@ -752,7 +752,7 @@ export abstract class BaseIdrissCrypto {
     params: SendToAnyoneParams[],
     transactionOptions: TransactionOptions,
   ): Promise<MultiSendToHashTransactionReceipt> {
-    let maticToSend: BigNumberish = BigNumber.from(0);
+    let polToSend: BigNumberish = BigNumber.from(0);
     const signer = await this.getConnectedAccount();
     const encodedCalldata = [];
     const beneficiaryClaims = [];
@@ -775,7 +775,7 @@ export abstract class BaseIdrissCrypto {
         properParamAmountToSend = paymentFee;
       }
 
-      maticToSend = maticToSend.add(properParamAmountToSend);
+      polToSend = polToSend.add(properParamAmountToSend);
 
       const claimPassword = await this.generateClaimPassword();
       const hashWithPassword = await this.generateHashWithPassword(
@@ -808,7 +808,7 @@ export abstract class BaseIdrissCrypto {
             method: { name: 'batch', args: [encodedCalldata] },
             estimateGasOptions: {
               from: transactionOptions.from ?? signer,
-              value: maticToSend.toString(),
+              value: polToSend.toString(),
             },
           });
       } catch (error) {
@@ -825,7 +825,7 @@ export abstract class BaseIdrissCrypto {
         transactionOptions: {
           ...transactionOptions,
           from: transactionOptions.from ?? signer,
-          value: maticToSend.toString(),
+          value: polToSend.toString(),
         },
       });
 
@@ -879,7 +879,7 @@ export abstract class BaseIdrissCrypto {
       asset.amount,
       asset.type,
     );
-    const maticToSend =
+    const polToSend =
       asset.type === AssetType.Native
         ? BigNumber.from(asset.amount).add(paymentFee)
         : paymentFee;
@@ -914,7 +914,7 @@ export abstract class BaseIdrissCrypto {
             },
             estimateGasOptions: {
               from: transactionOptions.from ?? signer,
-              value: maticToSend.toString(),
+              value: polToSend.toString(),
             },
           });
       } catch (error) {
@@ -938,7 +938,7 @@ export abstract class BaseIdrissCrypto {
         transactionOptions: {
           ...transactionOptions,
           from: transactionOptions.from ?? signer,
-          value: maticToSend.toString(),
+          value: polToSend.toString(),
         },
       });
 
@@ -1274,7 +1274,7 @@ export abstract class BaseIdrissCrypto {
       method: { name: 'decimals', args: [] },
     });
 
-    // because the Oracle provides only MATIC price, we calculate the opposite: dollar price in MATIC
+    // because the Oracle provides only POL price, we calculate the opposite: dollar price in POL
     const etherInWei = BigNumber.from(10).pow(18);
     const priceDecimalsMul = BigNumber.from(10).pow(priceDecimals);
     return etherInWei.mul(priceDecimalsMul).div(currentPriceData.answer);

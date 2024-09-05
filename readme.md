@@ -350,7 +350,7 @@ Returns:
 export class ValidateOTPResponse {
     public message: string;
     public session_key: string;
-    public priceMATIC: number;
+    public pricePOL: number;
     public priceETH: number;
     public priceBNB: number;
     public receiptID: string
@@ -378,7 +378,7 @@ try {
 Error is thrown if session is not valid anymore (more than 3 wrong OTPs), wrong OTP is provided, the transaction failed or the session key is unknown.
 
 
-If correct, 0 value payment ```priceMatic = 0``` must be performed using ```receiptID```:
+If correct, 0 value payment ```pricePOL = 0``` must be performed using ```receiptID```:
 
 ```typescript
 paymentContract = await loadPaymentContract(web3);
@@ -437,12 +437,12 @@ try {
 
 #### Important Consideration
 * The address paying for the free sign up (``` selectedAccount ```) will be defined as the owner address of a given IDriss. We strongly advise that the payment transaction is confirmed by a wallet owned and operated by the user in pocession of the respective email/phone/Twitter account only. Only the owner address will be able to make any changes (including deletions) to an IDriss.
-* If ``` selectedAccount ``` has no funds, a faucet will deposit some funds (MATIC on Polygon) to pay for the gas fee of this 0 value transaction. This is part of the ``` validateOTP ``` call and funds will be deposited to the address provided in ``` createOTP ``` (the resolving address).
+* If ``` selectedAccount ``` has no funds, a faucet will deposit some funds (POL on Polygon) to pay for the gas fee of this 0 value transaction. This is part of the ``` validateOTP ``` call and funds will be deposited to the address provided in ``` createOTP ``` (the resolving address).
 
 ## 4. Sending crypto & NFTs to emails, phone numbers, and Twitter usernames
 
 ### Send to anyone, no wallet required for the recipient.
-* Supported assets: MATIC/ERC20/ERC721/ERC1155 on Polygon network.
+* Supported assets: POL/ERC20/ERC721/ERC1155 on Polygon network.
 * Assets can be sent to individuals or distributed to groups of users. 
 * Assets are sent to a proxy smart contract. The approve function is invoked so the contract can hold the assets in escrow. A wallet is generated for the recipient during the claiming process. 
 * In case the recipient is already registered in the address book, assets are directly transferred to the user.
