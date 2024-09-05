@@ -8,7 +8,7 @@ const { IdrissCrypto } = require("../../lib");
 const { AssetType } = require("../../lib/types/assetType");
 
 const IDrissArtifact = require('../artifacts/tests/contracts/src/contracts/mocks/IDrissRegistryMock.sol/IDriss.json')
-const IDrissWrapperArtifact = require('../artifacts/tests/contracts/src/contracts/mocks/IDrissWrapperMock.sol/IDrissWrapperContract.json')
+const IDrissWrapperArtifact = require('../artifacts/tests/contracts/src/contracts/mocks/IDrissWrapperMock.sol/IDrissWrapperContractMock.json')
 const MaticPriceAggregatorV3MockArtifact = require('../artifacts/tests/contracts/src/contracts/mocks/MaticPriceAggregatorV3Mock.sol/MaticPriceAggregatorV3Mock.json')
 const MockERC1155Artifact = require('../artifacts/tests/contracts/src/contracts/mocks/IDrissRegistryMock.sol/MockERC1155.json')
 const MockNFTArtifact = require('../artifacts/tests/contracts/src/contracts/mocks/IDrissRegistryMock.sol/MockNFT.json')
