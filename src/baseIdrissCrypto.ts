@@ -28,6 +28,8 @@ import type {
 import type { AssetLiability } from './types/assetLiability';
 import { AssetType } from './types/assetType';
 import type { VotingParams } from './types/votingParams';
+import {TwitterNameResolverArbitrary} from "./twitterNameResolverArbitrary";
+import {TwitterNameResolver} from "./twitterNameResolver";
 
 const IDRISS_HOMEPAGE = 'https://idriss.xyz';
 
@@ -35,7 +37,9 @@ export abstract class BaseIdrissCrypto {
   protected web3Provider: Web3Provider;
   protected registryWeb3Provider: Web3Provider;
   protected contractsAddressess: ContractsAddresses;
-
+  private twitterNameResolver: TwitterNameResolver;
+  private twitterNameResolverArbitrary: TwitterNameResolverArbitrary;
+  private TWITTER_BEARER_TOKEN: null | string = null;
   private idrissRegistryContract: Contract;
   private idrissMultipleRegistryContract: Contract;
   private idrissSendToAnyoneContract: Contract;
@@ -70,6 +74,7 @@ export abstract class BaseIdrissCrypto {
         CONTRACTS_ADDRESSES.idrissTipping,
     };
 
+    this.TWITTER_BEARER_TOKEN = connectionOptions.twitterApiKey ?? null;
     this.web3Provider = connectionOptions.web3Provider;
 
     this.registryWeb3Provider = Web3ProviderAdapter.fromWeb3(
@@ -99,6 +104,8 @@ export abstract class BaseIdrissCrypto {
       ABIS.IDrissTippingAbi,
       this.contractsAddressess.idrissTipping,
     );
+    this.twitterNameResolver = new TwitterNameResolver();
+    this.twitterNameResolverArbitrary = new TwitterNameResolverArbitrary(this.TWITTER_BEARER_TOKEN);
   }
 
   public static matchInput(input: string) {
@@ -364,18 +371,18 @@ export abstract class BaseIdrissCrypto {
     resolvedIDriss[resolveOptions.walletTag!] &&
     resolvedIDriss[resolveOptions.walletTag!].length > 0
       ? this.callWeb3Tipping(
-          resolvedIDriss[resolveOptions.walletTag!],
-          asset,
-          message,
-          transactionOptions,
-        )
+        resolvedIDriss[resolveOptions.walletTag!],
+        asset,
+        message,
+        transactionOptions,
+      )
       : this.callWeb3SendToAnyone(
-          hash,
-          beneficiary,
-          asset,
-          message,
-          transactionOptions,
-        ));
+        hash,
+        beneficiary,
+        asset,
+        message,
+        transactionOptions,
+      ));
     return result;
   }
 
@@ -1311,5 +1318,13 @@ export abstract class BaseIdrissCrypto {
     }
 
     return resultObject;
+  }
+
+  public async reverseResolveArbitrary(username: string) {
+    return this.twitterNameResolverArbitrary.reverseTwitterID(username);
+  }
+
+  public async transformIdentifierArbitrary (id: string) {
+    return this.twitterNameResolverArbitrary.getTwitterID(id);
   }
 }

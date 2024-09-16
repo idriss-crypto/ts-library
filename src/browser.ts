@@ -9,16 +9,16 @@ import { BaseIdrissCrypto } from './baseIdrissCrypto';
 type IdrissCryptoConnectionOptions = Omit<ConnectionOptions, 'web3Provider'> &
   (
     | {
-        providerType?: 'web3';
-        web3Provider?: provider;
-      }
+    providerType?: 'web3';
+    web3Provider?: provider;
+  }
     | {
-        providerType: 'ethersv5';
-        web3Provider?: ConstructorParameters<
-          typeof ethers.providers.Web3Provider
-        >[0];
-      }
-  );
+    providerType: 'ethersv5';
+    web3Provider?: ConstructorParameters<
+      typeof ethers.providers.Web3Provider
+    >[0];
+  }
+    );
 
 export class IdrissCrypto extends BaseIdrissCrypto {
   constructor(
@@ -36,7 +36,7 @@ export class IdrissCrypto extends BaseIdrissCrypto {
       web3Provider = Web3ProviderAdapter.fromWeb3(
         new Web3(
           connectionOptions.web3Provider ??
-            new Web3.providers.HttpProvider(url),
+          new Web3.providers.HttpProvider(url),
         ),
       );
     }
